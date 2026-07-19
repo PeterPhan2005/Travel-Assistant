@@ -1,0 +1,492 @@
+[
+  {
+    "id": "T000",
+    "file": "T000-bootstrap-repository.md",
+    "title": "Bootstrap repository",
+    "area": "foundation",
+    "depends_on": []
+  },
+  {
+    "id": "T001",
+    "file": "T001-verify-development-environment.md",
+    "title": "Verify development environment",
+    "area": "foundation",
+    "depends_on": [
+      "T000"
+    ]
+  },
+  {
+    "id": "T002",
+    "file": "T002-approve-context-and-adrs.md",
+    "title": "Approve context and ADR baseline",
+    "area": "docs",
+    "depends_on": [
+      "T000"
+    ]
+  },
+  {
+    "id": "T003",
+    "file": "T003-local-infrastructure.md",
+    "title": "Create local backend infrastructure",
+    "area": "backend",
+    "depends_on": [
+      "T000",
+      "T002"
+    ]
+  },
+  {
+    "id": "T004",
+    "file": "T004-continuous-integration.md",
+    "title": "Add CI checks",
+    "area": "quality",
+    "depends_on": [
+      "T000"
+    ]
+  },
+  {
+    "id": "T010",
+    "file": "T010-create-android-app.md",
+    "title": "Create Android Compose app",
+    "area": "android",
+    "depends_on": [
+      "T000",
+      "T001",
+      "T002"
+    ]
+  },
+  {
+    "id": "T011",
+    "file": "T011-android-architecture-shell.md",
+    "title": "Add Android architecture shell",
+    "area": "android",
+    "depends_on": [
+      "T010"
+    ]
+  },
+  {
+    "id": "T012",
+    "file": "T012-navigation-and-theme.md",
+    "title": "Implement navigation and theme",
+    "area": "android",
+    "depends_on": [
+      "T011"
+    ]
+  },
+  {
+    "id": "T013",
+    "file": "T013-room-schema.md",
+    "title": "Create Room offline schema",
+    "area": "android",
+    "depends_on": [
+      "T011"
+    ]
+  },
+  {
+    "id": "T014",
+    "file": "T014-curated-seed-importer-android.md",
+    "title": "Import curated seed into Room",
+    "area": "android",
+    "depends_on": [
+      "T013"
+    ]
+  },
+  {
+    "id": "T015",
+    "file": "T015-location-permission-and-context.md",
+    "title": "Implement foreground location context",
+    "area": "android",
+    "depends_on": [
+      "T011"
+    ]
+  },
+  {
+    "id": "T016",
+    "file": "T016-nearby-local-search.md",
+    "title": "Implement nearby local search",
+    "area": "android",
+    "depends_on": [
+      "T014",
+      "T015"
+    ]
+  },
+  {
+    "id": "T017",
+    "file": "T017-poi-detail-and-narration.md",
+    "title": "Implement POI detail and local narration",
+    "area": "android",
+    "depends_on": [
+      "T016"
+    ]
+  },
+  {
+    "id": "T018",
+    "file": "T018-external-navigation.md",
+    "title": "Open external navigation",
+    "area": "android",
+    "depends_on": [
+      "T017"
+    ]
+  },
+  {
+    "id": "T019",
+    "file": "T019-offline-ui-state.md",
+    "title": "Add explicit offline UI state",
+    "area": "android",
+    "depends_on": [
+      "T016"
+    ]
+  },
+  {
+    "id": "T020",
+    "file": "T020-firebase-project-integration.md",
+    "title": "Integrate Firebase configuration",
+    "area": "android",
+    "depends_on": [
+      "T010"
+    ]
+  },
+  {
+    "id": "T021",
+    "file": "T021-email-auth.md",
+    "title": "Implement email authentication",
+    "area": "android",
+    "depends_on": [
+      "T020",
+      "T012"
+    ]
+  },
+  {
+    "id": "T022",
+    "file": "T022-google-auth.md",
+    "title": "Implement Google authentication",
+    "area": "android",
+    "depends_on": [
+      "T020",
+      "T021"
+    ]
+  },
+  {
+    "id": "T023",
+    "file": "T023-fastapi-skeleton.md",
+    "title": "Create FastAPI service",
+    "area": "backend",
+    "depends_on": [
+      "T000",
+      "T001",
+      "T003"
+    ]
+  },
+  {
+    "id": "T024",
+    "file": "T024-firebase-token-verification.md",
+    "title": "Verify Firebase tokens in backend",
+    "area": "backend",
+    "depends_on": [
+      "T023",
+      "T020"
+    ]
+  },
+  {
+    "id": "T025",
+    "file": "T025-preferences-sync.md",
+    "title": "Synchronize user preferences",
+    "area": "fullstack",
+    "depends_on": [
+      "T021",
+      "T024",
+      "T031"
+    ]
+  },
+  {
+    "id": "T030",
+    "file": "T030-postgres-schema.md",
+    "title": "Create server database schema",
+    "area": "backend",
+    "depends_on": [
+      "T003",
+      "T023"
+    ]
+  },
+  {
+    "id": "T031",
+    "file": "T031-curated-data-pipeline.md",
+    "title": "Build curated data pipeline",
+    "area": "data",
+    "depends_on": [
+      "T030",
+      "T002"
+    ]
+  },
+  {
+    "id": "T032",
+    "file": "T032-poi-provider-contracts.md",
+    "title": "Define POI provider adapters",
+    "area": "backend",
+    "depends_on": [
+      "T023",
+      "T030"
+    ]
+  },
+  {
+    "id": "T033",
+    "file": "T033-nearby-api.md",
+    "title": "Implement nearby POI API",
+    "area": "backend",
+    "depends_on": [
+      "T031",
+      "T032"
+    ]
+  },
+  {
+    "id": "T034",
+    "file": "T034-travel-package-builder.md",
+    "title": "Build travel package artifact",
+    "area": "backend",
+    "depends_on": [
+      "T031"
+    ]
+  },
+  {
+    "id": "T035",
+    "file": "T035-android-package-sync.md",
+    "title": "Download and activate travel package",
+    "area": "android",
+    "depends_on": [
+      "T013",
+      "T034",
+      "T024"
+    ]
+  },
+  {
+    "id": "T040",
+    "file": "T040-agent-contract-models.md",
+    "title": "Define agent contract models",
+    "area": "ai",
+    "depends_on": [
+      "T023",
+      "T002"
+    ]
+  },
+  {
+    "id": "T041",
+    "file": "T041-router-agent.md",
+    "title": "Implement Router Agent",
+    "area": "ai",
+    "depends_on": [
+      "T040"
+    ]
+  },
+  {
+    "id": "T042",
+    "file": "T042-discovery-agent.md",
+    "title": "Implement Discovery Agent",
+    "area": "ai",
+    "depends_on": [
+      "T040",
+      "T032",
+      "T033"
+    ]
+  },
+  {
+    "id": "T043",
+    "file": "T043-narration-agent.md",
+    "title": "Implement Narration Agent",
+    "area": "ai",
+    "depends_on": [
+      "T040",
+      "T031"
+    ]
+  },
+  {
+    "id": "T044",
+    "file": "T044-local-culture-agent.md",
+    "title": "Implement Local Culture Agent",
+    "area": "ai",
+    "depends_on": [
+      "T040",
+      "T031"
+    ]
+  },
+  {
+    "id": "T045",
+    "file": "T045-itinerary-agent.md",
+    "title": "Implement Itinerary Agent",
+    "area": "ai",
+    "depends_on": [
+      "T040",
+      "T033"
+    ]
+  },
+  {
+    "id": "T046",
+    "file": "T046-grounding-reviewer-agent.md",
+    "title": "Implement Grounding Reviewer",
+    "area": "ai",
+    "depends_on": [
+      "T042",
+      "T043",
+      "T044",
+      "T045"
+    ]
+  },
+  {
+    "id": "T047",
+    "file": "T047-response-composer-agent.md",
+    "title": "Implement Response Composer",
+    "area": "ai",
+    "depends_on": [
+      "T046"
+    ]
+  },
+  {
+    "id": "T048",
+    "file": "T048-code-orchestrator.md",
+    "title": "Implement strict multi-agent orchestrator",
+    "area": "ai",
+    "depends_on": [
+      "T041",
+      "T042",
+      "T043",
+      "T044",
+      "T045",
+      "T046",
+      "T047"
+    ]
+  },
+  {
+    "id": "T049",
+    "file": "T049-agent-tracing-and-usage.md",
+    "title": "Add agent observability",
+    "area": "ai",
+    "depends_on": [
+      "T048"
+    ]
+  },
+  {
+    "id": "T050",
+    "file": "T050-agent-eval-runner.md",
+    "title": "Create agent evaluation runner",
+    "area": "quality",
+    "depends_on": [
+      "T048",
+      "T049"
+    ]
+  },
+  {
+    "id": "T060",
+    "file": "T060-android-speech-input.md",
+    "title": "Implement Android speech-to-text input",
+    "area": "android",
+    "depends_on": [
+      "T012"
+    ]
+  },
+  {
+    "id": "T061",
+    "file": "T061-voice-query-integration.md",
+    "title": "Connect voice query to assistant API",
+    "area": "fullstack",
+    "depends_on": [
+      "T060",
+      "T048",
+      "T024"
+    ]
+  },
+  {
+    "id": "T070",
+    "file": "T070-itinerary-mobile-ui.md",
+    "title": "Implement itinerary generation UI",
+    "area": "android",
+    "depends_on": [
+      "T012",
+      "T045",
+      "T048"
+    ]
+  },
+  {
+    "id": "T071",
+    "file": "T071-itinerary-persistence-sync.md",
+    "title": "Persist and sync itineraries",
+    "area": "fullstack",
+    "depends_on": [
+      "T030",
+      "T070",
+      "T024"
+    ]
+  },
+  {
+    "id": "T080",
+    "file": "T080-offline-full-text-search.md",
+    "title": "Implement Room full-text search",
+    "area": "android",
+    "depends_on": [
+      "T035"
+    ]
+  },
+  {
+    "id": "T090",
+    "file": "T090-product-analytics.md",
+    "title": "Instrument MVP KPIs",
+    "area": "fullstack",
+    "depends_on": [
+      "T018",
+      "T061",
+      "T070"
+    ]
+  },
+  {
+    "id": "T091",
+    "file": "T091-end-to-end-demo-tests.md",
+    "title": "Add end-to-end demo tests",
+    "area": "quality",
+    "depends_on": [
+      "T061",
+      "T071",
+      "T080",
+      "T090"
+    ]
+  },
+  {
+    "id": "T092",
+    "file": "T092-complete-hcmc-dataset.md",
+    "title": "Complete HCMC curated dataset",
+    "area": "data",
+    "depends_on": [
+      "T031",
+      "T043",
+      "T044"
+    ]
+  },
+  {
+    "id": "T093",
+    "file": "T093-complete-bangkok-dataset.md",
+    "title": "Complete Bangkok demo dataset",
+    "area": "data",
+    "depends_on": [
+      "T031",
+      "T043",
+      "T044"
+    ]
+  },
+  {
+    "id": "T094",
+    "file": "T094-demo-mode-and-location-simulation.md",
+    "title": "Add safe demo mode",
+    "area": "android",
+    "depends_on": [
+      "T091",
+      "T092",
+      "T093"
+    ]
+  },
+  {
+    "id": "T095",
+    "file": "T095-release-candidate.md",
+    "title": "Produce release candidate",
+    "area": "quality",
+    "depends_on": [
+      "T091",
+      "T094"
+    ]
+  }
+]
