@@ -2,11 +2,11 @@
 
 ## Current phase
 
-Planning pack created; implementation not started.
+Repository bootstrap complete; developer environment verification is next.
 
 ## Current goal
 
-Approve architecture and start Task T000.
+Verify the developer environment in Task T001.
 
 ## Completed
 
@@ -14,6 +14,7 @@ Approve architecture and start Task T000.
 - Android-first decision recorded.
 - Strict real multi-agent definition recorded.
 - Initial task backlog created.
+- T000 Bootstrap repository.
 
 ## In progress
 
@@ -21,9 +22,7 @@ Approve architecture and start Task T000.
 
 ## Next up
 
-- T000 Bootstrap repository.
 - T001 Verify developer environment.
-- T002 Confirm context and ADR baseline.
 
 ## Open questions
 

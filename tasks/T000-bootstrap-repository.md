@@ -1,7 +1,7 @@
 ---
 id: T000
 title: Bootstrap repository
-status: todo
+status: done
 depends_on: []
 area: foundation
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Repository opens cleanly in Git.
-- [ ] No secrets are committed.
-- [ ] Root AGENTS.md is present.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Repository opens cleanly in Git.
+- [x] No secrets are committed.
+- [x] Root AGENTS.md is present.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 
