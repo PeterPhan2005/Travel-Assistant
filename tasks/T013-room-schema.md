@@ -1,7 +1,7 @@
 ---
 id: T013
 title: Create Room offline schema
-status: todo
+status: done
 depends_on: [T011]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Schema matches data-model context.
-- [ ] DAO tests cover core queries.
-- [ ] Migration strategy starts at version 1.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Schema matches data-model context.
+- [x] DAO tests cover core queries.
+- [x] Migration strategy starts at version 1.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -5,11 +5,12 @@
 Phase 1 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
-persistence, networking and product features remain incomplete.
+the initial version-1 Room schema and DAO layer are complete. Seed importing,
+networking and product features remain incomplete.
 
 ## Current goal
 
-Begin T013 Room offline schema only when that task is explicitly assigned.
+Begin T014 curated seed importing only when that task is explicitly assigned.
 
 ## Completed
 
@@ -25,6 +26,7 @@ Begin T013 Room offline schema only when that task is explicitly assigned.
 - T010 Create Android Compose app.
 - T011 Add Android architecture shell.
 - T012 Implement navigation and theme.
+- T013 Create Room offline schema.
 
 ## In progress
 
@@ -32,7 +34,7 @@ Begin T013 Room offline schema only when that task is explicitly assigned.
 
 ## Next up
 
-- T013 Create Room offline schema.
+- T014 Import curated seed into Room.
 
 ## Open questions
 
@@ -51,6 +53,11 @@ Begin T013 Room offline schema only when that task is explicitly assigned.
 - Code-orchestrated independent specialist runs.
 - Curated-first POI and narration data.
 - Room travel packages for offline mode.
+- Room version 1 uses stable string identifiers, Unix epoch milliseconds,
+  SQLite REAL-backed `Double` coordinates and integer currency minor units.
+- POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
+  items cascade on itinerary deletion, while a deleted POI sets an optional
+  itinerary-item POI reference to null so the user's itinerary item remains.
 
 ## T002 baseline consistency review
 
@@ -67,8 +74,8 @@ Begin T013 Room offline schema only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T012 are complete; T013 is the sole next task. |
-| Implementation state | The Android architecture shell, top-level Navigation Compose shell and centralized Material 3 theme are present under `android/`. Destination product features remain placeholders; persistence, networking and product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T013 are complete; T014 is the sole next task. |
+| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. Bundled seed importing, destination product features, networking and authentication remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -148,3 +155,17 @@ input API; updating to stable Espresso 3.7.0 and JUnit extension 1.3.0 resolved
 the compatibility failure. JVM tests, connected instrumented tests, debug lint,
 debug assembly, install and a cold launcher-activity start all passed on the
 Pixel API 36.1 emulator. Destination features remain unimplemented by design.
+
+T013 completed on 2026-07-21 with the initial version-1 Room database, all nine
+accepted local entities, aggregate-oriented DAOs and singleton Hilt database/DAO
+providers. The schema is exported to a tracked JSON file, starts directly at
+version 1 and has no destructive-migration fallback. Field-level choices not
+fixed by the context use stable string IDs, epoch-millisecond timestamps,
+`Double` coordinates and integer currency minor units. Package metadata remains
+limited to the accepted city/version/manifest/publication fields; no active or
+latest-package behavior was invented. Six isolated in-memory Room tests cover
+POI/content queries, both deliberate foreign-key delete behaviors, ordered
+itinerary aggregates and cascading deletion, package lookup, deterministic sync
+ordering/state updates/removal and per-test isolation. JVM tests, instrumented
+tests, lint and debug/test APK assembly passed. Seed data/importing, FTS, product
+repositories/UI, synchronization workers and networking remain outside T013.
