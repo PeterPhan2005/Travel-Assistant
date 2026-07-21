@@ -24,10 +24,11 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 
 ## Trạng thái hiện tại
 
-Repository đã có Android Studio starter project trong `android/` với package hiện
-có được giữ nguyên và scaffold đã được xác thực trong T010. Application
-architecture và các tính năng sản phẩm chưa được triển khai; các task Android
-tiếp theo vẫn phải được thực hiện theo thứ tự backlog.
+Repository đã có Android architecture shell trong `android/`, với package hiện
+có được giữ nguyên. Hilt, ViewModel/StateFlow và repository boundaries đã được
+thiết lập trong T011. Navigation, persistence, networking và các tính năng sản
+phẩm vẫn chưa được triển khai; các task Android tiếp theo phải được thực hiện
+theo thứ tự backlog.
 
 ## Android app identifiers
 
