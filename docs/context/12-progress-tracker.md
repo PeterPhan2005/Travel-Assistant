@@ -94,5 +94,5 @@ starter with debug lint, JVM unit tests and debug assembly, and checks the empty
 backend boundary with pinned Ruff, mypy and pytest tooling plus a placeholder CI
 smoke test. Workflow YAML parsing, read-only permissions, cache inputs and all
 job-equivalent local commands passed. A deliberate temporary pytest failure
-returned a non-zero exit status and was removed. The first remote GitHub Actions
-run remains pending until the changes are committed and pushed.
+returned a non-zero exit status and was removed. The first remote CI run failed because sdkmanager was not on PATH. A follow-up CI fix invoked sdkmanager through ANDROID_HOME, and the subsequent GitHub
+Actions run passed both Android and backend jobs.
