@@ -6,7 +6,8 @@ Review specialist outputs before the final response.
 
 ## Input
 
-- Structured outputs from specialists.
+- Deterministically ranked discovery results.
+- Structured outputs from any selected optional specialists.
 - Source metadata.
 - Product response rules.
 

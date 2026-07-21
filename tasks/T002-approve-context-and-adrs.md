@@ -1,7 +1,7 @@
 ---
 id: T002
 title: Approve context and ADR baseline
-status: todo
+status: done
 depends_on: [T000]
 area: docs
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] All locked product decisions are represented.
-- [ ] No template placeholders remain in accepted files.
-- [ ] Open questions are explicit.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] All locked product decisions are represented.
+- [x] No template placeholders remain in accepted files.
+- [x] Open questions are explicit.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

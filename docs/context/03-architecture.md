@@ -27,27 +27,27 @@
 
 ## Multi-agent topology
 
-- Router Agent.
-- Discovery Agent.
-- Narration Agent.
-- Local Culture Agent.
-- Itinerary Agent.
-- Grounding Reviewer Agent.
-- Response Composer Agent.
+- Core runtime path: Router Agent → Discovery Agent → deterministic ranking →
+  Grounding Reviewer Agent → Response Composer Agent.
+- Optional specialists selected by intent: Narration Agent, Local Culture Agent
+  and Itinerary Agent.
+- Optional specialist output must pass through the Grounding Reviewer before the
+  Response Composer; specialists do not bypass the core grounding/composition
+  boundary.
 
 Specialists run through separate agent executions with scoped structured input. Application code controls fan-out, parallelism, retry and timeouts.
 
 ## Deterministic services
 
-- GPS/context collection.
-- Speech-to-text.
+- GPS/location acquisition and context collection.
+- Speech recognition/speech-to-text.
 - Haversine/route distance.
 - Opening-hours normalization.
 - POI deduplication.
 - Ranking/scoring.
-- Authorization.
+- Authentication/token verification and authorization.
 - Offline full-text search.
-- Sync and conflict resolution.
+- Travel-package synchronization and sync conflict resolution.
 
 ## Invariants
 

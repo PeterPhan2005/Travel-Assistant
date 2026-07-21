@@ -14,12 +14,23 @@ A runtime agent is considered independent only when it has:
 
 ## Orchestration
 
-1. Router Agent returns an execution plan.
-2. Application code gathers deterministic context.
-3. Required specialists run separately; independent tasks may run in parallel.
-4. Deterministic validators run.
-5. Grounding Reviewer checks evidence and missing fields.
-6. Response Composer creates the final user-facing response.
+The locked core runtime path is:
+
+Router Agent → Discovery Agent → deterministic ranking → Grounding Reviewer
+Agent → Response Composer Agent.
+
+1. Application code gathers deterministic context such as location and speech
+   transcript before or around routing as needed.
+2. Router Agent returns an execution plan.
+3. Discovery Agent retrieves candidate evidence; it does not determine the final
+   order.
+4. Application code applies deterministic ranking and validators.
+5. Narration, Local Culture and Itinerary agents run only when selected for the
+   request; independent optional work may run in parallel.
+6. Grounding Reviewer checks ranked discovery results, optional specialist
+   outputs, evidence and missing fields.
+7. Response Composer creates the final user-facing response without adding facts
+   or changing the deterministic rank.
 
 ## Model configuration
 

@@ -4,6 +4,9 @@
 
 Ứng dụng Android trợ lý du lịch cá nhân cho người Việt, đóng vai trò như một người bản địa số. Sản phẩm nổi bật nhờ thuyết minh điểm đến theo vị trí, gợi ý ẩm thực thực tế, kiến thức đời sống địa phương và lịch trình cá nhân hóa.
 
+Đầu ra ban đầu là text. Voice trong phạm vi ban đầu chỉ là speech-to-text để nhập
+truy vấn, không phải audio narration hoặc text-to-speech.
+
 ## Primary users
 
 - Người Việt du lịch trong nước.
@@ -31,3 +34,11 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 
 - Team size: 2.
 - Deadline: 25/01/2027.
+
+## Current implementation state
+
+- `android/` đã chứa Android Studio starter project native Kotlin/Compose với
+  package hiện có được giữ nguyên.
+- Starter project chưa có application architecture hoặc product implementation
+  của backlog; T010 và các task Android tiếp theo chưa hoàn thành.
+- Backend, database, data pipeline và agent runtime chưa được triển khai.

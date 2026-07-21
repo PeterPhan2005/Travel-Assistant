@@ -16,7 +16,7 @@ Classify a user request and produce an execution plan. It does not answer the us
 
 - Intent.
 - Extracted entities.
-- Required specialist agents.
+- Selected optional specialist agents, if the intent needs them.
 - Whether agents can run in parallel.
 - Missing information that materially blocks execution.
 - Confidence.

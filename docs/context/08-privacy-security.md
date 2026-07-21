@@ -3,7 +3,9 @@
 ## Agreed retention
 
 - Exact location history: not stored server-side.
-- Location used in a request: logs must be rounded or removed; operational retention 7–30 days.
+- Location used in a request: logs must be rounded or removed. The accepted
+  operational-retention range is 7–30 days; the exact production duration is an
+  explicit open question in the progress tracker.
 - Itinerary: retained until user deletes it/account.
 - Preferences: retained until user deletes them/account.
 - Voice audio: not stored.

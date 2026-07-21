@@ -32,7 +32,12 @@
 ## Product rules
 
 - Món đặc trưng ưu tiên curated/editor/community verified.
-- AI inference chỉ là fallback và phải được gắn nhãn.
+- AI chỉ được tổng hợp hoặc suy luận từ dữ liệu và nguồn hiện có; nội dung suy
+  luận phải được gắn nhãn. Nếu không có bằng chứng cho một fact, assistant phải
+  nói rõ là chưa có dữ liệu và không được tự điền hoặc phát minh fact đó.
 - Thiếu dữ liệu không gian quán thì bỏ trường; khi người dùng hỏi trực tiếp mới trả lời “chưa có dữ liệu”.
 - Giá phải có `source_type` và `updated_at`.
-- Agent được tự mở rộng tìm kiếm và bổ sung thông tin, nhưng không tự thực hiện hành động có chi phí hoặc thay đổi dữ liệu đã lưu mà không có xác nhận.
+- Khi online, agent được tự mở rộng tìm kiếm qua các nguồn được phép để thu thập
+  bằng chứng, nhưng không được biến thông tin không có nguồn thành fact và không
+  tự thực hiện hành động có chi phí hoặc thay đổi dữ liệu đã lưu mà không có xác
+  nhận.

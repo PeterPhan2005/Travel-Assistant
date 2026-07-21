@@ -2,12 +2,13 @@
 
 ## Current phase
 
-Repository bootstrap and developer environment verification are complete;
-context and ADR approval is next.
+Repository bootstrap, developer environment verification and context/ADR
+baseline approval are complete. Local backend infrastructure is next.
 
 ## Current goal
 
-Review and approve the project context and architecture decisions in Task T002.
+Begin T003 local backend infrastructure only when that task is explicitly
+assigned.
 
 ## Completed
 
@@ -17,6 +18,7 @@ Review and approve the project context and architecture decisions in Task T002.
 - Initial task backlog created.
 - T000 Bootstrap repository.
 - T001 Verify developer environment.
+- T002 Approve context and ADR baseline.
 
 ## In progress
 
@@ -24,7 +26,7 @@ Review and approve the project context and architecture decisions in Task T002.
 
 ## Next up
 
-- T002 Approve context and ADRs.
+- T003 Create local backend infrastructure.
 
 ## Open questions
 
@@ -33,6 +35,8 @@ Review and approve the project context and architecture decisions in Task T002.
 - Cloud deployment provider.
 - Split of 30–50 curated POIs between HCMC and Bangkok.
 - Exact list of source publishers accepted for narration.
+- Exact production retention duration for rounded or redacted operational
+  location-request logs within the accepted 7–30 day range.
 
 ## Architecture decisions
 
@@ -41,6 +45,24 @@ Review and approve the project context and architecture decisions in Task T002.
 - Code-orchestrated independent specialist runs.
 - Curated-first POI and narration data.
 - Room travel packages for offline mode.
+
+## T002 baseline consistency review
+
+| Area | Accepted baseline |
+| --- | --- |
+| Product scope | Vietnamese-first native Android travel assistant; text output initially, with voice limited to speech-to-text input. |
+| Target users | Vietnamese domestic travelers plus selected outbound demo cases. |
+| Supported cities | Ho Chi Minh City is primary and Bangkok is the international demo; 30–50 curated POIs total, with the city split unresolved. |
+| Online/offline | Online mode may use approved provider adapters; offline mode uses only downloaded, versioned travel-package data and offers no new AI generation. |
+| Curated data | Curated POI, menu, narration and local-culture records are the trust anchor; external sources may enrich them with provenance and freshness. |
+| Grounding | Unavailable facts are never invented; unsupported claims are removed, missing fields stay missing and historical/cultural claims need sources or an explicit fallback label. |
+| Stack | Kotlin/Jetpack Compose native Android; Python 3.12/FastAPI backend; PostgreSQL/PostGIS database; OpenAI Agents SDK runtime. |
+| Authentication | Firebase Authentication with email/password and Google; token verification and authorization are deterministic services, not agents. |
+| Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
+| Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
+| Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
+| Task sequence | T000 and T001 are complete; T002 is complete; T003 is the sole next task. T010 remains incomplete. |
+| Implementation state | An Android Studio starter exists under `android/`, but application architecture and product implementation are incomplete; backend, database, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -53,3 +75,8 @@ Play AVD, emulator acceleration, Gradle wrapper, Python 3.12, Node.js LTS, npm,
 Codex CLI, Docker CLI and Docker daemon all passed. A physical Android device is
 still required for later GPS/microphone behavior testing, but is not a T001
 blocker.
+
+T002 completed on 2026-07-21. Accepted context and ADRs now state the locked
+runtime path, optional specialist roles, deterministic-service boundary,
+grounding policy and actual starter-project state consistently. No application
+source or build configuration was changed.
