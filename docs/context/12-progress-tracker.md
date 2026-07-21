@@ -2,13 +2,13 @@
 
 ## Current phase
 
-Repository bootstrap, developer environment verification, context/ADR baseline
-approval and local PostgreSQL/PostGIS infrastructure are complete. Continuous
-integration is next.
+Phase 0 foundation work is complete: repository bootstrap, developer environment
+verification, context/ADR approval, local PostgreSQL/PostGIS infrastructure and
+continuous integration.
 
 ## Current goal
 
-Begin T004 continuous integration only when that task is explicitly assigned.
+Begin T010 Android app task only when that task is explicitly assigned.
 
 ## Completed
 
@@ -20,6 +20,7 @@ Begin T004 continuous integration only when that task is explicitly assigned.
 - T001 Verify developer environment.
 - T002 Approve context and ADR baseline.
 - T003 Create local backend infrastructure.
+- T004 Add CI checks.
 
 ## In progress
 
@@ -27,7 +28,7 @@ Begin T004 continuous integration only when that task is explicitly assigned.
 
 ## Next up
 
-- T004 Add CI checks.
+- T010 Create Android Compose app.
 
 ## Open questions
 
@@ -62,7 +63,7 @@ Begin T004 continuous integration only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T003 are complete; T004 is the sole next task. T010 remains incomplete. |
+| Task sequence | T000 through T003 are complete; T010 is the sole next task. T010 remains incomplete. |
 | Implementation state | An Android Studio starter exists under `android/`, but application architecture and product implementation are incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
@@ -87,3 +88,11 @@ local PostgreSQL/PostGIS, a named persistent volume, explicit health check,
 loopback-only host port and safe sample environment values. Compose validation,
 database health, SQL connectivity, PostGIS availability and volume persistence
 were verified without adding backend application code.
+
+T004 completed on 2026-07-21. GitHub Actions now checks the existing Android
+starter with debug lint, JVM unit tests and debug assembly, and checks the empty
+backend boundary with pinned Ruff, mypy and pytest tooling plus a placeholder CI
+smoke test. Workflow YAML parsing, read-only permissions, cache inputs and all
+job-equivalent local commands passed. A deliberate temporary pytest failure
+returned a non-zero exit status and was removed. The first remote GitHub Actions
+run remains pending until the changes are committed and pushed.

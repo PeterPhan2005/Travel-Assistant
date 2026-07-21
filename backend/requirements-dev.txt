@@ -1,0 +1,4 @@
+# CI-only development tooling. Production dependencies belong to T023.
+mypy==2.3.0
+pytest==9.1.1
+ruff==0.15.22

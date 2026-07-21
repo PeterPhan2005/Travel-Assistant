@@ -1,7 +1,7 @@
 ---
 id: T004
 title: Add CI checks
-status: todo
+status: done
 depends_on: [T000]
 area: quality
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] CI configuration is valid.
-- [ ] Jobs fail on lint/test errors.
-- [ ] Dependency caching is configured.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] CI configuration is valid.
+- [x] Jobs fail on lint/test errors.
+- [x] Dependency caching is configured.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

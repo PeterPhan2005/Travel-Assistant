@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  android:
+    name: Android lint, test, and build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21 with Gradle caching
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle*
+            android/gradle/libs.versions.toml
+            android/gradle/gradle-daemon-jvm.properties
+            android/gradle/wrapper/gradle-wrapper.jar
+            android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Install required Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-36.1" "build-tools;36.0.0"
+
+      - name: Run Android checks
+        working-directory: android
+        run: ./gradlew :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
+
+  backend:
+    name: Backend lint, type check, and test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python 3.12 with dependency caching
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install backend development dependencies
+        working-directory: backend
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Run Ruff
+        working-directory: backend
+        run: ruff check .
+
+      - name: Run mypy
+        working-directory: backend
+        run: mypy --strict tests
+
+      - name: Run pytest
+        working-directory: backend
+        run: pytest tests
