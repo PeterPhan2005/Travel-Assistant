@@ -7,8 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kltn.travelassistant.feature.home.presentation.HomeScreen
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
+import com.kltn.travelassistant.navigation.TopLevelDestination
+import com.kltn.travelassistant.navigation.TravelAssistantNavHost
+import com.kltn.travelassistant.navigation.TravelAssistantNavigationBar
+import com.kltn.travelassistant.navigation.navigateToTopLevelDestination
+import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 
 @Composable
 fun TravelAssistantApp(
@@ -16,11 +22,28 @@ fun TravelAssistantApp(
     modifier: Modifier = Modifier,
 ) {
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val selectedDestination = TopLevelDestination.fromRoute(
+        route = navBackStackEntry?.destination?.route,
+    )
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
-        HomeScreen(
-            uiState = uiState,
-            modifier = Modifier.padding(innerPadding),
-        )
+    TravelAssistantTheme {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            bottomBar = {
+                TravelAssistantNavigationBar(
+                    destinations = TopLevelDestination.all,
+                    selectedDestination = selectedDestination,
+                    onDestinationSelected = navController::navigateToTopLevelDestination,
+                )
+            },
+        ) { innerPadding ->
+            TravelAssistantNavHost(
+                navController = navController,
+                homeUiState = uiState,
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }

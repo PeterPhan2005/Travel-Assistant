@@ -1,5 +1,6 @@
-package com.kltn.travelassistant.feature.home.presentation
+package com.kltn.travelassistant.navigation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,14 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
 import com.kltn.travelassistant.R
 import com.kltn.travelassistant.ui.theme.AppSpacing
-import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 
 @Composable
-fun HomeScreen(
-    uiState: HomeUiState,
+fun PlaceholderDestinationScreen(
+    @StringRes titleRes: Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -28,21 +27,13 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
     ) {
         Text(
-            text = stringResource(R.string.destination_explore),
+            text = stringResource(titleRes),
             modifier = Modifier.semantics { heading() },
             style = MaterialTheme.typography.headlineMedium,
         )
         Text(
-            text = uiState.appName,
+            text = stringResource(R.string.feature_coming_later),
             style = MaterialTheme.typography.bodyLarge,
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    TravelAssistantTheme(dynamicColor = false) {
-        HomeScreen(uiState = HomeUiState(appName = "Travel Assistant"))
     }
 }

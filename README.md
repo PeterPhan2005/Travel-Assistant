@@ -26,9 +26,10 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 
 Repository đã có Android architecture shell trong `android/`, với package hiện
 có được giữ nguyên. Hilt, ViewModel/StateFlow và repository boundaries đã được
-thiết lập trong T011. Navigation, persistence, networking và các tính năng sản
-phẩm vẫn chưa được triển khai; các task Android tiếp theo phải được thực hiện
-theo thứ tự backlog.
+thiết lập trong T011. T012 đã bổ sung top-level Navigation Compose và Material 3
+theme tập trung với năm destination. Persistence, networking và các tính năng
+sản phẩm vẫn chưa được triển khai; các task Android tiếp theo phải được thực
+hiện theo thứ tự backlog.
 
 ## Android app identifiers
 

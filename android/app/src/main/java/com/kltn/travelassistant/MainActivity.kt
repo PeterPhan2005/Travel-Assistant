@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
-import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -17,9 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TravelAssistantTheme {
-                TravelAssistantApp(homeViewModel = homeViewModel)
-            }
+            TravelAssistantApp(homeViewModel = homeViewModel)
         }
     }
 }

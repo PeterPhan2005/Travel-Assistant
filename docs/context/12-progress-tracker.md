@@ -3,12 +3,13 @@
 ## Current phase
 
 Phase 1 is in progress. The Android architecture shell is present, with Hilt,
-ViewModel/StateFlow and repository boundaries established. Navigation,
+ViewModel/StateFlow and repository boundaries established. The top-level
+Navigation Compose shell and centralized Material 3 theme are complete;
 persistence, networking and product features remain incomplete.
 
 ## Current goal
 
-Begin T012 navigation and theme only when that task is explicitly assigned.
+Begin T013 Room offline schema only when that task is explicitly assigned.
 
 ## Completed
 
@@ -23,6 +24,7 @@ Begin T012 navigation and theme only when that task is explicitly assigned.
 - T004 Add CI checks.
 - T010 Create Android Compose app.
 - T011 Add Android architecture shell.
+- T012 Implement navigation and theme.
 
 ## In progress
 
@@ -30,7 +32,7 @@ Begin T012 navigation and theme only when that task is explicitly assigned.
 
 ## Next up
 
-- T012 Implement navigation and theme.
+- T013 Create Room offline schema.
 
 ## Open questions
 
@@ -65,8 +67,8 @@ Begin T012 navigation and theme only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 and T011 are complete; T012 is the sole next task. |
-| Implementation state | The Android architecture shell is present under `android/`; Hilt, ViewModel/StateFlow and repository boundaries are established. Navigation, persistence, networking and product features remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T012 are complete; T013 is the sole next task. |
+| Implementation state | The Android architecture shell, top-level Navigation Compose shell and centralized Material 3 theme are present under `android/`. Destination product features remain placeholders; persistence, networking and product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -129,3 +131,20 @@ MainActivity top-resumed/focused, and focused logcat inspection found no Hilt,
 binding, generated-component or AndroidRuntime fatal error. Navigation,
 persistence, networking and product features remain incomplete and belong to
 later tasks.
+
+T012 completed on 2026-07-21 by adding one Navigation Compose host and a
+Material 3 navigation bar for Explore, Assistant, Itinerary, Downloads and
+Profile. Canonical routes are centralized and unique, Explore is the start
+destination, repeated selections do not duplicate a top-level destination, and
+Back from a non-start destination returns to Explore using Navigation's own
+back stack. Explore retains the T011 Home/ViewModel state boundary; the other
+destinations are localized placeholders only. Complete provisional light/dark
+fallback schemes, typography and spacing are centralized under `ui/theme`,
+without claiming final identity or branding. Three destination-contract JVM
+tests and three Compose navigation tests were added while the three T011 JVM
+tests and identity instrumented test were preserved. The first connected test
+run revealed that the existing Espresso 3.5.1 reflected a removed Android 36.1
+input API; updating to stable Espresso 3.7.0 and JUnit extension 1.3.0 resolved
+the compatibility failure. JVM tests, connected instrumented tests, debug lint,
+debug assembly, install and a cold launcher-activity start all passed on the
+Pixel API 36.1 emulator. Destination features remain unimplemented by design.

@@ -39,9 +39,10 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 
 - Android architecture shell trong `android/` đã được xác thực với package hiện
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
-  thiết lập.
-- Navigation, persistence, networking và các tính năng sản phẩm vẫn chưa được
-  triển khai; T012 và các task Android tiếp theo chưa hoàn thành.
+  thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
+  thành với năm destination placeholder.
+- Persistence, networking và các tính năng sản phẩm vẫn chưa được triển khai;
+  T013 và các task Android tiếp theo chưa hoàn thành.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
   application, database schema/migrations, data pipeline và agent runtime chưa
   được triển khai.

@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">TravelAssistant</string>
+    <string name="destination_explore">Khám phá</string>
+    <string name="destination_assistant">Trợ lý</string>
+    <string name="destination_itinerary">Lịch trình</string>
+    <string name="destination_downloads">Đã tải</string>
+    <string name="destination_profile">Hồ sơ</string>
+    <string name="open_explore">Mở Khám phá</string>
+    <string name="open_assistant">Mở Trợ lý</string>
+    <string name="open_itinerary">Mở Lịch trình</string>
+    <string name="open_downloads">Mở nội dung đã tải</string>
+    <string name="open_profile">Mở Hồ sơ</string>
+    <string name="feature_coming_later">Tính năng này sẽ có trong phiên bản sau.</string>
 </resources>
