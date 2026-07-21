@@ -2,13 +2,13 @@
 
 ## Current phase
 
-Phase 0 foundation work is complete: repository bootstrap, developer environment
-verification, context/ADR approval, local PostgreSQL/PostGIS infrastructure and
-continuous integration.
+Phase 1 has started after completion of the Phase 0 foundation work. The existing
+Android Compose starter/app scaffold is now validated; application architecture
+and feature implementation remain incomplete.
 
 ## Current goal
 
-Begin T010 Android app task only when that task is explicitly assigned.
+Begin T011 Android architecture shell only when that task is explicitly assigned.
 
 ## Completed
 
@@ -21,6 +21,7 @@ Begin T010 Android app task only when that task is explicitly assigned.
 - T002 Approve context and ADR baseline.
 - T003 Create local backend infrastructure.
 - T004 Add CI checks.
+- T010 Create Android Compose app.
 
 ## In progress
 
@@ -28,7 +29,7 @@ Begin T010 Android app task only when that task is explicitly assigned.
 
 ## Next up
 
-- T010 Create Android Compose app.
+- T011 Add Android architecture shell.
 
 ## Open questions
 
@@ -63,8 +64,8 @@ Begin T010 Android app task only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T003 are complete; T010 is the sole next task. T010 remains incomplete. |
-| Implementation state | An Android Studio starter exists under `android/`, but application architecture and product implementation are incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 are complete; T011 is the sole next task. |
+| Implementation state | The Android Compose starter/app scaffold under `android/` is validated, but application architecture and feature implementation remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -96,3 +97,17 @@ smoke test. Workflow YAML parsing, read-only permissions, cache inputs and all
 job-equivalent local commands passed. A deliberate temporary pytest failure
 returned a non-zero exit status and was removed. The first remote CI run failed because sdkmanager was not on PATH. A follow-up CI fix invoked sdkmanager through ANDROID_HOME, and the subsequent GitHub
 Actions run passed both Android and backend jobs.
+
+T010 completed on 2026-07-21 by reconciling the existing Kotlin/Compose starter
+without recreating the project or changing its package, module, SDK, Gradle
+wrapper or dependencies. Package/namespace and application ID remain
+`com.kltn.travelassistant`, with `.MainActivity` as the single launcher activity.
+Debug assembly, JVM tests and the focused CI-equivalent lint/test/build command
+passed. The debug APK installed on the authorized
+`Pixel_7_API_36_Google_Play_ARM64` emulator, Activity Manager launched
+`com.kltn.travelassistant/.MainActivity` with `Status: ok`, the process remained
+alive with the activity top-resumed and focused, and no immediate package fatal
+exception appeared in a focused logcat scan. The clarified instrumented Android
+app identity smoke test passed on the emulator. The generated starter UI remains
+minimal and should be visually confirmed by a person; T011 still owns the
+architecture shell and later tasks own navigation, theme and product features.

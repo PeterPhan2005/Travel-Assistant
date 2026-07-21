@@ -37,10 +37,10 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 
 ## Current implementation state
 
-- `android/` đã chứa Android Studio starter project native Kotlin/Compose với
+- Android Compose starter/app scaffold trong `android/` đã được xác thực với
   package hiện có được giữ nguyên.
-- Starter project chưa có application architecture hoặc product implementation
-  của backlog; T010 và các task Android tiếp theo chưa hoàn thành.
+- Application architecture và các tính năng sản phẩm vẫn chưa được triển khai;
+  T011 và các task Android tiếp theo chưa hoàn thành.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
   application, database schema/migrations, data pipeline và agent runtime chưa
   được triển khai.

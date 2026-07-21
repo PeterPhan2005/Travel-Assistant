@@ -25,9 +25,16 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 ## Trạng thái hiện tại
 
 Repository đã có Android Studio starter project trong `android/` với package hiện
-có được giữ nguyên. Starter này chưa đồng nghĩa với việc kiến trúc ứng dụng hoặc
-các tính năng sản phẩm đã được triển khai; các task Android tương ứng vẫn phải
-được thực hiện theo thứ tự backlog.
+có được giữ nguyên và scaffold đã được xác thực trong T010. Application
+architecture và các tính năng sản phẩm chưa được triển khai; các task Android
+tiếp theo vẫn phải được thực hiện theo thứ tự backlog.
+
+## Android app identifiers
+
+- Package/namespace: `com.kltn.travelassistant`
+- Application ID: `com.kltn.travelassistant`
+- Launcher activity: `.MainActivity`
+- Application model: a single `ComponentActivity` using Jetpack Compose
 
 ## Cách dùng với Codex
 
