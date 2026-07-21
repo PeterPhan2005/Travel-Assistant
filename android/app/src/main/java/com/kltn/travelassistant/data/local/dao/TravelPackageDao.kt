@@ -12,4 +12,13 @@ interface TravelPackageDao {
 
     @Query("SELECT * FROM travel_packages WHERE city = :city AND version = :version LIMIT 1")
     suspend fun getPackage(city: String, version: String): TravelPackageEntity?
+
+    @Query(
+        """
+        SELECT * FROM travel_packages
+        WHERE package_id = :packageId AND version = :version
+        LIMIT 1
+        """,
+    )
+    suspend fun getPackageByIdAndVersion(packageId: String, version: String): TravelPackageEntity?
 }

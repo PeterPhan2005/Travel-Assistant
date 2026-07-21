@@ -1,0 +1,111 @@
+{
+  "formatVersion": 1,
+  "packageMetadata": {
+    "packageId": "bundled-hcmc-demo",
+    "city": "Ho Chi Minh City",
+    "version": "1",
+    "publishedAtEpochMillis": 1784592000000,
+    "manifest": {
+      "formatVersion": 1,
+      "poiIds": [
+        "hcmc-poi-central-post-office",
+        "hcmc-poi-independence-palace",
+        "hcmc-poi-ben-thanh-market",
+        "hcmc-poi-war-remnants-museum",
+        "hcmc-poi-nguyen-hue-walking-street"
+      ]
+    }
+  },
+  "pois": [
+    {
+      "poiId": "hcmc-poi-central-post-office",
+      "name": "Bưu điện Trung tâm Sài Gòn",
+      "city": "Ho Chi Minh City",
+      "category": "landmark",
+      "latitude": 10.7799,
+      "longitude": 106.7000,
+      "status": "demo",
+      "updatedAtEpochMillis": 1784592000000
+    },
+    {
+      "poiId": "hcmc-poi-independence-palace",
+      "name": "Dinh Độc Lập",
+      "city": "Ho Chi Minh City",
+      "category": "landmark",
+      "latitude": 10.7770,
+      "longitude": 106.6953,
+      "status": "demo",
+      "updatedAtEpochMillis": 1784592000000
+    },
+    {
+      "poiId": "hcmc-poi-ben-thanh-market",
+      "name": "Chợ Bến Thành",
+      "city": "Ho Chi Minh City",
+      "category": "market",
+      "latitude": 10.7725,
+      "longitude": 106.6980,
+      "status": "demo",
+      "updatedAtEpochMillis": 1784592000000
+    },
+    {
+      "poiId": "hcmc-poi-war-remnants-museum",
+      "name": "Bảo tàng Chứng tích Chiến tranh",
+      "city": "Ho Chi Minh City",
+      "category": "museum",
+      "latitude": 10.7795,
+      "longitude": 106.6920,
+      "status": "demo",
+      "updatedAtEpochMillis": 1784592000000
+    },
+    {
+      "poiId": "hcmc-poi-nguyen-hue-walking-street",
+      "name": "Phố đi bộ Nguyễn Huệ",
+      "city": "Ho Chi Minh City",
+      "category": "public_space",
+      "latitude": 10.7740,
+      "longitude": 106.7037,
+      "status": "demo",
+      "updatedAtEpochMillis": 1784592000000
+    }
+  ],
+  "aliases": [
+    {
+      "aliasId": "hcmc-alias-central-post-office-en",
+      "poiId": "hcmc-poi-central-post-office",
+      "alias": "Saigon Central Post Office",
+      "normalizedAlias": "saigon central post office",
+      "languageCode": "en"
+    },
+    {
+      "aliasId": "hcmc-alias-independence-palace-en",
+      "poiId": "hcmc-poi-independence-palace",
+      "alias": "Independence Palace",
+      "normalizedAlias": "independence palace",
+      "languageCode": "en"
+    },
+    {
+      "aliasId": "hcmc-alias-ben-thanh-market-en",
+      "poiId": "hcmc-poi-ben-thanh-market",
+      "alias": "Ben Thanh Market",
+      "normalizedAlias": "ben thanh market",
+      "languageCode": "en"
+    },
+    {
+      "aliasId": "hcmc-alias-war-remnants-museum-en",
+      "poiId": "hcmc-poi-war-remnants-museum",
+      "alias": "War Remnants Museum",
+      "normalizedAlias": "war remnants museum",
+      "languageCode": "en"
+    },
+    {
+      "aliasId": "hcmc-alias-nguyen-hue-walking-street-en",
+      "poiId": "hcmc-poi-nguyen-hue-walking-street",
+      "alias": "Nguyen Hue Walking Street",
+      "normalizedAlias": "nguyen hue walking street",
+      "languageCode": "en"
+    }
+  ],
+  "menuItems": [],
+  "narrations": [],
+  "cultureItems": []
+}
