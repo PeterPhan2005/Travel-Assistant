@@ -168,6 +168,84 @@ docker info
 `docker --version` chỉ chứng minh CLI có mặt. `docker info` phải có phần
 `Server` và trả exit code `0` mới chứng minh daemon hoạt động.
 
+## PostgreSQL/PostGIS local
+
+Từ repository root, tạo file cấu hình local từ sample đã track:
+
+```bash
+cp .env.example .env
+```
+
+Các credential trong `.env.example` chỉ dành cho local development. Không dùng
+chúng trong shared, staging hoặc production environment và không commit `.env`.
+Compose dùng một PostgreSQL/PostGIS service tên `database`, chỉ publish cổng lên
+loopback của máy và lưu database cluster trong named volume
+`travel-assistant_postgres_data`. Host port mặc định là `5433` để không xung đột
+với PostgreSQL local thường dùng `5432`; có thể đổi `POSTGRES_PORT` trong `.env`.
+Khi thay đổi POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD hoặc POSTGRES_PORT
+trong `.env`, phải cập nhật DATABASE_URL tương ứng để hai cấu hình không bị
+lệch nhau.
+
+Kiểm tra cấu hình và khởi động database:
+
+```bash
+docker compose config
+docker compose up -d
+docker compose ps
+```
+
+`docker compose ps` phải hiển thị service `database` ở trạng thái `healthy`.
+Kiểm tra readiness trực tiếp và xem log bằng:
+
+```bash
+docker compose exec database sh -c 'PGPASSWORD="$POSTGRES_PASS" pg_isready --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"'
+docker compose logs database
+docker compose logs --follow database
+```
+
+Xác nhận kết nối SQL và PostGIS:
+
+```bash
+docker compose exec database sh -c 'PGPASSWORD="$POSTGRES_PASS" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT current_database(), current_user;"'
+docker compose exec database sh -c 'PGPASSWORD="$POSTGRES_PASS" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT PostGIS_Full_Version();"'
+```
+
+Connection URL cho SQLAlchemy async/asyncpg có format:
+
+```text
+postgresql+asyncpg://<user>:<password>@localhost:<port>/<database>
+```
+
+Với sample mặc định, URL là:
+
+```text
+postgresql+asyncpg://travel_assistant:local_dev_only_change_me@localhost:5433/travel_assistant
+```
+
+Nếu credential chứa ký tự đặc biệt, phần user/password trong URL phải được
+percent-encode. `DATABASE_URL` được chuẩn bị cho task backend sau; T003 chưa tạo
+FastAPI, SQLAlchemy hoặc Alembic application.
+
+Dừng container nhưng giữ dữ liệu local:
+
+```bash
+docker compose down
+```
+
+Named volume vẫn tồn tại và được dùng lại ở lần `docker compose up -d` tiếp
+theo. Chỉ khi chủ động muốn xóa toàn bộ database local và khởi tạo lại từ đầu,
+chạy destructive reset sau:
+
+```bash
+docker compose down --volumes
+```
+
+Có thể kiểm tra volume hiện tại bằng:
+
+```bash
+docker volume ls --filter name=travel-assistant_postgres_data
+```
+
 ## Kiểm tra toàn bộ repository
 
 Từ repository root:

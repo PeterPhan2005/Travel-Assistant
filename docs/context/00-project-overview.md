@@ -41,4 +41,6 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   package hiện có được giữ nguyên.
 - Starter project chưa có application architecture hoặc product implementation
   của backlog; T010 và các task Android tiếp theo chưa hoàn thành.
-- Backend, database, data pipeline và agent runtime chưa được triển khai.
+- Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
+  application, database schema/migrations, data pipeline và agent runtime chưa
+  được triển khai.

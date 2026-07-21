@@ -1,7 +1,7 @@
 ---
 id: T003
 title: Create local backend infrastructure
-status: todo
+status: done
 depends_on: [T000, T002]
 area: backend
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Database becomes healthy locally.
-- [ ] No real credentials are committed.
-- [ ] Connection settings are documented.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Database becomes healthy locally.
+- [x] No real credentials are committed.
+- [x] Connection settings are documented.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

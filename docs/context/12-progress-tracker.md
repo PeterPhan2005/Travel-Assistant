@@ -2,13 +2,13 @@
 
 ## Current phase
 
-Repository bootstrap, developer environment verification and context/ADR
-baseline approval are complete. Local backend infrastructure is next.
+Repository bootstrap, developer environment verification, context/ADR baseline
+approval and local PostgreSQL/PostGIS infrastructure are complete. Continuous
+integration is next.
 
 ## Current goal
 
-Begin T003 local backend infrastructure only when that task is explicitly
-assigned.
+Begin T004 continuous integration only when that task is explicitly assigned.
 
 ## Completed
 
@@ -19,6 +19,7 @@ assigned.
 - T000 Bootstrap repository.
 - T001 Verify developer environment.
 - T002 Approve context and ADR baseline.
+- T003 Create local backend infrastructure.
 
 ## In progress
 
@@ -26,7 +27,7 @@ assigned.
 
 ## Next up
 
-- T003 Create local backend infrastructure.
+- T004 Add CI checks.
 
 ## Open questions
 
@@ -61,8 +62,8 @@ assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 and T001 are complete; T002 is complete; T003 is the sole next task. T010 remains incomplete. |
-| Implementation state | An Android Studio starter exists under `android/`, but application architecture and product implementation are incomplete; backend, database, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T003 are complete; T004 is the sole next task. T010 remains incomplete. |
+| Implementation state | An Android Studio starter exists under `android/`, but application architecture and product implementation are incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -80,3 +81,9 @@ T002 completed on 2026-07-21. Accepted context and ADRs now state the locked
 runtime path, optional specialist roles, deterministic-service boundary,
 grounding policy and actual starter-project state consistently. No application
 source or build configuration was changed.
+
+T003 completed on 2026-07-21. It added a single-service Docker Compose setup for
+local PostgreSQL/PostGIS, a named persistent volume, explicit health check,
+loopback-only host port and safe sample environment values. Compose validation,
+database health, SQL connectivity, PostGIS availability and volume persistence
+were verified without adding backend application code.
