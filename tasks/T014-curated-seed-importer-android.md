@@ -1,7 +1,7 @@
 ---
 id: T014
 title: Import curated seed into Room
-status: todo
+status: done
 depends_on: [T013]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Import is idempotent.
-- [ ] At least five HCMC POIs load.
-- [ ] Malformed seed fails safely.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Import is idempotent.
+- [x] At least five HCMC POIs load.
+- [x] Malformed seed fails safely.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -41,8 +41,9 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
   thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
   thành với năm destination placeholder.
-- Persistence, networking và các tính năng sản phẩm vẫn chưa được triển khai;
-  T013 và các task Android tiếp theo chưa hoàn thành.
+- Room version-1 schema và core DAO layer đã có; một bundled HCMC demo seed được
+  import an toàn và idempotent. Các destination vẫn là placeholder; networking,
+  authentication, location và các hành vi sản phẩm khác vẫn chưa hoàn thành.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
   application, database schema/migrations, data pipeline và agent runtime chưa
   được triển khai.

@@ -5,12 +5,14 @@
 Phase 1 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
-the initial version-1 Room schema and DAO layer are complete. Seed importing,
-networking and product features remain incomplete.
+the Room version-1 schema and core DAO layer are complete, and a bundled HCMC
+demo seed imports safely and idempotently. Destination features remain
+placeholders; networking, authentication, location and other product behavior
+remain incomplete.
 
 ## Current goal
 
-Begin T014 curated seed importing only when that task is explicitly assigned.
+Begin T015 foreground location context only when that task is explicitly assigned.
 
 ## Completed
 
@@ -27,6 +29,7 @@ Begin T014 curated seed importing only when that task is explicitly assigned.
 - T011 Add Android architecture shell.
 - T012 Implement navigation and theme.
 - T013 Create Room offline schema.
+- T014 Import curated seed into Room.
 
 ## In progress
 
@@ -34,7 +37,7 @@ Begin T014 curated seed importing only when that task is explicitly assigned.
 
 ## Next up
 
-- T014 Import curated seed into Room.
+- T015 Implement foreground location context.
 
 ## Open questions
 
@@ -74,8 +77,8 @@ Begin T014 curated seed importing only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T013 are complete; T014 is the sole next task. |
-| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. Bundled seed importing, destination product features, networking and authentication remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T014 are complete; T015 is the sole next task. |
+| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Destination product features remain placeholders; networking, authentication, location and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -169,3 +172,22 @@ itinerary aggregates and cascading deletion, package lookup, deterministic sync
 ordering/state updates/removal and per-test isolation. JVM tests, instrumented
 tests, lint and debug/test APK assembly passed. Seed data/importing, FTS, product
 repositories/UI, synchronization workers and networking remain outside T013.
+
+T014 completed on 2026-07-21 with a tracked, deterministic HCMC demo seed
+containing five POIs and five English aliases. Kotlin serialization parses a
+typed document strictly; validation rejects malformed input, unsupported city
+values, invalid coordinates, duplicate identifiers, invalid monetary values and
+missing POI references before entity conversion. The importer checks bundled
+package ID/version metadata for durable idempotency and writes all content plus
+the completion marker in one Room transaction. It is started asynchronously
+from the Hilt application boundary and reports concise imported, skipped or
+failed status without exposing seed content or exceptions. JVM tests cover
+strict parsing and independent validation. Four in-memory Room importer tests
+cover the real asset, five-POI import, unique identifiers, valid child
+references, stable second-run counts, package metadata, malformed input,
+invalid foreign keys and late-write rollback. JVM tests, lint, all 14
+instrumented tests, the CI-equivalent build, installation and two cold emulator
+launches passed; the first launch imported five POIs and the second reported the
+durable already-imported path. Room remains at version 1 and its exported schema
+is unchanged. POI UI, search, location, networking and later-task behavior
+remain outside T014.
