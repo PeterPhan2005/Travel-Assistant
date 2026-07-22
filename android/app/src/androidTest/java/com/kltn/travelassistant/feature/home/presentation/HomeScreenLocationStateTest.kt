@@ -158,6 +158,7 @@ class HomeScreenLocationStateTest {
                     onUseCurrentLocation = onUseCurrentLocation,
                     onOpenLocationSettings = {},
                     onNearbyQueryChanged = onNearbyQueryChanged,
+                    onPoiSelected = {},
                 )
             }
         }

@@ -7,7 +7,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Version-1 offline POI data.
+ * Offline POI data.
  *
  * Externally generated identifiers remain strings, timestamps are Unix epoch milliseconds,
  * coordinates use SQLite REAL through [Double], and currency values use integer minor units.
@@ -140,6 +140,8 @@ data class LocalNarrationEntity(
     val verificationStatus: String,
     @ColumnInfo(name = "generated_at_epoch_millis")
     val generatedAtEpochMillis: Long,
+    @ColumnInfo(name = "source_label")
+    val sourceLabel: String? = null,
 )
 
 @Entity(

@@ -3,6 +3,7 @@ package com.kltn.travelassistant.di
 import android.content.Context
 import androidx.room.Room
 import com.kltn.travelassistant.data.local.TravelAssistantDatabase
+import com.kltn.travelassistant.data.local.DatabaseMigrations
 import com.kltn.travelassistant.data.local.dao.ItineraryDao
 import com.kltn.travelassistant.data.local.dao.PendingSyncDao
 import com.kltn.travelassistant.data.local.dao.PoiContentDao
@@ -25,7 +26,8 @@ object DatabaseModule {
         context,
         TravelAssistantDatabase::class.java,
         TravelAssistantDatabase.DATABASE_NAME,
-    ).build()
+    ).addMigrations(DatabaseMigrations.MIGRATION_1_2)
+        .build()
 
     @Provides
     fun providePoiContentDao(database: TravelAssistantDatabase): PoiContentDao =

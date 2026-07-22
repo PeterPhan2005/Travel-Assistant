@@ -5,17 +5,22 @@
 Phase 1 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
-the Room version-1 schema and core DAO layer are complete, and a bundled HCMC
+the Room version-2 schema and core DAO layer are complete, and a bundled HCMC
 demo seed imports safely and idempotently. Explore now has user-triggered,
 one-shot foreground location context with explicit UI states plus offline Room
 search by canonical name, alias and category. Vietnamese text normalization and
-deterministic straight-line Haversine ranking run locally. There is no background
-tracking or exact-location persistence. Networking, authentication and other
+deterministic straight-line Haversine ranking run locally. Nearby rows open a
+Room-backed local detail screen while preserving Explore state. Optional fields,
+menus and sourced narration are omitted when absent; stored menu prices show
+currency-safe formatting and an update date. The bundled seed still contains no
+menu or narration records. There is no background tracking or exact-location
+persistence. External map navigation, networking, authentication and other
 product behavior remain incomplete.
 
 ## Current goal
 
-T016 nearby local search is complete. Do not begin T017 until it is explicitly assigned.
+T017 POI detail and local narration is complete. Do not begin T018 until it is
+explicitly assigned.
 
 ## Completed
 
@@ -35,6 +40,7 @@ T016 nearby local search is complete. Do not begin T017 until it is explicitly a
 - T014 Import curated seed into Room.
 - T015 Implement foreground location context.
 - T016 Implement nearby local search.
+- T017 Implement POI detail and local narration.
 
 ## In progress
 
@@ -42,7 +48,7 @@ T016 nearby local search is complete. Do not begin T017 until it is explicitly a
 
 ## Next up
 
-- T017 Implement POI detail and local narration.
+- T018 Open external navigation.
 
 ## Open questions
 
@@ -63,9 +69,17 @@ T016 nearby local search is complete. Do not begin T017 until it is explicitly a
 - Room travel packages for offline mode.
 - Room version 1 uses stable string identifiers, Unix epoch milliseconds,
   SQLite REAL-backed `Double` coordinates and integer currency minor units.
+- Room version 2 adds only nullable `source_label` to stored narrations through
+  explicit migration 1→2. Version-1 rows remain valid, both schemas are tracked
+  and no destructive migration fallback is enabled.
 - Nearby search loads HCMC POIs and aliases from Room in two deterministic
   queries, normalizes Vietnamese text in Kotlin and ranks valid coordinates by
   straight-line Haversine distance without a network fallback.
+- POI detail navigation passes only the stable POI ID through `poi/{poiId}`.
+  A Hilt-created detail ViewModel loads one transaction-safe POI/menu/Vietnamese
+  narration snapshot from Room, exposes Loading, Content, NotFound and Error,
+  and never exposes Room entities or user coordinates to Compose. Narration is
+  shown only with a nonblank stored source label.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -85,8 +99,8 @@ T016 nearby local search is complete. Do not begin T017 until it is explicitly a
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T016 are complete; T017 is the sole next task. |
-| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. There is no background tracking or exact-location persistence. Navigation and the Room seed remain available. POI details, narration, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T017 are complete; T018 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. There is no background tracking or exact-location persistence. External map navigation, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -237,3 +251,24 @@ cover bundled-seed search, DAO integration and UI states. `./gradlew test`, the
 CI-equivalent lint/test/assemble command and all 28 connected emulator tests
 passed. POI detail navigation, narration, FTS, maps, networking and package
 downloads remain outside T016.
+
+T017 completed on 2026-07-22 with clickable nearby results and one non-top-level
+`poi/{poiId}` destination. The route carries only the encoded stable POI ID; a
+Hilt detail ViewModel resolves a transaction-safe Room snapshot through a
+replaceable repository and exposes explicit Loading, Content, NotFound and Error
+states with retry. Back returns to Explore with its in-memory location and query,
+and the bottom navigation bar is hidden on detail. Missing optional POI
+attributes, menu and narration sections are omitted instead of synthesized.
+Currency formatting uses each ISO currency's real fraction digits, including
+zero-decimal VND, and every displayed menu price includes its source type and
+stored update date. Room moved from version 1 to 2 solely to add nullable
+`source_label` to local narrations through explicit migration 1→2; schemas 1 and
+2 are tracked, old POI/narration rows survive, and no destructive fallback is
+enabled. Seed DTO mapping accepts an optional nonblank source label, while the
+bundled JSON remains byte-for-byte unchanged with five POIs, five aliases, no
+menus and no narrations. JVM tests, lint, the CI-equivalent build and all 40
+connected emulator tests passed. Runtime validation on the Pixel API 36.1
+emulator acquired the HCMC foreground location, opened two correct seeded POIs,
+returned to the preserved Explore results, hid bottom navigation, omitted absent
+sections and produced no focused Room migration, Navigation, Hilt, fatal-runtime
+or exact-coordinate log match. External map navigation remains T018.

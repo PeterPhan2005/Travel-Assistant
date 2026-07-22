@@ -92,6 +92,7 @@ class SeedValidator @Inject constructor(
             requireNonBlank(narration.content)
             requireNonBlank(narration.verificationStatus)
             requireValid(narration.generatedAtEpochMillis > 0)
+            requireOptionalNonBlank(narration.sourceLabel)
         }
     }
 
@@ -158,6 +159,7 @@ class SeedValidator @Inject constructor(
                 content = narration.content,
                 verificationStatus = narration.verificationStatus,
                 generatedAtEpochMillis = narration.generatedAtEpochMillis,
+                sourceLabel = narration.sourceLabel,
             )
         },
         cultureItems = cultureItems.map { item ->

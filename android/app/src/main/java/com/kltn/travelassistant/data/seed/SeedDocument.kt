@@ -71,6 +71,7 @@ data class SeedNarration(
     val content: String,
     val verificationStatus: String,
     val generatedAtEpochMillis: Long,
+    val sourceLabel: String? = null,
 )
 
 @Serializable

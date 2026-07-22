@@ -1,7 +1,7 @@
 ---
 id: T017
 title: Implement POI detail and local narration
-status: todo
+status: done
 depends_on: [T016]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Missing optional fields are omitted.
-- [ ] Narration shows source label.
-- [ ] Price update date is visible.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Missing optional fields are omitted.
+- [x] Narration shows source label.
+- [x] Price update date is visible.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

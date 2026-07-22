@@ -1,0 +1,663 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "9717eb63e754cbc2645bc198e087ac1b",
+    "entities": [
+      {
+        "tableName": "local_pois",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`poi_id` TEXT NOT NULL, `name` TEXT NOT NULL, `city` TEXT NOT NULL, `area` TEXT, `category` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `address` TEXT, `short_description` TEXT, `status` TEXT NOT NULL, `updated_at_epoch_millis` INTEGER NOT NULL, PRIMARY KEY(`poi_id`))",
+        "fields": [
+          {
+            "fieldPath": "poiId",
+            "columnName": "poi_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "area",
+            "columnName": "area",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "shortDescription",
+            "columnName": "short_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMillis",
+            "columnName": "updated_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "poi_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_pois_city_category",
+            "unique": false,
+            "columnNames": [
+              "city",
+              "category"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_pois_city_category` ON `${TABLE_NAME}` (`city`, `category`)"
+          }
+        ]
+      },
+      {
+        "tableName": "local_poi_aliases",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`alias_id` TEXT NOT NULL, `poi_id` TEXT NOT NULL, `alias` TEXT NOT NULL, `normalized_alias` TEXT NOT NULL, `language_code` TEXT, PRIMARY KEY(`alias_id`), FOREIGN KEY(`poi_id`) REFERENCES `local_pois`(`poi_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "aliasId",
+            "columnName": "alias_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poiId",
+            "columnName": "poi_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alias",
+            "columnName": "alias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "normalizedAlias",
+            "columnName": "normalized_alias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "languageCode",
+            "columnName": "language_code",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "alias_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_poi_aliases_poi_id",
+            "unique": false,
+            "columnNames": [
+              "poi_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_poi_aliases_poi_id` ON `${TABLE_NAME}` (`poi_id`)"
+          },
+          {
+            "name": "index_local_poi_aliases_normalized_alias",
+            "unique": false,
+            "columnNames": [
+              "normalized_alias"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_poi_aliases_normalized_alias` ON `${TABLE_NAME}` (`normalized_alias`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "local_pois",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "poi_id"
+            ],
+            "referencedColumns": [
+              "poi_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "local_menu_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`menu_item_id` TEXT NOT NULL, `poi_id` TEXT NOT NULL, `dish_name` TEXT NOT NULL, `price_minor_units` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `source_type` TEXT NOT NULL, `updated_at_epoch_millis` INTEGER NOT NULL, PRIMARY KEY(`menu_item_id`), FOREIGN KEY(`poi_id`) REFERENCES `local_pois`(`poi_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "menuItemId",
+            "columnName": "menu_item_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poiId",
+            "columnName": "poi_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dishName",
+            "columnName": "dish_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priceMinorUnits",
+            "columnName": "price_minor_units",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "source_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMillis",
+            "columnName": "updated_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "menu_item_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_menu_items_poi_id",
+            "unique": false,
+            "columnNames": [
+              "poi_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_menu_items_poi_id` ON `${TABLE_NAME}` (`poi_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "local_pois",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "poi_id"
+            ],
+            "referencedColumns": [
+              "poi_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "local_narrations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`narration_id` TEXT NOT NULL, `poi_id` TEXT NOT NULL, `language_code` TEXT NOT NULL, `content` TEXT NOT NULL, `verification_status` TEXT NOT NULL, `generated_at_epoch_millis` INTEGER NOT NULL, `source_label` TEXT, PRIMARY KEY(`narration_id`), FOREIGN KEY(`poi_id`) REFERENCES `local_pois`(`poi_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "narrationId",
+            "columnName": "narration_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poiId",
+            "columnName": "poi_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "languageCode",
+            "columnName": "language_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verificationStatus",
+            "columnName": "verification_status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generatedAtEpochMillis",
+            "columnName": "generated_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceLabel",
+            "columnName": "source_label",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "narration_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_narrations_poi_language",
+            "unique": true,
+            "columnNames": [
+              "poi_id",
+              "language_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_narrations_poi_language` ON `${TABLE_NAME}` (`poi_id`, `language_code`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "local_pois",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "poi_id"
+            ],
+            "referencedColumns": [
+              "poi_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "local_culture_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`culture_item_id` TEXT NOT NULL, `city` TEXT NOT NULL, `area` TEXT, `topic` TEXT NOT NULL, `content` TEXT NOT NULL, `verification_status` TEXT NOT NULL, PRIMARY KEY(`culture_item_id`))",
+        "fields": [
+          {
+            "fieldPath": "cultureItemId",
+            "columnName": "culture_item_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "area",
+            "columnName": "area",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verificationStatus",
+            "columnName": "verification_status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "culture_item_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_culture_items_city_area",
+            "unique": false,
+            "columnNames": [
+              "city",
+              "area"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_culture_items_city_area` ON `${TABLE_NAME}` (`city`, `area`)"
+          }
+        ]
+      },
+      {
+        "tableName": "local_itineraries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`itinerary_id` TEXT NOT NULL, `title` TEXT NOT NULL, `created_at_epoch_millis` INTEGER NOT NULL, `updated_at_epoch_millis` INTEGER NOT NULL, PRIMARY KEY(`itinerary_id`))",
+        "fields": [
+          {
+            "fieldPath": "itineraryId",
+            "columnName": "itinerary_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMillis",
+            "columnName": "created_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMillis",
+            "columnName": "updated_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "itinerary_id"
+          ]
+        }
+      },
+      {
+        "tableName": "local_itinerary_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`itinerary_item_id` TEXT NOT NULL, `itinerary_id` TEXT NOT NULL, `poi_id` TEXT, `title` TEXT NOT NULL, `position` INTEGER NOT NULL, `start_at_epoch_millis` INTEGER, `end_at_epoch_millis` INTEGER, `travel_time_minutes` INTEGER, `notes` TEXT, PRIMARY KEY(`itinerary_item_id`), FOREIGN KEY(`itinerary_id`) REFERENCES `local_itineraries`(`itinerary_id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`poi_id`) REFERENCES `local_pois`(`poi_id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "itineraryItemId",
+            "columnName": "itinerary_item_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itineraryId",
+            "columnName": "itinerary_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poiId",
+            "columnName": "poi_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startAtEpochMillis",
+            "columnName": "start_at_epoch_millis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "endAtEpochMillis",
+            "columnName": "end_at_epoch_millis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "travelTimeMinutes",
+            "columnName": "travel_time_minutes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "itinerary_item_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_itinerary_items_itinerary_position",
+            "unique": true,
+            "columnNames": [
+              "itinerary_id",
+              "position"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_itinerary_items_itinerary_position` ON `${TABLE_NAME}` (`itinerary_id`, `position`)"
+          },
+          {
+            "name": "index_local_itinerary_items_poi_id",
+            "unique": false,
+            "columnNames": [
+              "poi_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_itinerary_items_poi_id` ON `${TABLE_NAME}` (`poi_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "local_itineraries",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "itinerary_id"
+            ],
+            "referencedColumns": [
+              "itinerary_id"
+            ]
+          },
+          {
+            "table": "local_pois",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "poi_id"
+            ],
+            "referencedColumns": [
+              "poi_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "travel_packages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`package_id` TEXT NOT NULL, `city` TEXT NOT NULL, `version` TEXT NOT NULL, `manifest_json` TEXT NOT NULL, `published_at_epoch_millis` INTEGER NOT NULL, PRIMARY KEY(`package_id`))",
+        "fields": [
+          {
+            "fieldPath": "packageId",
+            "columnName": "package_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "manifestJson",
+            "columnName": "manifest_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "publishedAtEpochMillis",
+            "columnName": "published_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "package_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_travel_packages_city_version",
+            "unique": true,
+            "columnNames": [
+              "city",
+              "version"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_travel_packages_city_version` ON `${TABLE_NAME}` (`city`, `version`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pending_sync_operations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`operation_id` TEXT NOT NULL, `operation_type` TEXT NOT NULL, `entity_type` TEXT NOT NULL, `entity_id` TEXT NOT NULL, `payload_json` TEXT NOT NULL, `status` TEXT NOT NULL, `created_at_epoch_millis` INTEGER NOT NULL, `last_attempt_at_epoch_millis` INTEGER, `attempt_count` INTEGER NOT NULL, PRIMARY KEY(`operation_id`))",
+        "fields": [
+          {
+            "fieldPath": "operationId",
+            "columnName": "operation_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operationType",
+            "columnName": "operation_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entity_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payload_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMillis",
+            "columnName": "created_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAttemptAtEpochMillis",
+            "columnName": "last_attempt_at_epoch_millis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attemptCount",
+            "columnName": "attempt_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "operation_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pending_sync_operations_status_created_id",
+            "unique": false,
+            "columnNames": [
+              "status",
+              "created_at_epoch_millis",
+              "operation_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_sync_operations_status_created_id` ON `${TABLE_NAME}` (`status`, `created_at_epoch_millis`, `operation_id`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9717eb63e754cbc2645bc198e087ac1b')"
+    ]
+  }
+}

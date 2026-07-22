@@ -38,4 +38,18 @@
     <string name="nearby_category_museum">Bảo tàng</string>
     <string name="nearby_category_public_space">Không gian công cộng</string>
     <string name="nearby_category_other">Khác</string>
+    <string name="poi_detail_title">Chi tiết địa điểm</string>
+    <string name="poi_detail_back">Quay lại Khám phá</string>
+    <string name="poi_detail_loading">Đang tải chi tiết địa điểm từ thiết bị…</string>
+    <string name="poi_detail_not_found">Không tìm thấy địa điểm này trong dữ liệu trên thiết bị.</string>
+    <string name="poi_detail_error">Không thể đọc chi tiết địa điểm trên thiết bị lúc này.</string>
+    <string name="poi_detail_retry">Thử lại</string>
+    <string name="poi_detail_city">Thành phố: %1$s</string>
+    <string name="poi_detail_area">Khu vực: %1$s</string>
+    <string name="poi_detail_address">Địa chỉ: %1$s</string>
+    <string name="poi_detail_menu_title">Món và giá đã lưu</string>
+    <string name="poi_detail_price_source">Loại nguồn giá: %1$s</string>
+    <string name="poi_detail_price_updated">Cập nhật ngày %1$s</string>
+    <string name="poi_detail_narration_title">Thuyết minh đã lưu</string>
+    <string name="poi_detail_narration_source">Nguồn: %1$s</string>
 </resources>

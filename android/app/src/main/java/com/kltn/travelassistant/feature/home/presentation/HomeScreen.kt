@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -21,8 +22,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
-import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabel
 import com.kltn.travelassistant.feature.nearby.presentation.DistanceFormatter
+import com.kltn.travelassistant.feature.nearby.presentation.labelRes
 import com.kltn.travelassistant.ui.theme.AppSpacing
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 
@@ -32,6 +33,7 @@ fun HomeScreen(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    onPoiSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -104,7 +106,10 @@ fun HomeScreen(
                     items = nearbyState.results,
                     key = NearbyPoi::poiId,
                 ) { poi ->
-                    NearbyPoiRow(poi = poi)
+                    NearbyPoiRow(
+                        poi = poi,
+                        onClick = { onPoiSelected(poi.poiId) },
+                    )
                 }
                 NearbySearchUiState.Empty -> item {
                     Text(text = stringResource(R.string.nearby_empty))
@@ -120,11 +125,13 @@ fun HomeScreen(
 @Composable
 private fun NearbyPoiRow(
     poi: NearbyPoi,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(AppSpacing.content / 2),
     ) {
@@ -146,15 +153,6 @@ private fun NearbyPoiRow(
         HorizontalDivider()
     }
 }
-
-private val PoiCategoryLabel.labelRes: Int
-    get() = when (this) {
-        PoiCategoryLabel.LANDMARK -> R.string.nearby_category_landmark
-        PoiCategoryLabel.MARKET -> R.string.nearby_category_market
-        PoiCategoryLabel.MUSEUM -> R.string.nearby_category_museum
-        PoiCategoryLabel.PUBLIC_SPACE -> R.string.nearby_category_public_space
-        PoiCategoryLabel.OTHER -> R.string.nearby_category_other
-    }
 
 @Composable
 private fun LocationContextSection(
@@ -243,6 +241,7 @@ private fun HomeScreenPreview() {
             onUseCurrentLocation = {},
             onOpenLocationSettings = {},
             onNearbyQueryChanged = {},
+            onPoiSelected = {},
         )
     }
 }

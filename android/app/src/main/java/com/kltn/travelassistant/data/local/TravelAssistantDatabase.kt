@@ -17,7 +17,7 @@ import com.kltn.travelassistant.data.local.entity.PendingSyncOperationEntity
 import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
 
 /**
- * Initial local database schema.
+ * Local database schema.
  *
  * Every future schema change must increment [version], preserve exported schemas, add explicit
  * migrations, and include migration tests. Destructive migration fallback is intentionally absent.
@@ -34,7 +34,7 @@ import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
         TravelPackageEntity::class,
         PendingSyncOperationEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class TravelAssistantDatabase : RoomDatabase() {

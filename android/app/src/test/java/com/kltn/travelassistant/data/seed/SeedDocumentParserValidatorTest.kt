@@ -73,6 +73,29 @@ class SeedDocumentParserValidatorTest {
         assertThrows(SeedValidationException::class.java) { validator.validate(missingParent) }
     }
 
+    @Test
+    fun narrationSourceLabelIsOptionalButCannotBeBlankWhenSupplied() {
+        val valid = validDocument()
+        val narration = SeedNarration(
+            narrationId = "narration-1",
+            poiId = "poi-1",
+            languageCode = "vi",
+            content = "Nội dung có nguồn.",
+            verificationStatus = "verified",
+            generatedAtEpochMillis = 1,
+            sourceLabel = "Ban quản lý điểm đến",
+        )
+
+        val mapped = validator.validate(valid.copy(narrations = listOf(narration)))
+
+        assertEquals("Ban quản lý điểm đến", mapped.narrations.single().sourceLabel)
+        assertThrows(SeedValidationException::class.java) {
+            validator.validate(
+                valid.copy(narrations = listOf(narration.copy(sourceLabel = " "))),
+            )
+        }
+    }
+
     private fun validDocument(): SeedDocument {
         val pois = (1..5).map { number ->
             SeedPoi(

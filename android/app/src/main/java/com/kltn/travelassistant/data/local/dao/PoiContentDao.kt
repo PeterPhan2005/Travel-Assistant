@@ -2,12 +2,14 @@ package com.kltn.travelassistant.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.kltn.travelassistant.data.local.entity.LocalCultureEntity
 import com.kltn.travelassistant.data.local.entity.LocalMenuItemEntity
 import com.kltn.travelassistant.data.local.entity.LocalNarrationEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiAliasEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiEntity
+import com.kltn.travelassistant.data.local.model.LocalPoiDetailSnapshot
 
 @Dao
 interface PoiContentDao {
@@ -55,6 +57,19 @@ interface PoiContentDao {
         """,
     )
     suspend fun getNarration(poiId: String, languageCode: String): LocalNarrationEntity?
+
+    @Transaction
+    suspend fun getPoiDetailSnapshot(
+        poiId: String,
+        languageCode: String,
+    ): LocalPoiDetailSnapshot? {
+        val poi = getPoiById(poiId) ?: return null
+        return LocalPoiDetailSnapshot(
+            poi = poi,
+            menuItems = getMenuItemsForPoi(poiId),
+            narration = getNarration(poiId, languageCode),
+        )
+    }
 
     @Query("SELECT * FROM local_culture_items WHERE city = :city ORDER BY topic, culture_item_id")
     suspend fun getCultureByCity(city: String): List<LocalCultureEntity>

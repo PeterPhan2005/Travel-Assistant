@@ -1,5 +1,6 @@
 package com.kltn.travelassistant.navigation
 
+import android.net.Uri
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -10,11 +11,24 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
+
+object PoiDetailDestination {
+    const val POI_ID_ARGUMENT = "poiId"
+    const val ROUTE_PATTERN = "poi/{$POI_ID_ARGUMENT}"
+
+    fun createRoute(poiId: String): String {
+        require(poiId.isNotBlank())
+        return "poi/${Uri.encode(poiId)}"
+    }
+}
 
 @Composable
 fun TravelAssistantNavigationBar(
@@ -48,6 +62,9 @@ fun TravelAssistantNavHost(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    poiDetailContent: @Composable (poiId: String, onBack: () -> Unit) -> Unit = { _, onBack ->
+        PoiDetailRoute(onBack = onBack)
+    },
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -61,6 +78,11 @@ fun TravelAssistantNavHost(
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
                 onNearbyQueryChanged = onNearbyQueryChanged,
+                onPoiSelected = { poiId ->
+                    navController.navigate(PoiDetailDestination.createRoute(poiId)) {
+                        launchSingleTop = true
+                    }
+                },
             )
         }
         composable(TopLevelDestination.ASSISTANT.route) {
@@ -74,6 +96,19 @@ fun TravelAssistantNavHost(
         }
         composable(TopLevelDestination.PROFILE.route) {
             PlaceholderDestinationScreen(titleRes = R.string.destination_profile)
+        }
+        composable(
+            route = PoiDetailDestination.ROUTE_PATTERN,
+            arguments = listOf(
+                navArgument(PoiDetailDestination.POI_ID_ARGUMENT) {
+                    type = NavType.StringType
+                },
+            ),
+        ) { backStackEntry ->
+            val poiId = backStackEntry.arguments
+                ?.getString(PoiDetailDestination.POI_ID_ARGUMENT)
+                .orEmpty()
+            poiDetailContent(poiId) { navController.popBackStack() }
         }
     }
 }
