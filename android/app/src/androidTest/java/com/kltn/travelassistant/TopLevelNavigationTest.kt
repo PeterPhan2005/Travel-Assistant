@@ -2,6 +2,7 @@ package com.kltn.travelassistant
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -19,6 +20,21 @@ import org.junit.runner.RunWith
 class TopLevelNavigationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun coldLaunchShowsIdleLocationActionWithoutStartingAcquisition() {
+        composeRule
+            .onNode(hasText(composeRule.activity.getString(R.string.location_use_current)))
+            .assertIsDisplayed()
+        composeRule
+            .onAllNodes(hasText(composeRule.activity.getString(R.string.location_loading)))
+            .assertCountEquals(0)
+        composeRule
+            .onAllNodes(
+                hasText(composeRule.activity.getString(R.string.location_available_local_only)),
+            )
+            .assertCountEquals(0)
+    }
 
     @Test
     fun everyNavigationItemIsVisible() {

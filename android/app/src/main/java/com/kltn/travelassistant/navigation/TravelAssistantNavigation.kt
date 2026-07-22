@@ -45,6 +45,8 @@ fun TravelAssistantNavigationBar(
 fun TravelAssistantNavHost(
     navController: NavHostController,
     homeUiState: HomeUiState,
+    onUseCurrentLocation: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -53,7 +55,11 @@ fun TravelAssistantNavHost(
         modifier = modifier,
     ) {
         composable(TopLevelDestination.EXPLORE.route) {
-            HomeScreen(uiState = homeUiState)
+            HomeScreen(
+                uiState = homeUiState,
+                onUseCurrentLocation = onUseCurrentLocation,
+                onOpenLocationSettings = onOpenLocationSettings,
+            )
         }
         composable(TopLevelDestination.ASSISTANT.route) {
             PlaceholderDestinationScreen(titleRes = R.string.destination_assistant)

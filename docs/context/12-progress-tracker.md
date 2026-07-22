@@ -6,13 +6,15 @@ Phase 1 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
 the Room version-1 schema and core DAO layer are complete, and a bundled HCMC
-demo seed imports safely and idempotently. Destination features remain
-placeholders; networking, authentication, location and other product behavior
-remain incomplete.
+demo seed imports safely and idempotently. Explore now has user-triggered,
+one-shot foreground location context with explicit UI states. There is no
+background tracking or exact-location persistence. Navigation and the Room seed
+remain available; nearby POI search, distance ranking, networking,
+authentication and other product behavior remain incomplete.
 
 ## Current goal
 
-Begin T015 foreground location context only when that task is explicitly assigned.
+Begin T016 nearby local search only when that task is explicitly assigned.
 
 ## Completed
 
@@ -30,6 +32,7 @@ Begin T015 foreground location context only when that task is explicitly assigne
 - T012 Implement navigation and theme.
 - T013 Create Room offline schema.
 - T014 Import curated seed into Room.
+- T015 Implement foreground location context.
 
 ## In progress
 
@@ -37,7 +40,7 @@ Begin T015 foreground location context only when that task is explicitly assigne
 
 ## Next up
 
-- T015 Implement foreground location context.
+- T016 Implement nearby local search.
 
 ## Open questions
 
@@ -77,8 +80,8 @@ Begin T015 foreground location context only when that task is explicitly assigne
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T014 are complete; T015 is the sole next task. |
-| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Destination product features remain placeholders; networking, authentication, location and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T015 are complete; T016 is the sole next task. |
+| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Explore has user-triggered, one-shot foreground location context with explicit states, no background tracking and no exact-location persistence. Navigation and the Room seed remain available. Nearby POI search, distance ranking, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -191,3 +194,23 @@ launches passed; the first launch imported five POIs and the second reported the
 durable already-imported path. Room remains at version 1 and its exported schema
 is unchanged. POI UI, search, location, networking and later-task behavior
 remain outside T014.
+
+T015 completed on 2026-07-22 with a user-triggered foreground location section
+on Explore. Activity Result permission launchers remain in `MainActivity`; cold
+launch and navigation never request permission. Coarse permission is accepted,
+denial exposes retry and settings recovery, and the Hilt-bound `LocationClient`
+uses the platform `LocationManagerCompat.getCurrentLocation` API for one current
+fix with cancellation and a 15-second timeout. Exact coordinates exist only in
+immutable in-memory state and are neither displayed, persisted, transmitted nor
+logged. JVM tests cover Idle, Loading, Available, PermissionDenied and Error,
+retry, immutable state, duplicate suppression and cancellation. Compose tests
+cover cold-launch Idle plus all location render states while preserving bottom
+navigation. JVM tests, lint, all 20 instrumented tests and the CI-equivalent
+command passed. Runtime validation on the Pixel API 36 emulator confirmed an
+ungranted cold launch, denial and retry, coarse-only handling, a precise
+one-shot success with 5 m reported accuracy, immediate request unregistration,
+and a second cold launch with no automatic request. The emulator accepted the
+HCMC geo-fix command but continued to report its default simulated coordinate;
+its network provider was disabled, so the coarse-only acquisition timed out into
+the recoverable Error state. A physical-device coarse/precise GPS check remains
+recommended. Nearby POI search and distance ranking remain outside T015.

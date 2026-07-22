@@ -29,8 +29,10 @@ có được giữ nguyên. Hilt, ViewModel/StateFlow và repository boundaries 
 thiết lập trong T011. T012 đã bổ sung top-level Navigation Compose và Material 3
 theme tập trung với năm destination. Room version-1 schema và core DAO layer đã
 có; một bundled HCMC demo seed được import an toàn và idempotent. Các destination
-vẫn là placeholder; networking, authentication, location và các tính năng sản
-phẩm khác vẫn chưa được triển khai.
+vẫn tối giản; Explore đã có location context foreground một lần chỉ sau hành
+động người dùng, không có background tracking hoặc lưu vị trí. Networking,
+authentication, nearby POI search, distance ranking và các tính năng sản phẩm
+khác vẫn chưa được triển khai.
 
 ## Android app identifiers
 

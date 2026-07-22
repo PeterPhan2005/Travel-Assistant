@@ -11,4 +11,17 @@
     <string name="open_downloads">Mở nội dung đã tải</string>
     <string name="open_profile">Mở Hồ sơ</string>
     <string name="feature_coming_later">Tính năng này sẽ có trong phiên bản sau.</string>
+    <string name="location_section_title">Vị trí hiện tại</string>
+    <string name="location_use_current">Dùng vị trí hiện tại</string>
+    <string name="location_loading">Đang lấy vị trí hiện tại…</string>
+    <string name="location_available_local_only">Đã lấy vị trí. Dữ liệu chỉ được giữ tạm thời trên thiết bị.</string>
+    <string name="location_accuracy">Độ chính xác ước tính: %1$d m</string>
+    <string name="location_refresh">Cập nhật vị trí</string>
+    <string name="location_permission_denied">Ứng dụng cần quyền vị trí khi đang sử dụng để đưa ra gợi ý gần bạn. Bạn có thể thử lại hoặc cấp quyền trong cài đặt.</string>
+    <string name="location_retry">Thử lại</string>
+    <string name="location_open_settings">Mở cài đặt ứng dụng</string>
+    <string name="location_provider_unavailable">Chưa thể lấy vị trí. Hãy bật dịch vụ vị trí rồi thử lại.</string>
+    <string name="location_timeout">Quá thời gian lấy vị trí. Hãy thử lại.</string>
+    <string name="location_cancelled">Đã dừng lấy vị trí khi ứng dụng rời màn hình. Hãy thử lại.</string>
+    <string name="location_error">Không thể lấy vị trí lúc này. Hãy thử lại.</string>
 </resources>

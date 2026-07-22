@@ -1,7 +1,7 @@
 ---
 id: T015
 title: Implement foreground location context
-status: todo
+status: done
 depends_on: [T011]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No permission requested on cold launch.
-- [ ] Denied state is recoverable.
-- [ ] Location can be replaced by fake in tests.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No permission requested on cold launch.
+- [x] Denied state is recoverable.
+- [x] Location can be replaced by fake in tests.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -19,6 +19,8 @@ import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 @Composable
 fun TravelAssistantApp(
     homeViewModel: HomeViewModel,
+    onUseCurrentLocation: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -42,6 +44,8 @@ fun TravelAssistantApp(
             TravelAssistantNavHost(
                 navController = navController,
                 homeUiState = uiState,
+                onUseCurrentLocation = onUseCurrentLocation,
+                onOpenLocationSettings = onOpenLocationSettings,
                 modifier = Modifier.padding(innerPadding),
             )
         }
