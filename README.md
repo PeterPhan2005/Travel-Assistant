@@ -30,9 +30,10 @@ thiết lập trong T011. T012 đã bổ sung top-level Navigation Compose và M
 theme tập trung với năm destination. Room version-1 schema và core DAO layer đã
 có; một bundled HCMC demo seed được import an toàn và idempotent. Các destination
 vẫn tối giản; Explore đã có location context foreground một lần chỉ sau hành
-động người dùng, không có background tracking hoặc lưu vị trí. Networking,
-authentication, nearby POI search, distance ranking và các tính năng sản phẩm
-khác vẫn chưa được triển khai.
+động người dùng và tìm kiếm POI offline trong Room theo tên, bí danh hoặc loại,
+với chuẩn hóa dấu tiếng Việt và xếp hạng khoảng cách đường thẳng. Không có
+background tracking hoặc lưu vị trí. Networking, authentication và các tính
+năng sản phẩm khác vẫn chưa được triển khai.
 
 ## Android app identifiers
 

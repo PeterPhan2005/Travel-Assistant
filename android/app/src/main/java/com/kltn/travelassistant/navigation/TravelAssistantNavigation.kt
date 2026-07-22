@@ -47,6 +47,7 @@ fun TravelAssistantNavHost(
     homeUiState: HomeUiState,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
+    onNearbyQueryChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -59,6 +60,7 @@ fun TravelAssistantNavHost(
                 uiState = homeUiState,
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
+                onNearbyQueryChanged = onNearbyQueryChanged,
             )
         }
         composable(TopLevelDestination.ASSISTANT.route) {

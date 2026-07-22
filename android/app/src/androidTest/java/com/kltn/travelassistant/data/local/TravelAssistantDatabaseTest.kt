@@ -86,6 +86,7 @@ class TravelAssistantDatabaseTest {
         assertEquals(poi, database.poiContentDao().getPoiById(poi.poiId))
         assertEquals(listOf(poi), database.poiContentDao().getPoisByCity(poi.city))
         assertEquals(listOf(alias), database.poiContentDao().getAliasesForPoi(poi.poiId))
+        assertEquals(listOf(alias), database.poiContentDao().getAliasesForPois(listOf(poi.poiId)))
         assertEquals(listOf(menuItem), database.poiContentDao().getMenuItemsForPoi(poi.poiId))
         assertEquals(narration, database.poiContentDao().getNarration(poi.poiId, "vi"))
         assertEquals(listOf(culture), database.poiContentDao().getCultureByCity(poi.city))

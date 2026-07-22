@@ -7,14 +7,15 @@ ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
 the Room version-1 schema and core DAO layer are complete, and a bundled HCMC
 demo seed imports safely and idempotently. Explore now has user-triggered,
-one-shot foreground location context with explicit UI states. There is no
-background tracking or exact-location persistence. Navigation and the Room seed
-remain available; nearby POI search, distance ranking, networking,
-authentication and other product behavior remain incomplete.
+one-shot foreground location context with explicit UI states plus offline Room
+search by canonical name, alias and category. Vietnamese text normalization and
+deterministic straight-line Haversine ranking run locally. There is no background
+tracking or exact-location persistence. Networking, authentication and other
+product behavior remain incomplete.
 
 ## Current goal
 
-Begin T016 nearby local search only when that task is explicitly assigned.
+T016 nearby local search is complete. Do not begin T017 until it is explicitly assigned.
 
 ## Completed
 
@@ -33,6 +34,7 @@ Begin T016 nearby local search only when that task is explicitly assigned.
 - T013 Create Room offline schema.
 - T014 Import curated seed into Room.
 - T015 Implement foreground location context.
+- T016 Implement nearby local search.
 
 ## In progress
 
@@ -40,7 +42,7 @@ Begin T016 nearby local search only when that task is explicitly assigned.
 
 ## Next up
 
-- T016 Implement nearby local search.
+- T017 Implement POI detail and local narration.
 
 ## Open questions
 
@@ -61,6 +63,9 @@ Begin T016 nearby local search only when that task is explicitly assigned.
 - Room travel packages for offline mode.
 - Room version 1 uses stable string identifiers, Unix epoch milliseconds,
   SQLite REAL-backed `Double` coordinates and integer currency minor units.
+- Nearby search loads HCMC POIs and aliases from Room in two deterministic
+  queries, normalizes Vietnamese text in Kotlin and ranks valid coordinates by
+  straight-line Haversine distance without a network fallback.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -80,8 +85,8 @@ Begin T016 nearby local search only when that task is explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T015 are complete; T016 is the sole next task. |
-| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Explore has user-triggered, one-shot foreground location context with explicit states, no background tracking and no exact-location persistence. Navigation and the Room seed remain available. Nearby POI search, distance ranking, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T016 are complete; T017 is the sole next task. |
+| Implementation state | The Android architecture shell, top-level Navigation Compose shell, centralized Material 3 theme and Room version-1 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. There is no background tracking or exact-location persistence. Navigation and the Room seed remain available. POI details, narration, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -214,3 +219,21 @@ HCMC geo-fix command but continued to report its default simulated coordinate;
 its network provider was disabled, so the coarse-only acquisition timed out into
 the recoverable Error state. A physical-device coarse/precise GPS check remains
 recommended. Nearby POI search and distance ranking remain outside T015.
+
+T016 completed on 2026-07-22 with an offline-only nearby search boundary backed
+by the existing Room version-1 POI DAO. It loads HCMC POIs and all relevant
+aliases without a query per POI, normalizes Vietnamese diacritics and `đ`
+deterministically, matches canonical names, aliases, stored categories and
+localized category labels, excludes invalid stored coordinates and ranks valid
+matches by Haversine distance with stable tie ordering. Explore now exposes
+separate WaitingForLocation, Loading, Content, Empty and Error search states,
+keeps the query in memory, refreshes after each successful one-shot location and
+shows locale-formatted kilometres with a straight-line-distance notice. No Room
+entities or exact coordinates enter rendered result models, and search failures
+do not replace location permission state. Room remains version 1 and the exported
+schema is unchanged. Pure JVM tests cover normalization, distance, formatting,
+ranking and fake-repository ViewModel behavior; in-memory Room and Compose tests
+cover bundled-seed search, DAO integration and UI states. `./gradlew test`, the
+CI-equivalent lint/test/assemble command and all 28 connected emulator tests
+passed. POI detail navigation, narration, FTS, maps, networking and package
+downloads remain outside T016.

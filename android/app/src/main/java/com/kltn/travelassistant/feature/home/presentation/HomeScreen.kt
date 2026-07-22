@@ -3,11 +3,15 @@ package com.kltn.travelassistant.feature.home.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +20,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.kltn.travelassistant.R
+import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
+import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabel
+import com.kltn.travelassistant.feature.nearby.presentation.DistanceFormatter
 import com.kltn.travelassistant.ui.theme.AppSpacing
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 
@@ -24,30 +31,130 @@ fun HomeScreen(
     uiState: HomeUiState,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
+    onNearbyQueryChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(AppSpacing.screen),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.destination_explore),
+                modifier = Modifier.semantics { heading() },
+                style = MaterialTheme.typography.headlineMedium,
+            )
+        }
+        item {
+            Text(
+                text = uiState.appName,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+        item {
+            LocationContextSection(
+                state = uiState.locationState,
+                onUseCurrentLocation = onUseCurrentLocation,
+                onOpenLocationSettings = onOpenLocationSettings,
+            )
+        }
+        item {
+            Text(
+                text = stringResource(R.string.nearby_section_title),
+                modifier = Modifier.semantics { heading() },
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        if (uiState.locationState !is LocationUiState.Available) {
+            item {
+                Text(text = stringResource(R.string.nearby_location_required))
+            }
+        } else {
+            item {
+                OutlinedTextField(
+                    value = uiState.nearbyQuery,
+                    onValueChange = onNearbyQueryChanged,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(R.string.nearby_search_label)) },
+                    placeholder = {
+                        Text(text = stringResource(R.string.nearby_search_placeholder))
+                    },
+                    singleLine = true,
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.nearby_straight_line_notice),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            when (val nearbyState = uiState.nearbySearchState) {
+                NearbySearchUiState.WaitingForLocation -> item {
+                    Text(text = stringResource(R.string.nearby_location_required))
+                }
+                NearbySearchUiState.Loading -> item {
+                    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.content)) {
+                        CircularProgressIndicator()
+                        Text(text = stringResource(R.string.nearby_loading))
+                    }
+                }
+                is NearbySearchUiState.Content -> items(
+                    items = nearbyState.results,
+                    key = NearbyPoi::poiId,
+                ) { poi ->
+                    NearbyPoiRow(poi = poi)
+                }
+                NearbySearchUiState.Empty -> item {
+                    Text(text = stringResource(R.string.nearby_empty))
+                }
+                NearbySearchUiState.Error -> item {
+                    Text(text = stringResource(R.string.nearby_error))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NearbyPoiRow(
+    poi: NearbyPoi,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(AppSpacing.screen),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {},
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.content / 2),
     ) {
         Text(
-            text = stringResource(R.string.destination_explore),
-            modifier = Modifier.semantics { heading() },
-            style = MaterialTheme.typography.headlineMedium,
+            text = poi.displayName,
+            style = MaterialTheme.typography.titleSmall,
         )
         Text(
-            text = uiState.appName,
-            style = MaterialTheme.typography.bodyLarge,
+            text = stringResource(poi.categoryLabel.labelRes),
+            style = MaterialTheme.typography.bodyMedium,
         )
-        LocationContextSection(
-            state = uiState.locationState,
-            onUseCurrentLocation = onUseCurrentLocation,
-            onOpenLocationSettings = onOpenLocationSettings,
+        Text(
+            text = stringResource(
+                R.string.nearby_distance_km,
+                DistanceFormatter.formatKilometresValue(poi.distanceMeters),
+            ),
+            style = MaterialTheme.typography.bodyMedium,
         )
+        HorizontalDivider()
     }
 }
+
+private val PoiCategoryLabel.labelRes: Int
+    get() = when (this) {
+        PoiCategoryLabel.LANDMARK -> R.string.nearby_category_landmark
+        PoiCategoryLabel.MARKET -> R.string.nearby_category_market
+        PoiCategoryLabel.MUSEUM -> R.string.nearby_category_museum
+        PoiCategoryLabel.PUBLIC_SPACE -> R.string.nearby_category_public_space
+        PoiCategoryLabel.OTHER -> R.string.nearby_category_other
+    }
 
 @Composable
 private fun LocationContextSection(
@@ -135,6 +242,7 @@ private fun HomeScreenPreview() {
             uiState = HomeUiState(appName = "Travel Assistant"),
             onUseCurrentLocation = {},
             onOpenLocationSettings = {},
+            onNearbyQueryChanged = {},
         )
     }
 }

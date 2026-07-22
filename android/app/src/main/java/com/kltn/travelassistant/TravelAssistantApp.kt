@@ -46,6 +46,7 @@ fun TravelAssistantApp(
                 homeUiState = uiState,
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
+                onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
                 modifier = Modifier.padding(innerPadding),
             )
         }

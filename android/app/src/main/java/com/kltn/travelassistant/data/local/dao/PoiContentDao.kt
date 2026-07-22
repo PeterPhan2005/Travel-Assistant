@@ -35,6 +35,15 @@ interface PoiContentDao {
     @Query("SELECT * FROM local_poi_aliases WHERE poi_id = :poiId ORDER BY alias, alias_id")
     suspend fun getAliasesForPoi(poiId: String): List<LocalPoiAliasEntity>
 
+    @Query(
+        """
+        SELECT * FROM local_poi_aliases
+        WHERE poi_id IN (:poiIds)
+        ORDER BY poi_id, alias, alias_id
+        """,
+    )
+    suspend fun getAliasesForPois(poiIds: List<String>): List<LocalPoiAliasEntity>
+
     @Query("SELECT * FROM local_menu_items WHERE poi_id = :poiId ORDER BY dish_name, menu_item_id")
     suspend fun getMenuItemsForPoi(poiId: String): List<LocalMenuItemEntity>
 

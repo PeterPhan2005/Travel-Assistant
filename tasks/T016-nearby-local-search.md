@@ -1,7 +1,7 @@
 ---
 id: T016
 title: Implement nearby local search
-status: todo
+status: done
 depends_on: [T014, T015]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Works without network.
-- [ ] Displays distance in km.
-- [ ] Vietnamese diacritic normalization is tested.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Works without network.
+- [x] Displays distance in km.
+- [x] Vietnamese diacritic normalization is tested.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

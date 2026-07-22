@@ -2,6 +2,8 @@ package com.kltn.travelassistant.di
 
 import com.kltn.travelassistant.data.repository.AppInfoRepository
 import com.kltn.travelassistant.data.repository.DefaultAppInfoRepository
+import com.kltn.travelassistant.data.repository.RoomNearbySearchRepository
+import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,4 +18,10 @@ abstract class RepositoryModule {
     abstract fun bindAppInfoRepository(
         implementation: DefaultAppInfoRepository,
     ): AppInfoRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNearbySearchRepository(
+        implementation: RoomNearbySearchRepository,
+    ): NearbySearchRepository
 }

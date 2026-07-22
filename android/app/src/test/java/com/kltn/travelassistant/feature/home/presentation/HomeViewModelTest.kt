@@ -4,6 +4,10 @@ import com.kltn.travelassistant.data.location.DeviceLocation
 import com.kltn.travelassistant.data.location.LocationAcquisitionResult
 import com.kltn.travelassistant.data.location.LocationClient
 import com.kltn.travelassistant.data.repository.AppInfoRepository
+import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
+import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
+import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
+import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabel
 import java.util.ArrayDeque
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +51,10 @@ class HomeViewModelTest {
             viewModel.uiState.value,
         )
         assertEquals(0, locationClient.requestCount)
+        assertEquals(
+            NearbySearchUiState.WaitingForLocation,
+            viewModel.uiState.value.nearbySearchState,
+        )
     }
 
     @Test
@@ -63,7 +71,11 @@ class HomeViewModelTest {
     @Test
     fun grantedPermissionAndFakeSuccessReachAvailable() = runTest(dispatcher) {
         val locationClient = FakeLocationClient(successResult)
-        val viewModel = createViewModel(locationClient = locationClient)
+        val nearbyRepository = FakeNearbySearchRepository()
+        val viewModel = createViewModel(
+            locationClient = locationClient,
+            nearbySearchRepository = nearbyRepository,
+        )
 
         viewModel.onLocationPermissionGranted()
         assertEquals(LocationUiState.Loading, viewModel.uiState.value.locationState)
@@ -71,6 +83,11 @@ class HomeViewModelTest {
 
         assertEquals(LocationUiState.Available(testLocation), viewModel.uiState.value.locationState)
         assertEquals(1, locationClient.requestCount)
+        assertEquals(listOf(SearchRequest(testLocation.latitude, testLocation.longitude, "")), nearbyRepository.requests)
+        assertEquals(
+            NearbySearchUiState.Content(defaultNearbyPois),
+            viewModel.uiState.value.nearbySearchState,
+        )
     }
 
     @Test
@@ -185,7 +202,11 @@ class HomeViewModelTest {
     @Test
     fun repositoryStateChangesReachUiState() = runTest(dispatcher) {
         val repository = FakeAppInfoRepository("Initial name")
-        val viewModel = HomeViewModel(repository, FakeLocationClient(successResult))
+        val viewModel = HomeViewModel(
+            repository,
+            FakeLocationClient(successResult),
+            FakeNearbySearchRepository(),
+        )
 
         repository.updateAppName("Updated name")
         advanceUntilIdle()
@@ -201,11 +222,106 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState is MutableStateFlow<*>)
     }
 
+    @Test
+    fun queryUpdateFiltersAndClearingRestoresNearbyResults() = runTest(dispatcher) {
+        val repository = FakeNearbySearchRepository { request ->
+            NearbySearchResult.Success(
+                if (request.query.isBlank()) defaultNearbyPois else listOf(defaultNearbyPois.last()),
+            )
+        }
+        val viewModel = createViewModel(nearbySearchRepository = repository)
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        viewModel.onNearbyQueryChanged("ben thanh")
+        advanceUntilIdle()
+        assertEquals("ben thanh", viewModel.uiState.value.nearbyQuery)
+        assertEquals(
+            NearbySearchUiState.Content(listOf(defaultNearbyPois.last())),
+            viewModel.uiState.value.nearbySearchState,
+        )
+
+        viewModel.onNearbyQueryChanged("")
+        advanceUntilIdle()
+        assertEquals(NearbySearchUiState.Content(defaultNearbyPois), viewModel.uiState.value.nearbySearchState)
+        assertEquals(listOf("", "ben thanh", ""), repository.requests.map(SearchRequest::query))
+    }
+
+    @Test
+    fun duplicateQueryDoesNotStartAnotherSearch() = runTest(dispatcher) {
+        val repository = FakeNearbySearchRepository()
+        val viewModel = createViewModel(nearbySearchRepository = repository)
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        viewModel.onNearbyQueryChanged("museum")
+        viewModel.onNearbyQueryChanged("museum")
+        advanceUntilIdle()
+
+        assertEquals(listOf("", "museum"), repository.requests.map(SearchRequest::query))
+    }
+
+    @Test
+    fun refreshedLocationRecomputesNearbyOrderingAndDistance() = runTest(dispatcher) {
+        val refreshedLocation = testLocation.copy(latitude = 10.7000)
+        val repository = FakeNearbySearchRepository { request ->
+            val results = if (request.latitude == testLocation.latitude) {
+                defaultNearbyPois
+            } else {
+                defaultNearbyPois.reversed().mapIndexed { index, poi ->
+                    poi.copy(distanceMeters = 100.0 + index)
+                }
+            }
+            NearbySearchResult.Success(results)
+        }
+        val viewModel = createViewModel(
+            locationClient = FakeLocationClient(
+                successResult,
+                LocationAcquisitionResult.Success(refreshedLocation),
+            ),
+            nearbySearchRepository = repository,
+        )
+
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        val content = viewModel.uiState.value.nearbySearchState as NearbySearchUiState.Content
+        assertEquals(defaultNearbyPois.reversed().map(NearbyPoi::poiId), content.results.map(NearbyPoi::poiId))
+        assertEquals(100.0, content.results.first().distanceMeters, 0.0)
+        assertEquals(listOf(testLocation.latitude, refreshedLocation.latitude), repository.requests.map(SearchRequest::latitude))
+    }
+
+    @Test
+    fun emptyAndDatabaseErrorStatesAreExplicitAndDoNotReplaceLocationState() = runTest(dispatcher) {
+        val repository = FakeNearbySearchRepository { request ->
+            if (request.query == "error") {
+                NearbySearchResult.DatabaseError
+            } else {
+                NearbySearchResult.Success(emptyList())
+            }
+        }
+        val viewModel = createViewModel(nearbySearchRepository = repository)
+
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+        assertEquals(NearbySearchUiState.Empty, viewModel.uiState.value.nearbySearchState)
+        assertEquals(LocationUiState.Available(testLocation), viewModel.uiState.value.locationState)
+
+        viewModel.onNearbyQueryChanged("error")
+        advanceUntilIdle()
+        assertEquals(NearbySearchUiState.Error, viewModel.uiState.value.nearbySearchState)
+        assertEquals(LocationUiState.Available(testLocation), viewModel.uiState.value.locationState)
+    }
+
     private fun createViewModel(
         locationClient: LocationClient = FakeLocationClient(successResult),
+        nearbySearchRepository: NearbySearchRepository = FakeNearbySearchRepository(),
     ): HomeViewModel = HomeViewModel(
         repository = FakeAppInfoRepository("Initial name"),
         locationClient = locationClient,
+        nearbySearchRepository = nearbySearchRepository,
     )
 
     private class FakeAppInfoRepository(initialAppName: String) : AppInfoRepository {
@@ -243,6 +359,30 @@ class HomeViewModelTest {
         }
     }
 
+    private class FakeNearbySearchRepository(
+        private val resultProvider: (SearchRequest) -> NearbySearchResult = {
+            NearbySearchResult.Success(defaultNearbyPois)
+        },
+    ) : NearbySearchRepository {
+        val requests = mutableListOf<SearchRequest>()
+
+        override suspend fun search(
+            latitude: Double,
+            longitude: Double,
+            query: String,
+        ): NearbySearchResult {
+            val request = SearchRequest(latitude, longitude, query)
+            requests += request
+            return resultProvider(request)
+        }
+    }
+
+    private data class SearchRequest(
+        val latitude: Double,
+        val longitude: Double,
+        val query: String,
+    )
+
     private companion object {
         val testLocation = DeviceLocation(
             latitude = 10.7799,
@@ -251,5 +391,21 @@ class HomeViewModelTest {
             capturedAtEpochMillis = 1_753_200_000_000L,
         )
         val successResult = LocationAcquisitionResult.Success(testLocation)
+        val defaultNearbyPois = listOf(
+            NearbyPoi(
+                poiId = "post-office",
+                displayName = "Bưu điện Trung tâm Sài Gòn",
+                category = "landmark",
+                categoryLabel = PoiCategoryLabel.LANDMARK,
+                distanceMeters = 0.0,
+            ),
+            NearbyPoi(
+                poiId = "ben-thanh",
+                displayName = "Chợ Bến Thành",
+                category = "market",
+                categoryLabel = PoiCategoryLabel.MARKET,
+                distanceMeters = 850.0,
+            ),
+        )
     }
 }
