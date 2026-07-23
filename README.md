@@ -32,8 +32,11 @@ có; một bundled HCMC demo seed được import an toàn và idempotent. Các 
 vẫn tối giản; Explore đã có location context foreground một lần chỉ sau hành
 động người dùng và tìm kiếm POI offline trong Room theo tên, bí danh hoặc loại,
 với chuẩn hóa dấu tiếng Việt và xếp hạng khoảng cách đường thẳng. Không có
-background tracking hoặc lưu vị trí. Networking, authentication và các tính
-năng sản phẩm khác vẫn chưa được triển khai.
+background tracking hoặc lưu vị trí. Debug build đã tích hợp dedicated Firebase
+development client configuration và dùng Firebase automatic initialization;
+release/production configuration vẫn tách riêng và chưa có. Email/Google
+authentication, networking và các tính năng sản phẩm khác vẫn chưa được triển
+khai.
 
 ## Android app identifiers
 

@@ -27,8 +27,20 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Firebase Android client configuration is variant-specific. Only the dedicated
+# development debug file is tracked; root, release, staging and local copies
+# remain ignored by the general rule.
 google-services.json
+!android/app/src/debug/google-services.json
+
+# Server-side and confidential credentials must never be committed.
 service-account*.json
+firebase-admin*.json
+*firebase-adminsdk*.json
+*fcm-server-key*
+*oauth-client-secret*
+client_secret*.json
 
 # Editor
 .vscode/

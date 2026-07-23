@@ -41,13 +41,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
   thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
   thành với năm destination placeholder.
-- Room version-1 schema và core DAO layer đã có; một bundled HCMC demo seed được
+- Room version-2 schema và core DAO layer đã có; một bundled HCMC demo seed được
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Các destination còn
-  lại vẫn là placeholder; networking, authentication và các hành vi sản phẩm
-  khác vẫn chưa hoàn thành. Không có background tracking hoặc lưu vị trí chính
-  xác.
+  lại vẫn là placeholder. Dedicated Firebase development client configuration
+  đã được tích hợp riêng cho debug và Firebase tự động khởi tạo; production và
+  release configuration vẫn tách riêng và chưa có. Email/Google authentication,
+  networking và các hành vi sản phẩm khác vẫn chưa hoàn thành. Không có
+  background tracking hoặc lưu vị trí chính xác.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
   application, database schema/migrations, data pipeline và agent runtime chưa
   được triển khai.

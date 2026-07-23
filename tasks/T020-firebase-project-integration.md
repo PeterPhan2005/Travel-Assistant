@@ -1,7 +1,7 @@
 ---
 id: T020
 title: Integrate Firebase configuration
-status: todo
+status: done
 depends_on: [T010]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Firebase initializes in debug.
-- [ ] Config-file handling is documented.
-- [ ] CI does not require committed production secrets.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Firebase initializes in debug.
+- [x] Config-file handling is documented.
+- [x] CI does not require committed production secrets.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

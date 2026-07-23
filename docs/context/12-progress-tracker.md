@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 1 is in progress. The Android architecture shell is present, with Hilt,
+Phase 2 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
 the Room version-2 schema and core DAO layer are complete, and a bundled HCMC
@@ -25,11 +25,15 @@ only in Downloads, while Assistant and Downloads explain their Internet
 requirements without claiming those unfinished features work. External
 navigation is not disabled solely because the app is offline. Package
 downloading, networking, authentication, AI and other later product behavior
-remain incomplete.
+remain incomplete. The dedicated Firebase development client configuration is
+integrated only for debug through the Google Services plugin and Firebase Android
+BoM. Standard automatic initialization provides the default Firebase app in the
+debug process. Production/release configuration remains separate and absent;
+email and Google authentication behavior remain unimplemented.
 
 ## Current goal
 
-T019 explicit offline UI state is complete. Do not begin T020 until it is
+T020 Firebase project integration is complete. Do not begin T021 until it is
 explicitly assigned.
 
 ## Completed
@@ -53,6 +57,7 @@ explicitly assigned.
 - T017 Implement POI detail and local narration.
 - T018 Open external navigation.
 - T019 Add explicit offline UI state.
+- T020 Integrate Firebase configuration.
 
 ## In progress
 
@@ -60,7 +65,7 @@ explicitly assigned.
 
 ## Next up
 
-- T020 Integrate Firebase configuration.
+- T021 Implement email authentication.
 
 ## Open questions
 
@@ -102,6 +107,12 @@ explicitly assigned.
   owning Flow and failures remain a controlled Checking state. A separate Room
   Flow selects HCMC package metadata by publication timestamp, version and
   package ID, so connectivity and local-data failures stay independent.
+- Firebase uses the official Google Services Gradle plugin only in the app
+  module, with the plugin version and Firebase Android BoM managed by the version
+  catalog. Only the dedicated development config at
+  `android/app/src/debug/google-services.json` is allowed in Git; automatic
+  initialization is used, while production/release configuration and
+  authentication behavior remain outside T020.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -121,8 +132,8 @@ explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T019 are complete; T020 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. There is no background tracking or exact-location persistence. Package downloading, networking, authentication and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T020 are complete; T021 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically; production/release configuration remains separate and absent, and email/Google authentication behavior remains unimplemented. There is no background tracking or exact-location persistence. Package downloading, networking, authentication behavior and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -331,3 +342,23 @@ Runtime validation covered validated-network launch, loss/restoration callbacks,
 five retained local POIs, offline filtering/detail/navigation and cold offline
 startup. Room remains version 2; schemas 1 and 2 and the bundled seed are
 unchanged. Networking, downloads, authentication and AI remain unimplemented.
+
+T020 completed on 2026-07-23 by integrating the dedicated Firebase development
+client configuration only into the Android debug variant. Google Services plugin
+4.5.0 is declared through the version catalog, applied only to the app module,
+and uses the debug-specific `google-services.json`. Firebase Android BoM 34.16.0
+aligns the sole Firebase product dependency, Firebase Authentication 24.2.0, as
+foundation for T021 without any authentication API calls or UI. Standard
+FirebaseInitProvider automatic initialization creates the default Firebase app.
+A JVM configuration-policy test verifies the exact debug path and package while
+rejecting root, main, release, production, staging and local configs. A
+network-free instrumented smoke test verifies the default app, application
+context and nonblank required options without hardcoded identifiers. JVM tests,
+lint, the CI-equivalent build and all 65 connected emulator tests passed. The
+debug APK installed and cold-launched with `Status: ok`; the process remained
+alive, existing Explore content rendered and focused log checks found no
+Firebase initialization/resource error, Hilt/AndroidRuntime fatal, or supplied
+Firebase identifier value. CI needs no production config, Firebase repository
+secret or server credential. Room remains version 2; schemas 1 and 2 and the
+bundled seed are unchanged. Email/Google authentication, backend token
+verification and other Firebase products remain unimplemented.

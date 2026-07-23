@@ -288,6 +288,67 @@ docker info
 
 Không đưa `android/local.properties`, `.env`, credential hoặc API key vào Git.
 
+## Firebase development cho Android
+
+Android debug build kết nối duy nhất tới Firebase project dành cho development.
+Firebase Android app trong project đó phải dùng package:
+
+```text
+com.kltn.travelassistant
+```
+
+Client configuration được đặt riêng cho debug tại:
+
+```text
+android/app/src/debug/google-services.json
+```
+
+File này chứa các identifier phía client để Firebase SDK chọn đúng project/app,
+không phải service-account hay server credential. Repository track đúng file
+development này để local build và CI có thể build debug mà không cần repository
+secret. Firebase Security Rules, IAM và App Check ở task sau mới là các lớp bảo
+vệ tài nguyên Firebase; không dựa vào việc giữ bí mật Android client config.
+
+Để tải lại config mà không thay đổi các identifier do Firebase cấp:
+
+1. Mở Firebase Console và chọn đúng project **development**, không chọn staging
+   hoặc production.
+2. Mở **Project settings > General > Your apps**.
+3. Chọn Android app có package `com.kltn.travelassistant`. Nếu app chưa tồn tại,
+   đăng ký đúng package này; không đổi application ID của Android project.
+4. Chọn **Download google-services.json**.
+5. Thay file tại `android/app/src/debug/google-services.json`; không đặt bản sao
+   tại `android/app/`, `android/app/src/main/` hoặc repository root.
+6. Từ repository root, kiểm tra package mà không in các identifier:
+
+   ```bash
+   jq -e \
+     '[.client[]?.client_info?.android_client_info?.package_name] |
+      length > 0 and all(. == "com.kltn.travelassistant")' \
+     android/app/src/debug/google-services.json
+   ```
+
+7. Từ `android/`, xác nhận Google Services xử lý được debug config:
+
+   ```bash
+   ./gradlew :app:processDebugGoogleServices
+   ```
+
+Release/production phải có Firebase project và variant-specific config riêng;
+chúng cố ý chưa có trong T020. Không chuyển development config tới module root,
+vì vị trí đó có thể khiến release build sau này dùng nhầm project development.
+
+Không bao giờ commit:
+
+- service-account JSON hoặc Admin SDK private key;
+- Firebase Admin credential;
+- FCM server key/credential;
+- OAuth client secret;
+- production backend secret.
+
+Các secret phía server phải nằm trong secret manager hoặc environment được quản
+lý, không nằm trong Android app, GitHub Actions output hoặc repository.
+
 ## Backend virtual environment
 
 macOS/Linux:
@@ -319,7 +380,9 @@ và `codex --version` vẫn là kiểm tra bắt buộc.
 ## Tài khoản dịch vụ cần chuẩn bị
 
 - GitHub repository.
-- Firebase project cho email/password và Google sign-in.
+- Firebase development project đã đăng ký Android package
+  `com.kltn.travelassistant`; email/password và Google sign-in vẫn thuộc các task
+  sau.
 - Google Cloud project nếu dùng Google Maps/Places.
 - OpenAI API project/key cho backend agent.
 - PostgreSQL/PostGIS local qua Docker; cloud deployment chọn sau.
