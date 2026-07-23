@@ -1,7 +1,7 @@
 ---
 id: T018
 title: Open external navigation
-status: todo
+status: done
 depends_on: [T017]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Intent is validated before launch.
-- [ ] No supported map app shows a clear error.
-- [ ] Analytics hook is exposed.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Intent is validated before launch.
+- [x] No supported map app shows a clear error.
+- [x] Analytics hook is exposed.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

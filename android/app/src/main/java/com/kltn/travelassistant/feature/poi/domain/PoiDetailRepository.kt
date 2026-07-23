@@ -12,6 +12,14 @@ data class PoiDetail(
     val shortDescription: String?,
     val menuItems: List<PoiMenuItem>,
     val narration: PoiNarration?,
+    val navigationTarget: PoiNavigationTarget? = null,
+)
+
+data class PoiNavigationTarget(
+    val poiId: String,
+    val displayName: String,
+    val latitude: Double,
+    val longitude: Double,
 )
 
 data class PoiMenuItem(

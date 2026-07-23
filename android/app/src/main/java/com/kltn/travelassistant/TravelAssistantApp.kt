@@ -11,10 +11,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
 import com.kltn.travelassistant.navigation.TopLevelDestination
 import com.kltn.travelassistant.navigation.TravelAssistantNavHost
 import com.kltn.travelassistant.navigation.TravelAssistantNavigationBar
+import com.kltn.travelassistant.navigation.external.ExternalNavigationResult
 import com.kltn.travelassistant.navigation.navigateToTopLevelDestination
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 
@@ -23,6 +25,7 @@ fun TravelAssistantApp(
     homeViewModel: HomeViewModel,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
+    onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult,
     modifier: Modifier = Modifier,
 ) {
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -31,6 +34,7 @@ fun TravelAssistantApp(
         onUseCurrentLocation = onUseCurrentLocation,
         onOpenLocationSettings = onOpenLocationSettings,
         onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
+        onOpenExternalNavigation = onOpenExternalNavigation,
         modifier = modifier,
     )
 }
@@ -42,8 +46,14 @@ fun TravelAssistantAppContent(
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult = {
+        ExternalNavigationResult.LaunchFailed
+    },
     poiDetailContent: @Composable (poiId: String, onBack: () -> Unit) -> Unit = { _, onBack ->
-        PoiDetailRoute(onBack = onBack)
+        PoiDetailRoute(
+            onBack = onBack,
+            onOpenExternalNavigation = onOpenExternalNavigation,
+        )
     },
 ) {
     val navController = rememberNavController()
@@ -71,6 +81,7 @@ fun TravelAssistantAppContent(
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
                 onNearbyQueryChanged = onNearbyQueryChanged,
+                onOpenExternalNavigation = onOpenExternalNavigation,
                 poiDetailContent = poiDetailContent,
                 modifier = Modifier.padding(innerPadding),
             )

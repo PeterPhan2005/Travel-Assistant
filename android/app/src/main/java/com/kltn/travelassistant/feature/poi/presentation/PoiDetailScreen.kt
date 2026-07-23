@@ -19,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,19 +33,28 @@ import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.nearby.presentation.labelRes
 import com.kltn.travelassistant.feature.poi.domain.PoiDetail
 import com.kltn.travelassistant.feature.poi.domain.PoiMenuItem
+import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
+import com.kltn.travelassistant.navigation.external.ExternalNavigationResult
 import com.kltn.travelassistant.ui.theme.AppSpacing
 
 @Composable
 fun PoiDetailRoute(
     onBack: () -> Unit,
+    onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult,
     modifier: Modifier = Modifier,
     viewModel: PoiDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var navigationError by remember { mutableStateOf<PoiNavigationError?>(null) }
     PoiDetailScreen(
         uiState = uiState,
         onBack = onBack,
         onRetry = viewModel::retry,
+        navigationError = navigationError,
+        onNavigate = { target ->
+            navigationError = null
+            navigationError = onOpenExternalNavigation(target).toPoiNavigationError()
+        },
         modifier = modifier,
     )
 }
@@ -53,6 +65,8 @@ fun PoiDetailScreen(
     onBack: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    navigationError: PoiNavigationError? = null,
+    onNavigate: (PoiNavigationTarget) -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -88,7 +102,11 @@ fun PoiDetailScreen(
                     }
                 },
             )
-            is PoiDetailUiState.Content -> PoiDetailContent(detail = uiState.detail)
+            is PoiDetailUiState.Content -> PoiDetailContent(
+                detail = uiState.detail,
+                navigationError = navigationError,
+                onNavigate = onNavigate,
+            )
         }
     }
 }
@@ -110,7 +128,11 @@ private fun DetailMessage(
 }
 
 @Composable
-private fun PoiDetailContent(detail: PoiDetail) {
+private fun PoiDetailContent(
+    detail: PoiDetail,
+    navigationError: PoiNavigationError?,
+    onNavigate: (PoiNavigationTarget) -> Unit,
+) {
     LazyColumn(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(AppSpacing.screen),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
@@ -132,6 +154,21 @@ private fun PoiDetailContent(detail: PoiDetail) {
         }
         detail.shortDescription?.let { description ->
             item { Text(text = description) }
+        }
+        detail.navigationTarget?.let { target ->
+            item {
+                Button(onClick = { onNavigate(target) }) {
+                    Text(text = stringResource(R.string.poi_detail_navigate))
+                }
+            }
+            navigationError?.let { error ->
+                item {
+                    Text(
+                        text = stringResource(error.messageRes),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         }
         val displayableMenuItems = detail.menuItems.mapNotNull(::formatMenuItem)
         if (displayableMenuItems.isNotEmpty()) {
@@ -166,6 +203,20 @@ private fun PoiDetailContent(detail: PoiDetail) {
             }
         }
     }
+}
+
+enum class PoiNavigationError(val messageRes: Int) {
+    NO_COMPATIBLE_APPLICATION(R.string.poi_detail_navigation_unavailable),
+    INVALID_DESTINATION(R.string.poi_detail_navigation_invalid_destination),
+    LAUNCH_FAILED(R.string.poi_detail_navigation_launch_failed),
+}
+
+private fun ExternalNavigationResult.toPoiNavigationError(): PoiNavigationError? = when (this) {
+    ExternalNavigationResult.Opened -> null
+    ExternalNavigationResult.NoCompatibleApplication ->
+        PoiNavigationError.NO_COMPATIBLE_APPLICATION
+    ExternalNavigationResult.InvalidDestination -> PoiNavigationError.INVALID_DESTINATION
+    ExternalNavigationResult.LaunchFailed -> PoiNavigationError.LAUNCH_FAILED
 }
 
 private fun formatMenuItem(item: PoiMenuItem): FormattedMenuItem? {

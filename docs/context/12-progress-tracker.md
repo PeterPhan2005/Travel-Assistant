@@ -14,12 +14,15 @@ Room-backed local detail screen while preserving Explore state. Optional fields,
 menus and sourced narration are omitted when absent; stored menu prices show
 currency-safe formatting and an update date. The bundled seed still contains no
 menu or narration records. There is no background tracking or exact-location
-persistence. External map navigation, networking, authentication and other
+persistence. Loaded POI details now offer explicit external navigation through
+any compatible `geo:` handler, with validated stored POI coordinates, localized
+recoverable errors and a no-op analytics boundary that never receives
+coordinates. Explicit offline UI state, networking, authentication and other
 product behavior remain incomplete.
 
 ## Current goal
 
-T017 POI detail and local narration is complete. Do not begin T018 until it is
+T018 external navigation is complete. Do not begin T019 until it is
 explicitly assigned.
 
 ## Completed
@@ -41,6 +44,7 @@ explicitly assigned.
 - T015 Implement foreground location context.
 - T016 Implement nearby local search.
 - T017 Implement POI detail and local narration.
+- T018 Open external navigation.
 
 ## In progress
 
@@ -48,12 +52,11 @@ explicitly assigned.
 
 ## Next up
 
-- T018 Open external navigation.
+- T019 Add explicit offline UI state.
 
 ## Open questions
 
 - Final visual identity/project name.
-- Exact Google Maps/MapLibre choice for first demo.
 - Cloud deployment provider.
 - Split of 30–50 curated POIs between HCMC and Bangkok.
 - Exact list of source publishers accepted for narration.
@@ -80,6 +83,11 @@ explicitly assigned.
   narration snapshot from Room, exposes Loading, Content, NotFound and Error,
   and never exposes Room entities or user coordinates to Compose. Narration is
   shown only with a nonblank stored source label.
+- External navigation uses a generic `ACTION_VIEW` `geo:` Intent through a
+  Hilt-bound Android launcher. It validates the stored POI identity and
+  coordinates, checks for a compatible activity, handles resolution/launch
+  races without crashing and returns typed outcomes to transient detail UI.
+  The replaceable no-op analytics hook receives only POI ID and outcome.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -99,8 +107,8 @@ explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T017 are complete; T018 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. There is no background tracking or exact-location persistence. External map navigation, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T018 are complete; T019 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. There is no background tracking or exact-location persistence. Explicit offline UI state, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -272,3 +280,19 @@ emulator acquired the HCMC foreground location, opened two correct seeded POIs,
 returned to the preserved Explore results, hid bottom navigation, omitted absent
 sections and produced no focused Room migration, Navigation, Hilt, fatal-runtime
 or exact-coordinate log match. External map navigation remains T018.
+
+T018 completed on 2026-07-23 with an explicit `Dẫn đường` action on loaded POI
+details. The Room-backed detail model now exposes a POI-owned destination target
+without rendering coordinates or using the user's current location. A
+Hilt-bound Android launcher validates nonblank identity/name, finite coordinate
+bounds, creates a provider-neutral locale-independent `ACTION_VIEW` `geo:` URI,
+checks package resolution and controls missing-activity, launch-race, security
+and malformed-target failures. The detail route owns transient localized errors
+and allows retry; success clears prior errors. A replaceable analytics hook
+records only POI ID plus requested/outcome events, with a no-op production
+implementation and no SDK or coordinate logging. The manifest adds only the
+minimal `geo:` package-visibility query and no permission. JVM tests, debug
+lint, the CI-equivalent build and all 50 connected emulator tests passed. The
+debug APK installed and cold-launched with the process alive and no focused
+AndroidRuntime fatal error. Embedded maps, route calculation, tracking,
+networking and explicit offline UI state remain outside T018.

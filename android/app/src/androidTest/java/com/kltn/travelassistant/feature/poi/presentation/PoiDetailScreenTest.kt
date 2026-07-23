@@ -13,7 +13,10 @@ import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabel
 import com.kltn.travelassistant.feature.poi.domain.PoiDetail
 import com.kltn.travelassistant.feature.poi.domain.PoiMenuItem
 import com.kltn.travelassistant.feature.poi.domain.PoiNarration
+import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -59,6 +62,60 @@ class PoiDetailScreenTest {
         composeRule.onAllNodesWithText(getString(R.string.poi_detail_narration_title)).assertCountEquals(0)
         composeRule.onAllNodesWithText("N/A").assertCountEquals(0)
         composeRule.onAllNodesWithText("Unknown").assertCountEquals(0)
+    }
+
+    @Test
+    fun navigationActionPassesStoredPoiTargetWithoutDisplayingCoordinates() {
+        var openedTarget: PoiNavigationTarget? = null
+        setScreen(
+            PoiDetailUiState.Content(minimalDetail),
+            onNavigate = { openedTarget = it },
+        )
+
+        composeRule.onNodeWithText(getString(R.string.poi_detail_navigate))
+            .assertIsDisplayed()
+            .performClick()
+
+        assertEquals(minimalDetail.navigationTarget, openedTarget)
+        composeRule.onAllNodesWithText(minimalDetail.navigationTarget!!.latitude.toString())
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithText(minimalDetail.navigationTarget.longitude.toString())
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun navigationActionIsOmittedWithoutTarget() {
+        setScreen(PoiDetailUiState.Content(minimalDetail.copy(navigationTarget = null)))
+
+        composeRule.onAllNodesWithText(getString(R.string.poi_detail_navigate)).assertCountEquals(0)
+    }
+
+    @Test
+    fun localizedNavigationErrorsRemainRecoverable() {
+        var attempts = 0
+        setScreen(
+            PoiDetailUiState.Content(minimalDetail),
+            navigationError = PoiNavigationError.NO_COMPATIBLE_APPLICATION,
+            onNavigate = { attempts += 1 },
+        )
+
+        composeRule.onNodeWithText(
+            getString(R.string.poi_detail_navigation_unavailable),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.poi_detail_navigate)).performClick()
+
+        assertEquals(1, attempts)
+    }
+
+    @Test
+    fun invalidDestinationAndLaunchFailureUseDifferentLocalizedMessages() {
+        val unavailable = getString(R.string.poi_detail_navigation_unavailable)
+        val invalid = getString(R.string.poi_detail_navigation_invalid_destination)
+        val failed = getString(R.string.poi_detail_navigation_launch_failed)
+
+        assertNotEquals(unavailable, invalid)
+        assertNotEquals(unavailable, failed)
+        assertNotEquals(invalid, failed)
     }
 
     @Test
@@ -123,6 +180,8 @@ class PoiDetailScreenTest {
     private fun setScreen(
         state: PoiDetailUiState,
         onRetry: () -> Unit = {},
+        navigationError: PoiNavigationError? = null,
+        onNavigate: (PoiNavigationTarget) -> Unit = {},
     ) {
         composeRule.setContent {
             TravelAssistantTheme(dynamicColor = false) {
@@ -130,6 +189,8 @@ class PoiDetailScreenTest {
                     uiState = state,
                     onBack = {},
                     onRetry = onRetry,
+                    navigationError = navigationError,
+                    onNavigate = onNavigate,
                 )
             }
         }
@@ -150,6 +211,12 @@ class PoiDetailScreenTest {
             shortDescription = null,
             menuItems = emptyList(),
             narration = null,
+            navigationTarget = PoiNavigationTarget(
+                poiId = "ben-thanh",
+                displayName = "Chợ Bến Thành",
+                latitude = 10.7725,
+                longitude = 106.6980,
+            ),
         )
     }
 }

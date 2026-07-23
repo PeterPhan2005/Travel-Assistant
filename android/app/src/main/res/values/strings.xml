@@ -47,6 +47,10 @@
     <string name="poi_detail_city">Thành phố: %1$s</string>
     <string name="poi_detail_area">Khu vực: %1$s</string>
     <string name="poi_detail_address">Địa chỉ: %1$s</string>
+    <string name="poi_detail_navigate">Dẫn đường</string>
+    <string name="poi_detail_navigation_unavailable">Không tìm thấy ứng dụng bản đồ phù hợp trên thiết bị.</string>
+    <string name="poi_detail_navigation_invalid_destination">Không thể dẫn đường vì thông tin vị trí của địa điểm không hợp lệ.</string>
+    <string name="poi_detail_navigation_launch_failed">Không thể mở ứng dụng bản đồ lúc này. Vui lòng thử lại.</string>
     <string name="poi_detail_menu_title">Món và giá đã lưu</string>
     <string name="poi_detail_price_source">Loại nguồn giá: %1$s</string>
     <string name="poi_detail_price_updated">Cập nhật ngày %1$s</string>

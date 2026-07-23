@@ -80,6 +80,10 @@ class RoomPoiDetailRepositoryTest {
         assertEquals(1_721_510_400_000, result.detail.menuItems.single().updatedAtEpochMillis)
         assertEquals("Nội dung thuyết minh đã lưu.", result.detail.narration?.content)
         assertEquals("Ban quản lý điểm đến", result.detail.narration?.sourceLabel)
+        assertEquals(poi.poiId, result.detail.navigationTarget?.poiId)
+        assertEquals(poi.name, result.detail.navigationTarget?.displayName)
+        assertEquals(poi.latitude, result.detail.navigationTarget?.latitude)
+        assertEquals(poi.longitude, result.detail.navigationTarget?.longitude)
     }
 
     @Test

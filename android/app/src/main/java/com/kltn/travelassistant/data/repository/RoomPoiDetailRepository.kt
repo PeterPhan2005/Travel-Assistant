@@ -7,6 +7,7 @@ import com.kltn.travelassistant.feature.poi.domain.PoiDetailRepository
 import com.kltn.travelassistant.feature.poi.domain.PoiDetailResult
 import com.kltn.travelassistant.feature.poi.domain.PoiMenuItem
 import com.kltn.travelassistant.feature.poi.domain.PoiNarration
+import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -53,6 +54,12 @@ class RoomPoiDetailRepository @Inject constructor(
                     )
                 }.toList(),
                 narration = narration,
+                navigationTarget = PoiNavigationTarget(
+                    poiId = snapshot.poi.poiId,
+                    displayName = snapshot.poi.name,
+                    latitude = snapshot.poi.latitude,
+                    longitude = snapshot.poi.longitude,
+                ),
             ),
         )
     } catch (exception: CancellationException) {

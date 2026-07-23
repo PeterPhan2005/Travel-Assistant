@@ -18,7 +18,9 @@ import androidx.navigation.navArgument
 import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
+import com.kltn.travelassistant.navigation.external.ExternalNavigationResult
 
 object PoiDetailDestination {
     const val POI_ID_ARGUMENT = "poiId"
@@ -62,10 +64,16 @@ fun TravelAssistantNavHost(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
-    poiDetailContent: @Composable (poiId: String, onBack: () -> Unit) -> Unit = { _, onBack ->
-        PoiDetailRoute(onBack = onBack)
-    },
     modifier: Modifier = Modifier,
+    onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult = {
+        ExternalNavigationResult.LaunchFailed
+    },
+    poiDetailContent: @Composable (poiId: String, onBack: () -> Unit) -> Unit = { _, onBack ->
+        PoiDetailRoute(
+            onBack = onBack,
+            onOpenExternalNavigation = onOpenExternalNavigation,
+        )
+    },
 ) {
     NavHost(
         navController = navController,

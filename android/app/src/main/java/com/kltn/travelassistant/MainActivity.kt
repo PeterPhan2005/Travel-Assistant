@@ -14,10 +14,15 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
+import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var externalNavigationCoordinator: ExternalNavigationCoordinator
+
     private val homeViewModel: HomeViewModel by viewModels()
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -51,6 +56,7 @@ class MainActivity : ComponentActivity() {
                 homeViewModel = homeViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
                 onOpenLocationSettings = ::openLocationSettings,
+                onOpenExternalNavigation = externalNavigationCoordinator::open,
             )
         }
     }
