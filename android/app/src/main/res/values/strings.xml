@@ -11,6 +11,16 @@
     <string name="open_downloads">Mở nội dung đã tải</string>
     <string name="open_profile">Mở Hồ sơ</string>
     <string name="feature_coming_later">Tính năng này sẽ có trong phiên bản sau.</string>
+    <string name="connectivity_checking">Đang kiểm tra kết nối. Dữ liệu trên thiết bị vẫn có thể sử dụng.</string>
+    <string name="connectivity_offline">Bạn đang ngoại tuyến. Ứng dụng đang dùng dữ liệu đã lưu trên thiết bị.</string>
+    <string name="connectivity_offline_dismiss">Đóng thông báo ngoại tuyến</string>
+    <string name="local_package_title">Dữ liệu trên thiết bị</string>
+    <string name="local_package_loading">Đang kiểm tra thông tin dữ liệu trên thiết bị…</string>
+    <string name="local_package_version">Phiên bản %1$s</string>
+    <string name="local_package_publication_date">Phát hành ngày %1$s</string>
+    <string name="local_package_unavailable">Chưa có thông tin về gói dữ liệu trên thiết bị.</string>
+    <string name="assistant_offline_explanation">Trợ lý AI cần kết nối Internet để tạo phản hồi mới. Bạn vẫn có thể tìm dữ liệu đã lưu trong Khám phá.</string>
+    <string name="downloads_offline_explanation">Cần kết nối Internet để tải gói dữ liệu mới. Dữ liệu hiện có trên thiết bị vẫn sử dụng được.</string>
     <string name="location_section_title">Vị trí hiện tại</string>
     <string name="location_use_current">Dùng vị trí hiện tại</string>
     <string name="location_loading">Đang lấy vị trí hiện tại…</string>

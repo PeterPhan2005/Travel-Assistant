@@ -13,6 +13,11 @@ import com.kltn.travelassistant.data.local.entity.LocalPoiAliasEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiEntity
 import com.kltn.travelassistant.data.local.entity.PendingSyncOperationEntity
 import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -22,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class TravelAssistantDatabaseTest {
     private lateinit var database: TravelAssistantDatabase
 
@@ -163,6 +169,56 @@ class TravelAssistantDatabaseTest {
     }
 
     @Test
+    fun latestPackageFlowIsInitiallyNullAndEmitsAfterInsertion() = runTest {
+        val dao = database.travelPackageDao()
+        val observedPackage = async {
+            dao.observeLatestPackage("Ho Chi Minh City")
+                .filterNotNull()
+                .first()
+        }
+        runCurrent()
+        val travelPackage = sampleTravelPackage(
+            packageId = "package-hcmc-flow",
+            version = "2026.07.1",
+            publishedAtEpochMillis = 1_721_510_400_000,
+        )
+
+        assertNull(dao.observeLatestPackage("Ho Chi Minh City").first())
+        dao.upsertPackage(travelPackage)
+
+        assertEquals(travelPackage, observedPackage.await())
+    }
+
+    @Test
+    fun latestPackageSelectionUsesPublicationVersionAndIdOrder() = runTest {
+        val dao = database.travelPackageDao()
+        val packages = listOf(
+            sampleTravelPackage(
+                packageId = "package-newer-low-version",
+                version = "2026.07.1",
+                publishedAtEpochMillis = 300,
+            ),
+            sampleTravelPackage(
+                packageId = "package-newer-high-version",
+                version = "2026.07.2",
+                publishedAtEpochMillis = 300,
+            ),
+            sampleTravelPackage(
+                packageId = "package-older",
+                version = "2026.08.1",
+                publishedAtEpochMillis = 200,
+            ),
+        )
+        packages.forEach { dao.upsertPackage(it) }
+
+        assertEquals(
+            "package-newer-high-version",
+            dao.observeLatestPackage("Ho Chi Minh City").first()?.packageId,
+        )
+        assertNull(dao.observeLatestPackage("Bangkok").first())
+    }
+
+    @Test
     fun pendingSyncOperationsHaveDeterministicOrderAndMutableState() = runTest {
         val operations = listOf(
             sampleSyncOperation("operation-c", 200),
@@ -244,5 +300,17 @@ class TravelAssistantDatabaseTest {
         createdAtEpochMillis = createdAtEpochMillis,
         lastAttemptAtEpochMillis = null,
         attemptCount = 0,
+    )
+
+    private fun sampleTravelPackage(
+        packageId: String,
+        version: String,
+        publishedAtEpochMillis: Long,
+    ) = TravelPackageEntity(
+        packageId = packageId,
+        city = "Ho Chi Minh City",
+        version = version,
+        manifestJson = "{}",
+        publishedAtEpochMillis = publishedAtEpochMillis,
     )
 }

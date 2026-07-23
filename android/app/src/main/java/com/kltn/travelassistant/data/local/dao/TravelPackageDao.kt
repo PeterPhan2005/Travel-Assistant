@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TravelPackageDao {
@@ -21,4 +22,14 @@ interface TravelPackageDao {
         """,
     )
     suspend fun getPackageByIdAndVersion(packageId: String, version: String): TravelPackageEntity?
+
+    @Query(
+        """
+        SELECT * FROM travel_packages
+        WHERE city = :city
+        ORDER BY published_at_epoch_millis DESC, version DESC, package_id DESC
+        LIMIT 1
+        """,
+    )
+    fun observeLatestPackage(city: String): Flow<TravelPackageEntity?>
 }

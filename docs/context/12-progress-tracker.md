@@ -17,12 +17,19 @@ menu or narration records. There is no background tracking or exact-location
 persistence. Loaded POI details now offer explicit external navigation through
 any compatible `geo:` handler, with validated stored POI coordinates, localized
 recoverable errors and a no-op analytics boundary that never receives
-coordinates. Explicit offline UI state, networking, authentication and other
-product behavior remain incomplete.
+coordinates. The app shell now observes validated Internet connectivity without
+making a network request and presents Checking, Online and Offline explicitly.
+Offline Room search and POI detail remain usable. Local package version and
+publication metadata is observed by the app-shell state owner but displayed
+only in Downloads, while Assistant and Downloads explain their Internet
+requirements without claiming those unfinished features work. External
+navigation is not disabled solely because the app is offline. Package
+downloading, networking, authentication, AI and other later product behavior
+remain incomplete.
 
 ## Current goal
 
-T018 external navigation is complete. Do not begin T019 until it is
+T019 explicit offline UI state is complete. Do not begin T020 until it is
 explicitly assigned.
 
 ## Completed
@@ -45,6 +52,7 @@ explicitly assigned.
 - T016 Implement nearby local search.
 - T017 Implement POI detail and local narration.
 - T018 Open external navigation.
+- T019 Add explicit offline UI state.
 
 ## In progress
 
@@ -52,7 +60,7 @@ explicitly assigned.
 
 ## Next up
 
-- T019 Add explicit offline UI state.
+- T020 Integrate Firebase configuration.
 
 ## Open questions
 
@@ -88,6 +96,12 @@ explicitly assigned.
   coordinates, checks for a compatible activity, handles resolution/launch
   races without crashing and returns typed outcomes to transient detail UI.
   The replaceable no-op analytics hook receives only POI ID and outcome.
+- App-shell connectivity is observed through a replaceable boundary backed by
+  `ConnectivityManager`. Online requires both `NET_CAPABILITY_INTERNET` and
+  `NET_CAPABILITY_VALIDATED`; callback registration is cancelled with the
+  owning Flow and failures remain a controlled Checking state. A separate Room
+  Flow selects HCMC package metadata by publication timestamp, version and
+  package ID, so connectivity and local-data failures stay independent.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -107,8 +121,8 @@ explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T018 are complete; T019 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. There is no background tracking or exact-location persistence. Explicit offline UI state, networking, authentication and other product behavior remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T019 are complete; T020 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. There is no background tracking or exact-location persistence. Package downloading, networking, authentication and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -296,3 +310,24 @@ lint, the CI-equivalent build and all 50 connected emulator tests passed. The
 debug APK installed and cold-launched with the process alive and no focused
 AndroidRuntime fatal error. Embedded maps, route calculation, tracking,
 networking and explicit offline UI state remain outside T018.
+
+T019 completed on 2026-07-23 with a Hilt-created app-shell state owner that
+combines independent connectivity and local-package metadata streams.
+`ConnectivityManager` observes the active/default network without making a
+request and classifies it Online only with both Internet and validated
+capabilities; initial state, callbacks, expected failures and callback cleanup
+are explicit and tested. A Room Flow observes the latest deterministic HCMC
+package selection and maps only version plus publication timestamp into UI
+state. The shell shows a reusable offline warning without blocking content,
+with in-memory dismissal scoped only to the current Offline episode. Package
+freshness is separate, compact informational content shown only in Downloads;
+valid versions remain visible when an invalid publication date is omitted.
+Room-backed search, Vietnamese filtering, POI detail, Back and external `Dẫn
+đường` remain usable Offline.
+Assistant and Downloads show localized Internet-required explanations without
+exposing unimplemented actions. JVM tests, lint, the CI-equivalent build and all
+64 connected emulator tests passed.
+Runtime validation covered validated-network launch, loss/restoration callbacks,
+five retained local POIs, offline filtering/detail/navigation and cold offline
+startup. Room remains version 2; schemas 1 and 2 and the bundled seed are
+unchanged. Networking, downloads, authentication and AI remain unimplemented.

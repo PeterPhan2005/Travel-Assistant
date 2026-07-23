@@ -16,6 +16,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.kltn.travelassistant.R
+import com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState
+import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageMetadataSection
+import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageUiState
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
@@ -61,6 +64,8 @@ fun TravelAssistantNavigationBar(
 fun TravelAssistantNavHost(
     navController: NavHostController,
     homeUiState: HomeUiState,
+    connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
+    localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
@@ -94,13 +99,34 @@ fun TravelAssistantNavHost(
             )
         }
         composable(TopLevelDestination.ASSISTANT.route) {
-            PlaceholderDestinationScreen(titleRes = R.string.destination_assistant)
+            PlaceholderDestinationScreen(
+                titleRes = R.string.destination_assistant,
+                unavailableExplanationRes = if (
+                    connectivityUiState == ConnectivityUiState.Offline
+                ) {
+                    R.string.assistant_offline_explanation
+                } else {
+                    null
+                },
+            )
         }
         composable(TopLevelDestination.ITINERARY.route) {
             PlaceholderDestinationScreen(titleRes = R.string.destination_itinerary)
         }
         composable(TopLevelDestination.DOWNLOADS.route) {
-            PlaceholderDestinationScreen(titleRes = R.string.destination_downloads)
+            PlaceholderDestinationScreen(
+                titleRes = R.string.destination_downloads,
+                unavailableExplanationRes = if (
+                    connectivityUiState == ConnectivityUiState.Offline
+                ) {
+                    R.string.downloads_offline_explanation
+                } else {
+                    null
+                },
+                additionalContent = {
+                    LocalPackageMetadataSection(uiState = localPackageUiState)
+                },
+            )
         }
         composable(TopLevelDestination.PROFILE.route) {
             PlaceholderDestinationScreen(titleRes = R.string.destination_profile)

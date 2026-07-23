@@ -1,7 +1,7 @@
 ---
 id: T019
 title: Add explicit offline UI state
-status: todo
+status: done
 depends_on: [T016]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Offline search remains usable.
-- [ ] Online-only actions are disabled safely.
-- [ ] UI tests cover offline state.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Offline search remains usable.
+- [x] Online-only actions are disabled safely.
+- [x] UI tests cover offline state.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

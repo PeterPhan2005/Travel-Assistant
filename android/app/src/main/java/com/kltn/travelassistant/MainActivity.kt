@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import com.kltn.travelassistant.feature.appshell.presentation.AppShellViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
 import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var externalNavigationCoordinator: ExternalNavigationCoordinator
 
+    private val appShellViewModel: AppShellViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -53,6 +55,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TravelAssistantApp(
+                appShellViewModel = appShellViewModel,
                 homeViewModel = homeViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
                 onOpenLocationSettings = ::openLocationSettings,
