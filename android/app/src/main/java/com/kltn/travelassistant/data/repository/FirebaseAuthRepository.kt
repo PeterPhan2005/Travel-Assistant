@@ -49,6 +49,10 @@ class FirebaseAuthRepository @Inject constructor(
         is AuthResult.Success -> gateway.reloadCurrentUser().toDomainResult()
     }
 
+    override suspend fun signInWithGoogleIdToken(
+        idToken: String,
+    ): AuthResult<AuthUser> = gateway.signInWithGoogleIdToken(idToken).toDomainResult()
+
     override suspend fun refreshVerification(): AuthResult<AuthUser> =
         gateway.reloadCurrentUser().toDomainResult()
 

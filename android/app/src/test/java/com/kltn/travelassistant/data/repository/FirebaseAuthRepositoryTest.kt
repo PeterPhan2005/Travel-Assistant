@@ -16,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 class FirebaseAuthRepositoryTest {
     @Test
@@ -107,6 +108,72 @@ class FirebaseAuthRepositoryTest {
     }
 
     @Test
+    fun googleCredentialExchangeMapsVerifiedAndUnexpectedlyUnverifiedUsers() = runTest {
+        val verifiedGateway = FakeAuthGateway(
+            googleSignInResult = AuthResult.Success(verifiedGatewayUser),
+        )
+        val unverifiedGateway = FakeAuthGateway(
+            googleSignInResult = AuthResult.Success(unverifiedGatewayUser),
+        )
+
+        assertEquals(
+            AuthResult.Success(verifiedUser),
+            FirebaseAuthRepository(verifiedGateway)
+                .signInWithGoogleIdToken(UUID.randomUUID().toString()),
+        )
+        assertEquals(
+            AuthResult.Success(unverifiedUser),
+            FirebaseAuthRepository(unverifiedGateway)
+                .signInWithGoogleIdToken(UUID.randomUUID().toString()),
+        )
+        assertEquals(listOf("googleSignIn"), verifiedGateway.operations)
+        assertEquals(listOf("googleSignIn"), unverifiedGateway.operations)
+    }
+
+    @Test
+    fun googleCredentialFailuresRemainTypedAndSessionFlowStaysSourceOfTruth() = runTest {
+        listOf(
+            AuthError.INVALID_CREDENTIALS,
+            AuthError.ACCOUNT_PROVIDER_CONFLICT,
+            AuthError.NETWORK_UNAVAILABLE,
+        ).forEach { error ->
+            val gateway = FakeAuthGateway(
+                initialUser = null,
+                googleSignInResult = AuthResult.Failure(error),
+            )
+            val repository = FirebaseAuthRepository(gateway)
+
+            assertEquals(
+                AuthResult.Failure(error),
+                repository.signInWithGoogleIdToken(UUID.randomUUID().toString()),
+            )
+            assertEquals(
+                AuthSession.SignedOut,
+                repository.observeSession().take(2).toList().last(),
+            )
+        }
+
+        val gateway = FakeAuthGateway(
+            initialUser = null,
+            googleSignInResult = AuthResult.Success(verifiedGatewayUser),
+        )
+        val repository = FirebaseAuthRepository(gateway)
+        assertEquals(
+            AuthResult.Success(verifiedUser),
+            repository.signInWithGoogleIdToken(UUID.randomUUID().toString()),
+        )
+        assertEquals(
+            AuthSession.SignedOut,
+            repository.observeSession().take(2).toList().last(),
+        )
+        gateway.emitCurrentUser(verifiedGatewayUser)
+        assertEquals(
+            AuthSession.Authenticated(verifiedUser),
+            repository.observeSession().take(2).toList().last(),
+        )
+    }
+
+    @Test
     fun refreshCanChangeUnverifiedUserToVerified() = runTest {
         val gateway = FakeAuthGateway(
             reloadResults = ArrayDeque(listOf(AuthResult.Success(verifiedGatewayUser))),
@@ -155,6 +222,8 @@ class FirebaseAuthRepositoryTest {
             AuthResult.Success(unverifiedGatewayUser),
         private val signInResult: AuthResult<GatewayAuthUser> =
             AuthResult.Success(unverifiedGatewayUser),
+        private val googleSignInResult: AuthResult<GatewayAuthUser> =
+            AuthResult.Success(verifiedGatewayUser),
         private val reloadResults: ArrayDeque<AuthResult<GatewayAuthUser>> =
             ArrayDeque(listOf(AuthResult.Success(unverifiedGatewayUser))),
         private val verificationResult: AuthResult<Unit> = AuthResult.Success(Unit),
@@ -179,6 +248,17 @@ class FirebaseAuthRepositoryTest {
         ): AuthResult<GatewayAuthUser> {
             operations += "signIn"
             return signInResult
+        }
+
+        override suspend fun signInWithGoogleIdToken(
+            idToken: String,
+        ): AuthResult<GatewayAuthUser> {
+            operations += "googleSignIn"
+            return googleSignInResult
+        }
+
+        fun emitCurrentUser(user: GatewayAuthUser?) {
+            currentUser.value = user
         }
 
         override suspend fun reloadCurrentUser(): AuthResult<GatewayAuthUser> {

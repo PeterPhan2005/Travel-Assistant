@@ -35,6 +35,7 @@ fun TravelAssistantApp(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult,
+    onGoogleSignIn: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appShellUiState by appShellViewModel.uiState.collectAsStateWithLifecycle()
@@ -52,6 +53,7 @@ fun TravelAssistantApp(
         onAuthPasswordChanged = profileViewModel::onPasswordChanged,
         onAuthPasswordConfirmationChanged = profileViewModel::onPasswordConfirmationChanged,
         onAuthSubmit = profileViewModel::submit,
+        onGoogleSignIn = onGoogleSignIn,
         onAuthRefreshVerification = profileViewModel::refreshVerification,
         onAuthResendVerificationEmail = profileViewModel::resendVerificationEmail,
         onAuthSignOut = profileViewModel::signOut,
@@ -75,6 +77,7 @@ fun TravelAssistantAppContent(
     onAuthPasswordChanged: (String) -> Unit = {},
     onAuthPasswordConfirmationChanged: (String) -> Unit = {},
     onAuthSubmit: () -> Unit = {},
+    onGoogleSignIn: () -> Unit = {},
     onAuthRefreshVerification: () -> Unit = {},
     onAuthResendVerificationEmail: () -> Unit = {},
     onAuthSignOut: () -> Unit = {},
@@ -134,6 +137,7 @@ fun TravelAssistantAppContent(
                     onAuthPasswordChanged = onAuthPasswordChanged,
                     onAuthPasswordConfirmationChanged = onAuthPasswordConfirmationChanged,
                     onAuthSubmit = onAuthSubmit,
+                    onGoogleSignIn = onGoogleSignIn,
                     onAuthRefreshVerification = onAuthRefreshVerification,
                     onAuthResendVerificationEmail = onAuthResendVerificationEmail,
                     onAuthSignOut = onAuthSignOut,

@@ -7,6 +7,7 @@ import com.google.firebase.auth.AuthResult as FirebaseSignInResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.kltn.travelassistant.feature.auth.domain.AuthError
 import com.kltn.travelassistant.feature.auth.domain.AuthResult
 import javax.inject.Inject
@@ -49,6 +50,13 @@ class FirebaseAuthGateway @Inject constructor(
     ): AuthResult<GatewayAuthUser> = runFirebaseCall {
         val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
         result.requireUser()
+    }
+
+    override suspend fun signInWithGoogleIdToken(
+        idToken: String,
+    ): AuthResult<GatewayAuthUser> = runFirebaseCall {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        firebaseAuth.signInWithCredential(credential).await().requireUser()
     }
 
     override suspend fun reloadCurrentUser(): AuthResult<GatewayAuthUser> {
@@ -123,8 +131,9 @@ internal object FirebaseAuthErrorMapper {
         "ERROR_INVALID_EMAIL" -> AuthError.INVALID_EMAIL
         "ERROR_WEAK_PASSWORD" -> AuthError.WEAK_PASSWORD
         "ERROR_EMAIL_ALREADY_IN_USE",
-        "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL",
         -> AuthError.EMAIL_ALREADY_IN_USE
+        "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL",
+        -> AuthError.ACCOUNT_PROVIDER_CONFLICT
         "ERROR_USER_DISABLED" -> AuthError.DISABLED_ACCOUNT
         "ERROR_INVALID_CREDENTIAL",
         "ERROR_WRONG_PASSWORD",

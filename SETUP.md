@@ -381,8 +381,10 @@ và `codex --version` vẫn là kiểm tra bắt buộc.
 
 - GitHub repository.
 - Firebase development project đã đăng ký Android package
-  `com.kltn.travelassistant`; email/password và Google sign-in vẫn thuộc các task
-  sau.
+  `com.kltn.travelassistant`; email/password và Google provider phải được bật,
+  SHA-1/SHA-256 debug phải được đăng ký và config debug phải chứa OAuth client
+  dành cho Credential Manager. Backend Firebase ID-token verification vẫn thuộc
+  task sau.
 - Google Cloud project nếu dùng Google Maps/Places.
 - OpenAI API project/key cho backend agent.
 - PostgreSQL/PostGIS local qua Docker; cloud deployment chọn sau.

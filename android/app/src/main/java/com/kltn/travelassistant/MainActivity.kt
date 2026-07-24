@@ -12,18 +12,29 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.kltn.travelassistant.data.auth.GoogleCredentialCoordinator
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellViewModel
 import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
+import com.kltn.travelassistant.feature.auth.domain.GoogleSignInFailure
+import com.kltn.travelassistant.feature.auth.domain.GoogleSignInResult
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
 import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var externalNavigationCoordinator: ExternalNavigationCoordinator
+
+    @Inject
+    lateinit var googleCredentialCoordinator: GoogleCredentialCoordinator
 
     private val appShellViewModel: AppShellViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
@@ -63,6 +74,7 @@ class MainActivity : ComponentActivity() {
                 onUseCurrentLocation = ::onUseCurrentLocation,
                 onOpenLocationSettings = ::openLocationSettings,
                 onOpenExternalNavigation = externalNavigationCoordinator::open,
+                onGoogleSignIn = ::onGoogleSignIn,
             )
         }
     }
@@ -99,6 +111,30 @@ class MainActivity : ComponentActivity() {
                 Uri.fromParts("package", packageName, null),
             ),
         )
+    }
+
+    private fun onGoogleSignIn() {
+        val attemptId = profileViewModel.onGoogleSignInStarted() ?: return
+        lifecycleScope.launch {
+            try {
+                val result = try {
+                    googleCredentialCoordinator.signIn(this@MainActivity)
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (_: Exception) {
+                    GoogleSignInResult.Failure(GoogleSignInFailure.UNKNOWN)
+                }
+                profileViewModel.onGoogleSignInResult(attemptId, result)
+            } catch (exception: CancellationException) {
+                withContext(NonCancellable) {
+                    profileViewModel.onGoogleSignInResult(
+                        attemptId,
+                        GoogleSignInResult.Cancelled,
+                    )
+                }
+                throw exception
+            }
+        }
     }
 
     private companion object {

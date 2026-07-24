@@ -1,12 +1,18 @@
 package com.kltn.travelassistant.feature.auth.presentation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,13 +25,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.password
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.auth.domain.AuthSession
 import com.kltn.travelassistant.feature.auth.domain.EmailValidationError
@@ -37,6 +45,8 @@ const val PROFILE_EMAIL_TEST_TAG = "profile-email"
 const val PROFILE_PASSWORD_TEST_TAG = "profile-password"
 const val PROFILE_PASSWORD_CONFIRMATION_TEST_TAG = "profile-password-confirmation"
 const val PROFILE_SUBMIT_TEST_TAG = "profile-submit"
+const val PROFILE_GOOGLE_SIGN_IN_TEST_TAG = "profile-google-sign-in"
+const val PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG = "google-sign-in-logo"
 
 @Composable
 fun ProfileScreen(
@@ -46,6 +56,7 @@ fun ProfileScreen(
     onPasswordChanged: (String) -> Unit,
     onPasswordConfirmationChanged: (String) -> Unit,
     onSubmit: () -> Unit,
+    onGoogleSignIn: () -> Unit = {},
     onRefreshVerification: () -> Unit,
     onResendVerificationEmail: () -> Unit,
     onSignOut: () -> Unit,
@@ -73,6 +84,7 @@ fun ProfileScreen(
                 onPasswordChanged = onPasswordChanged,
                 onPasswordConfirmationChanged = onPasswordConfirmationChanged,
                 onSubmit = onSubmit,
+                onGoogleSignIn = onGoogleSignIn,
             )
             is AuthSession.VerificationRequired -> VerificationRequiredContent(
                 email = session.user.email,
@@ -120,6 +132,7 @@ private fun SignedOutContent(
     onPasswordChanged: (String) -> Unit,
     onPasswordConfirmationChanged: (String) -> Unit,
     onSubmit: () -> Unit,
+    onGoogleSignIn: () -> Unit,
 ) {
     Text(stringResource(R.string.auth_signed_out_explanation))
     Row(
@@ -157,6 +170,29 @@ private fun SignedOutContent(
                 Text(stringResource(R.string.auth_sign_up))
             }
         }
+    }
+    Text(
+        text = stringResource(R.string.auth_or_separator),
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedButton(
+        onClick = onGoogleSignIn,
+        enabled = !uiState.isLoading,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_google_g),
+            contentDescription = null,
+            modifier = Modifier
+                .height(20.dp)
+                .aspectRatio(200f / 204f)
+                .testTag(PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(stringResource(R.string.auth_continue_with_google))
     }
     OutlinedTextField(
         value = uiState.email,
@@ -351,10 +387,17 @@ private fun ProfileMessage.stringResource(): Int = when (this) {
     ProfileMessage.WEAK_PASSWORD -> R.string.auth_password_too_short
     ProfileMessage.EMAIL_ALREADY_IN_USE -> R.string.auth_email_already_in_use
     ProfileMessage.INVALID_CREDENTIALS -> R.string.auth_invalid_credentials
+    ProfileMessage.GOOGLE_NO_CREDENTIAL -> R.string.auth_google_no_credential
+    ProfileMessage.GOOGLE_CONFIGURATION_ERROR -> R.string.auth_google_configuration_error
+    ProfileMessage.GOOGLE_INVALID_CREDENTIAL -> R.string.auth_google_invalid_credential
+    ProfileMessage.GOOGLE_PROVIDER_UNAVAILABLE -> R.string.auth_google_provider_unavailable
+    ProfileMessage.ACCOUNT_PROVIDER_CONFLICT -> R.string.auth_account_provider_conflict
     ProfileMessage.DISABLED_ACCOUNT -> R.string.auth_disabled_account
     ProfileMessage.TOO_MANY_REQUESTS -> R.string.auth_too_many_requests
     ProfileMessage.NETWORK_UNAVAILABLE -> R.string.auth_network_unavailable
     ProfileMessage.MISSING_CURRENT_USER -> R.string.auth_missing_current_user
+    ProfileMessage.CREDENTIAL_STATE_CLEAR_FAILED ->
+        R.string.auth_credential_state_clear_failed
     ProfileMessage.GENERIC_FAILURE -> R.string.auth_generic_failure
 }
 

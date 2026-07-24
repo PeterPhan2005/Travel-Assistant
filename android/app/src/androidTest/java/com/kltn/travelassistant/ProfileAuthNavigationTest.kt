@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kltn.travelassistant.feature.auth.domain.AuthSession
 import com.kltn.travelassistant.feature.auth.domain.AuthUser
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
+import com.kltn.travelassistant.feature.auth.presentation.PROFILE_GOOGLE_SIGN_IN_TEST_TAG
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
 import com.kltn.travelassistant.navigation.TopLevelDestination
 import com.kltn.travelassistant.navigation.navigationItemTestTag
@@ -28,6 +29,7 @@ class ProfileAuthNavigationTest {
 
     @Test
     fun profileSessionPersistsAcrossNavigationAndSignedOutExploreRemainsUsable() {
+        var googleRequested = false
         var profileState by mutableStateOf(
             ProfileUiState(session = AuthSession.SignedOut),
         )
@@ -38,6 +40,7 @@ class ProfileAuthNavigationTest {
                 onUseCurrentLocation = {},
                 onOpenLocationSettings = {},
                 onNearbyQueryChanged = {},
+                onGoogleSignIn = { googleRequested = true },
             )
         }
 
@@ -48,6 +51,10 @@ class ProfileAuthNavigationTest {
             .performClick()
         composeRule.onNodeWithText(getString(R.string.auth_signed_out_explanation))
             .assertIsDisplayed()
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG).performClick()
+        composeRule.runOnIdle {
+            org.junit.Assert.assertTrue(googleRequested)
+        }
 
         composeRule.runOnIdle {
             profileState = ProfileUiState(

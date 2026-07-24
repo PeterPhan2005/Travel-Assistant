@@ -62,6 +62,33 @@ class ProfileScreenTest {
     }
 
     @Test
+    fun signedOutGoogleButtonAndSeparatorAreExplicitAndInvokeCallback() {
+        var googleRequested = false
+        setProfileContent(
+            state = ProfileUiState(session = AuthSession.SignedOut),
+            onGoogleSignIn = { googleRequested = true },
+        )
+
+        composeRule.onNodeWithText(getString(R.string.auth_or_separator))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG)
+            .assertIsDisplayed()
+            .assertIsEnabled()
+        composeRule.onNodeWithTag(
+            PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG,
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.auth_continue_with_google))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG)
+            .performClick()
+
+        assertTrue(googleRequested)
+        composeRule.onNodeWithTag(PROFILE_EMAIL_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithTag(PROFILE_PASSWORD_TEST_TAG).assertIsDisplayed()
+    }
+
+    @Test
     fun localizedValidationErrorsRenderNearFields() {
         setProfileContent(
             ProfileUiState(
@@ -90,6 +117,9 @@ class ProfileScreenTest {
         )
 
         composeRule.onNodeWithTag(PROFILE_SUBMIT_TEST_TAG)
+            .performScrollTo()
+            .assertIsNotEnabled()
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG)
             .performScrollTo()
             .assertIsNotEnabled()
         composeRule.onNodeWithText(getString(R.string.auth_loading))
@@ -144,9 +174,58 @@ class ProfileScreenTest {
         composeRule.onAllNodesWithText("uid-private", substring = true).assertCountEquals(0)
         composeRule.onAllNodesWithText("token", substring = true, ignoreCase = true)
             .assertCountEquals(0)
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG)
+            .assertDoesNotExist()
+        composeRule.onNodeWithTag(
+            PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
         composeRule.onNodeWithText(getString(R.string.auth_sign_out)).performClick()
 
         assertTrue(signOutRequested)
+    }
+
+    @Test
+    fun googleButtonIsAbsentWhileVerificationIsRequired() {
+        setProfileContent(
+            ProfileUiState(
+                session = AuthSession.VerificationRequired(unverifiedUser),
+            ),
+        )
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG).assertDoesNotExist()
+        composeRule.onNodeWithTag(
+            PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+    }
+
+    @Test
+    fun googleErrorsAreLocalizedWithoutRawExceptionText() {
+        setProfileContent(
+            ProfileUiState(
+                session = AuthSession.SignedOut,
+                message = ProfileMessage.GOOGLE_NO_CREDENTIAL,
+            ),
+        )
+        composeRule.onNodeWithText(getString(R.string.auth_google_no_credential))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText("NoCredentialException", substring = true)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun cancelledGoogleAttemptShowsNoErrorAndKeepsButtonEnabled() {
+        setProfileContent(ProfileUiState(session = AuthSession.SignedOut))
+
+        composeRule.onNodeWithTag(PROFILE_GOOGLE_SIGN_IN_TEST_TAG)
+            .assertIsEnabled()
+        composeRule.onAllNodesWithText(
+            getString(R.string.auth_google_invalid_credential),
+        ).assertCountEquals(0)
+        composeRule.onAllNodesWithText(
+            getString(R.string.auth_generic_failure),
+        ).assertCountEquals(0)
     }
 
     @Test
@@ -171,6 +250,7 @@ class ProfileScreenTest {
         onRefreshVerification: () -> Unit = {},
         onResendVerificationEmail: () -> Unit = {},
         onSignOut: () -> Unit = {},
+        onGoogleSignIn: () -> Unit = {},
     ) {
         composeRule.setContent {
             TravelAssistantTheme {
@@ -181,6 +261,7 @@ class ProfileScreenTest {
                     onPasswordChanged = {},
                     onPasswordConfirmationChanged = {},
                     onSubmit = {},
+                    onGoogleSignIn = onGoogleSignIn,
                     onRefreshVerification = onRefreshVerification,
                     onResendVerificationEmail = onResendVerificationEmail,
                     onSignOut = onSignOut,

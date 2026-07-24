@@ -38,8 +38,11 @@ release/production configuration vẫn tách riêng và chưa có. Profile đã 
 khai email/password registration, verification-aware sign-in, verification
 refresh/resend, sign-out và Firebase-backed session restoration; kiểm thử tự
 động và validation thủ công với Firebase development project, email verification
-và process restart đều đã qua. Google authentication, backend token verification,
-networking và các tính năng sản phẩm khác vẫn chưa được triển khai.
+và process restart đều đã qua. Profile cũng hỗ trợ Google authentication qua
+Credential Manager; Google ID credential chỉ được đổi tạm thời sang Firebase,
+hủy picker không tạo lỗi, Firebase vẫn là nguồn phiên duy nhất và đăng xuất xóa
+Credential Manager state. Backend token verification, networking và các tính
+năng sản phẩm khác vẫn chưa được triển khai.
 
 ## Android app identifiers
 

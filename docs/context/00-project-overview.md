@@ -48,12 +48,16 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   lại vẫn là placeholder, ngoại trừ Profile đã có đăng ký/đăng nhập
   email-password, gửi/làm mới/gửi lại xác minh email, đăng xuất và khôi phục
   phiên dựa trên Firebase. Người dùng chưa xác minh không được xem nội dung
-  Profile đã xác thực. Dedicated Firebase development client configuration đã
-  được tích hợp riêng cho debug và Firebase tự động khởi tạo; production và
-  release configuration vẫn tách riêng và chưa có. Kiểm thử tự động và kiểm thử
-  thủ công với Firebase development project đã xác nhận đăng ký, gửi/xác minh
-  email, khôi phục phiên chưa xác minh và đã xác minh, đăng xuất rồi đăng nhập
-  lại đều hoạt động. Google authentication, backend token verification,
+  Profile đã xác thực. Profile cũng có đăng nhập Google rõ ràng qua Android
+  Credential Manager; Google ID credential chỉ tồn tại tạm thời khi đổi sang
+  Firebase credential, còn Firebase current-user stream vẫn là nguồn phiên duy
+  nhất. Hủy account picker là trạng thái có kiểm soát và đăng xuất xóa cả phiên
+  Firebase lẫn Credential Manager state. Dedicated Firebase development client
+  configuration đã được tích hợp riêng cho debug và Firebase tự động khởi tạo;
+  production và release configuration vẫn tách riêng và chưa có. Kiểm thử tự
+  động và kiểm thử thủ công với Firebase development project đã xác nhận các
+  luồng email/password và Google, hủy picker, khôi phục phiên sau cold launch,
+  đăng xuất và chọn lại tài khoản đều hoạt động. Backend token verification,
   networking và các hành vi sản phẩm khác vẫn chưa hoàn thành. Không có
   background tracking hoặc lưu vị trí chính xác.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend

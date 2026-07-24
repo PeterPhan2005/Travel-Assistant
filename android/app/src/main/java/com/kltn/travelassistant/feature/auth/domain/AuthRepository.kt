@@ -9,6 +9,8 @@ interface AuthRepository {
 
     suspend fun signIn(email: String, password: String): AuthResult<AuthUser>
 
+    suspend fun signInWithGoogleIdToken(idToken: String): AuthResult<AuthUser>
+
     suspend fun refreshVerification(): AuthResult<AuthUser>
 
     suspend fun resendVerificationEmail(): AuthResult<Unit>

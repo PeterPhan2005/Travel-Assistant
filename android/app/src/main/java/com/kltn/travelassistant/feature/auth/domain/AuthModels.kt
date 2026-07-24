@@ -23,6 +23,7 @@ enum class AuthError {
     WEAK_PASSWORD,
     EMAIL_ALREADY_IN_USE,
     INVALID_CREDENTIALS,
+    ACCOUNT_PROVIDER_CONFLICT,
     DISABLED_ACCOUNT,
     TOO_MANY_REQUESTS,
     NETWORK_UNAVAILABLE,
@@ -35,6 +36,32 @@ sealed interface AuthResult<out T> {
     data class Success<T>(val value: T) : AuthResult<T>
 
     data class Failure(val error: AuthError) : AuthResult<Nothing>
+}
+
+sealed interface GoogleSignInResult {
+    data class Success(val user: AuthUser) : GoogleSignInResult
+
+    data object Cancelled : GoogleSignInResult
+
+    data class Failure(val reason: GoogleSignInFailure) : GoogleSignInResult
+}
+
+enum class GoogleSignInFailure {
+    NO_CREDENTIAL,
+    CONFIGURATION,
+    INVALID_CREDENTIAL,
+    PROVIDER_UNAVAILABLE,
+    ACCOUNT_PROVIDER_CONFLICT,
+    DISABLED_ACCOUNT,
+    TOO_MANY_REQUESTS,
+    NETWORK_UNAVAILABLE,
+    UNKNOWN,
+}
+
+sealed interface CredentialStateClearResult {
+    data object Success : CredentialStateClearResult
+
+    data object Failure : CredentialStateClearResult
 }
 
 sealed interface RegistrationResult {

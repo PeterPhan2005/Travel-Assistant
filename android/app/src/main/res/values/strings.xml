@@ -72,6 +72,8 @@
     <string name="auth_sign_up">Đăng ký</string>
     <string name="auth_create_account">Tạo tài khoản</string>
     <string name="auth_sign_out">Đăng xuất</string>
+    <string name="auth_or_separator">Hoặc</string>
+    <string name="auth_continue_with_google">Tiếp tục với Google</string>
     <string name="auth_email_label">Email</string>
     <string name="auth_password_label">Mật khẩu</string>
     <string name="auth_password_confirmation_label">Nhập lại mật khẩu</string>
@@ -93,10 +95,16 @@
     <string name="auth_verification_still_required">Email này vẫn chưa được xác minh. Hãy kiểm tra hộp thư rồi thử lại.</string>
     <string name="auth_email_already_in_use">Email này đã được sử dụng. Hãy đăng nhập bằng tài khoản hiện có.</string>
     <string name="auth_invalid_credentials">Email hoặc mật khẩu không đúng.</string>
+    <string name="auth_google_no_credential">Không tìm thấy Tài khoản Google phù hợp trên thiết bị. Hãy thêm tài khoản rồi thử lại.</string>
+    <string name="auth_google_configuration_error">Đăng nhập bằng Google chưa được cấu hình đúng. Vui lòng thử lại sau.</string>
+    <string name="auth_google_invalid_credential">Không thể xác thực thông tin đăng nhập Google. Vui lòng thử lại.</string>
+    <string name="auth_google_provider_unavailable">Dịch vụ đăng nhập Google không khả dụng trên thiết bị này.</string>
+    <string name="auth_account_provider_conflict">Email này đang dùng một phương thức đăng nhập khác. Hãy đăng nhập bằng phương thức đã sử dụng trước đó.</string>
     <string name="auth_disabled_account">Tài khoản này đã bị vô hiệu hóa.</string>
     <string name="auth_too_many_requests">Có quá nhiều yêu cầu. Vui lòng chờ một lúc rồi thử lại.</string>
     <string name="auth_network_unavailable">Không thể kết nối để xác thực. Hãy kiểm tra Internet rồi thử lại.</string>
     <string name="auth_missing_current_user">Phiên đăng nhập không còn khả dụng. Vui lòng đăng nhập lại.</string>
+    <string name="auth_credential_state_clear_failed">Đã đăng xuất, nhưng chưa thể làm mới danh sách tài khoản Google. Bạn vẫn có thể thử đăng nhập lại.</string>
     <string name="auth_generic_failure">Không thể hoàn tất yêu cầu lúc này. Vui lòng thử lại.</string>
     <string name="auth_session_error">Không thể đọc trạng thái đăng nhập lúc này.</string>
     <string name="auth_retry">Thử lại</string>

@@ -12,7 +12,20 @@
           "package_name": "com.kltn.travelassistant"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "442815686381-q0keh0t3tobho48paqbetb7ut22pandh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kltn.travelassistant",
+            "certificate_hash": "65e84a8da0b0d9c481e8aff76bd3e23704d1aeed"
+          }
+        },
+        {
+          "client_id": "442815686381-iqobnbkq44m2phhm5mig5msrvs9g1u1r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDxWGy3KDNiXq7DIYzb-1w6P_NOMy9rrS8"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442815686381-iqobnbkq44m2phhm5mig5msrvs9g1u1r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

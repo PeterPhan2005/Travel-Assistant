@@ -16,6 +16,8 @@ interface AuthGateway {
 
     suspend fun signIn(email: String, password: String): AuthResult<GatewayAuthUser>
 
+    suspend fun signInWithGoogleIdToken(idToken: String): AuthResult<GatewayAuthUser>
+
     suspend fun reloadCurrentUser(): AuthResult<GatewayAuthUser>
 
     suspend fun sendVerificationEmail(): AuthResult<Unit>

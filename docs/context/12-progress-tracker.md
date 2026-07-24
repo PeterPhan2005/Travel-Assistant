@@ -24,8 +24,8 @@ publication metadata is observed by the app-shell state owner but displayed
 only in Downloads, while Assistant and Downloads explain their Internet
 requirements without claiming those unfinished features work. External
 navigation is not disabled solely because the app is offline. Package
-downloading, networking, Google authentication, backend token verification, AI
-and other later product behavior remain incomplete. The dedicated Firebase
+downloading, networking, backend token verification, AI and other later product
+behavior remain incomplete. The dedicated Firebase
 development client configuration is integrated only for debug through the
 Google Services plugin and Firebase Android BoM. Standard automatic
 initialization provides the default Firebase app in the debug process. Profile
@@ -37,12 +37,18 @@ checks pass. Manual validation against the Firebase development project confirms
 registration, verification-email delivery/resend, unverified restoration as
 VerificationRequired, explicit refresh to Authenticated, verified restoration,
 sign-out and verified email/password sign-in. Explore and local Room data remain
-intact and independent of authentication. Production/release configuration
-remains separate and absent.
+intact and independent of authentication. Profile also offers explicit Google
+sign-in through Credential Manager's button flow. The generated web client
+resource configures the request, Google ID credentials are exchanged only
+ephemerally for Firebase credentials, cancellation is controlled, and Firebase
+current-user state remains the single session source of truth. Explicit sign-out
+clears Firebase and Credential Manager state; a clearing failure keeps the app
+SignedOut with a recoverable warning. Production/release configuration remains
+separate and absent.
 
 ## Current goal
 
-T021 email authentication is complete. Do not begin T022 until it is explicitly
+T022 Google authentication is complete. Do not begin T023 until it is explicitly
 assigned.
 
 ## Completed
@@ -68,6 +74,7 @@ assigned.
 - T019 Add explicit offline UI state.
 - T020 Integrate Firebase configuration.
 - T021 Implement email authentication.
+- T022 Implement Google authentication.
 
 ## In progress
 
@@ -75,7 +82,7 @@ assigned.
 
 ## Next up
 
-- T022 Implement Google authentication.
+- T023 Create FastAPI service.
 
 ## Open questions
 
@@ -130,6 +137,14 @@ assigned.
   are neither returned nor persisted. Unverified users map to
   VerificationRequired, verified users map to Authenticated, and explicit
   reload/resend/sign-out actions originate only from Profile user actions.
+- Google authentication uses Credential Manager's explicit
+  `GetSignInWithGoogleOption` button flow at the Activity boundary. The generated
+  `default_web_client_id` resource supplies the server client ID. Only a typed
+  Google ID custom credential is accepted; its token is exchanged immediately
+  through the existing Firebase gateway and is never stored in ViewModel/UI
+  state, local persistence or logs. Cancellation is distinct from failure.
+  Firebase current-user observation remains the sole persistent session source,
+  and the common sign-out path clears both Firebase and Credential Manager state.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -149,8 +164,8 @@ assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T021 are complete; T022 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and sign-out. Manual development-project validation confirms unverified sessions restore as VerificationRequired and verified sessions restore as Authenticated after force-stop and cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. Google authentication and backend Firebase ID-token verification remain incomplete. There is no background tracking or exact-location persistence. Package downloading, networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T022 are complete; T023 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration and backend Firebase ID-token verification remain absent. There is no background tracking or exact-location persistence. Package downloading, networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -402,3 +417,30 @@ verification, verified restoration as Authenticated, sign-out, verified
 email/password sign-in and the neutral incorrect-password error. Explore and
 local Room data remained intact after sign-out, and no password, Firebase token
 or credential was committed or logged.
+
+T022 completed on 2026-07-24. Profile now has an explicit
+`Tiếp tục với Google` action that starts only from user interaction and uses
+Credential Manager's `GetSignInWithGoogleOption` button flow with the generated
+`default_web_client_id`. The action displays Google's official full-color “G”
+asset unchanged at 20 dp with decorative accessibility semantics, while keeping
+the existing full-width Material 3 button behavior. A Hilt-bound coordinator
+receives the Activity only for the active request, accepts only the Google ID
+custom credential type, parses it through `GoogleIdTokenCredential.createFrom`
+and immediately exchanges the ephemeral ID token through the existing Firebase
+gateway. Credential Manager cancellation is harmless and retryable; missing
+configuration, no credential, provider unavailability, malformed credentials,
+Firebase collisions, disabled accounts, throttling, network failures and
+unexpected failures map to stable Vietnamese UI messages without exposing raw
+exceptions or credential data. Firebase current-user observation remains the
+single persistent session source, including restoration after force-stop and
+cold launch. The common email/Google sign-out path signs out Firebase and clears
+Credential Manager state; clearing failure leaves the app SignedOut with a
+recoverable warning. Credential Manager 1.6.0 and googleid 1.2.0 are managed
+through the version catalog, with the existing Firebase BoM/auth dependency
+unchanged. All 105 JVM tests, lint, the CI-equivalent build, Google Services
+processing and all 77 emulator tests passed. Manual validation on the authorized
+Google Play emulator confirmed the centered multicolor logo in both light and
+dark themes, no automatic picker, explicit Credential Manager launch, harmless
+cancellation, live Google/Firebase authentication, restored session after cold
+launch, sign-out with renewed account selection, preserved Explore/Room package
+data and location permission, and a localized offline authentication failure.
