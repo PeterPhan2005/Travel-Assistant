@@ -19,6 +19,9 @@ import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState
 import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageMetadataSection
 import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageUiState
+import com.kltn.travelassistant.feature.auth.presentation.AuthFormMode
+import com.kltn.travelassistant.feature.auth.presentation.ProfileScreen
+import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
@@ -64,11 +67,21 @@ fun TravelAssistantNavigationBar(
 fun TravelAssistantNavHost(
     navController: NavHostController,
     homeUiState: HomeUiState,
+    profileUiState: ProfileUiState = ProfileUiState(),
     connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
     localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
+    onAuthEmailChanged: (String) -> Unit = {},
+    onAuthPasswordChanged: (String) -> Unit = {},
+    onAuthPasswordConfirmationChanged: (String) -> Unit = {},
+    onAuthSubmit: () -> Unit = {},
+    onAuthRefreshVerification: () -> Unit = {},
+    onAuthResendVerificationEmail: () -> Unit = {},
+    onAuthSignOut: () -> Unit = {},
+    onAuthRetrySession: () -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult = {
         ExternalNavigationResult.LaunchFailed
@@ -129,7 +142,18 @@ fun TravelAssistantNavHost(
             )
         }
         composable(TopLevelDestination.PROFILE.route) {
-            PlaceholderDestinationScreen(titleRes = R.string.destination_profile)
+            ProfileScreen(
+                uiState = profileUiState,
+                onFormModeChanged = onAuthFormModeChanged,
+                onEmailChanged = onAuthEmailChanged,
+                onPasswordChanged = onAuthPasswordChanged,
+                onPasswordConfirmationChanged = onAuthPasswordConfirmationChanged,
+                onSubmit = onAuthSubmit,
+                onRefreshVerification = onAuthRefreshVerification,
+                onResendVerificationEmail = onAuthResendVerificationEmail,
+                onSignOut = onAuthSignOut,
+                onRetrySession = onAuthRetrySession,
+            )
         }
         composable(
             route = PoiDetailDestination.ROUTE_PATTERN,

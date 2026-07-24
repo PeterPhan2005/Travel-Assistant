@@ -1,7 +1,7 @@
 ---
 id: T021
 title: Implement email authentication
-status: todo
+status: done
 depends_on: [T020, T012]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Validation errors are user friendly.
-- [ ] Authenticated route state survives restart.
-- [ ] Tests use fakes where possible.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Validation errors are user friendly.
+- [x] Authenticated route state survives restart.
+- [x] Tests use fakes where possible.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -45,9 +45,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Các destination còn
-  lại vẫn là placeholder. Dedicated Firebase development client configuration
-  đã được tích hợp riêng cho debug và Firebase tự động khởi tạo; production và
-  release configuration vẫn tách riêng và chưa có. Email/Google authentication,
+  lại vẫn là placeholder, ngoại trừ Profile đã có đăng ký/đăng nhập
+  email-password, gửi/làm mới/gửi lại xác minh email, đăng xuất và khôi phục
+  phiên dựa trên Firebase. Người dùng chưa xác minh không được xem nội dung
+  Profile đã xác thực. Dedicated Firebase development client configuration đã
+  được tích hợp riêng cho debug và Firebase tự động khởi tạo; production và
+  release configuration vẫn tách riêng và chưa có. Kiểm thử tự động và kiểm thử
+  thủ công với Firebase development project đã xác nhận đăng ký, gửi/xác minh
+  email, khôi phục phiên chưa xác minh và đã xác minh, đăng xuất rồi đăng nhập
+  lại đều hoạt động. Google authentication, backend token verification,
   networking và các hành vi sản phẩm khác vẫn chưa hoàn thành. Không có
   background tracking hoặc lưu vị trí chính xác.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
