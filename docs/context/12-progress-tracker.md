@@ -47,13 +47,16 @@ SignedOut with a recoverable warning. Production/release configuration remains
 separate and absent. The backend now has an independent FastAPI application
 factory, immutable validated environment settings, an unauthenticated liveness
 endpoint, validated request correlation IDs and one sanitized JSON error
-envelope. It does not connect to PostgreSQL or initialize Firebase, providers or
-the AI runtime.
+envelope. A replaceable Firebase verification boundary uses the official Admin
+SDK with ADC, an explicit expected project, revocation checking and
+off-event-loop execution. `GET /auth/me` accepts only Bearer ID tokens and
+exposes only the verified UID. It does not connect to PostgreSQL or initialize
+providers or the AI runtime. Android still does not call the backend.
 
 ## Current goal
 
-T023 FastAPI service is complete. Do not begin T024 until it is explicitly
-assigned.
+T024 Firebase token verification is complete. Do not begin T030 until it is
+explicitly assigned.
 
 ## Completed
 
@@ -80,6 +83,7 @@ assigned.
 - T021 Implement email authentication.
 - T022 Implement Google authentication.
 - T023 Create FastAPI service.
+- T024 Verify Firebase tokens in backend.
 
 ## In progress
 
@@ -87,7 +91,7 @@ assigned.
 
 ## Next up
 
-- T024 Verify Firebase tokens in backend.
+- T030 Create server database schema.
 
 ## Open questions
 
@@ -156,6 +160,12 @@ assigned.
   `/health` is liveness-only. Safe caller request IDs are preserved; invalid
   values are replaced by UUIDs, and all application JSON errors share a typed,
   sanitized envelope containing the response request ID.
+- Backend authentication is a deterministic replaceable service. The production
+  adapter lazily creates a uniquely named Firebase Admin app configured with the
+  required expected project ID and ADC, then passes that app explicitly to
+  `verify_id_token` with revocation checking enabled. Synchronous SDK work runs
+  outside the event loop. Routes receive only an immutable validated UID;
+  decoded claims and credentials never cross the adapter boundary.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -175,8 +185,8 @@ assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T023 are complete; T024 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration and backend Firebase ID-token verification remain absent. There is no background tracking or exact-location persistence. Package downloading, networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs and sanitized error envelope are implemented; Firebase token verification, database connectivity/schema/migrations, data pipeline and agent runtime are not. |
+| Task sequence | T000 through T004 and T010 through T024 are complete; T030 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. Package downloading, Android networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public. Database connectivity/schema/migrations, data pipeline and agent runtime are not. |
 
 ## Session notes
 
@@ -470,3 +480,18 @@ database-free health, request-ID validation and all error paths. CI now caches
 both dependency files and applies strict mypy checks to application and test
 code. Firebase verification, database connectivity/schema/migrations, protected
 routes, provider adapters, AI runtime and Android networking remain unimplemented.
+
+T024 completed on 2026-07-27. Backend settings now require a trimmed, bounded
+`FIREBASE_PROJECT_ID` while keeping `DATABASE_URL` redacted and credentials out
+of application configuration. A typed verifier protocol returns only a frozen
+UID principal. Its Firebase Admin 7.5.0 production adapter lazily initializes a
+uniquely named app with the expected project ID and ADC, explicitly verifies ID
+tokens with `check_revoked=True` in a worker thread, validates the decoded UID
+and normalizes invalid/expired/revoked/disabled credentials separately from
+certificate, credential and network unavailability. `GET /auth/me` strictly
+requires Bearer authentication, uses the existing request-ID error envelope and
+returns only `uid`; `/health` remains public and database-free. Deterministic
+fake/mocked tests cover settings, parsing, errors, privacy, cancellation,
+concurrency and independent factories without credentials or network access.
+Android still does not obtain or transport ID tokens to the backend, and
+PostgreSQL connectivity/schema/migrations remain incomplete.

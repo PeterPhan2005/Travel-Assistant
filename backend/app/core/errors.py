@@ -112,10 +112,12 @@ async def http_exception_handler(
     if not isinstance(exception, HTTPException):
         return await unexpected_exception_handler(request, exception)
 
-    code, default_message = _HTTP_ERROR_DEFAULTS.get(
+    explicit_code = getattr(exception, "code", None)
+    default_code, default_message = _HTTP_ERROR_DEFAULTS.get(
         exception.status_code,
         ("http_error", "The request could not be completed."),
     )
+    code = explicit_code if isinstance(explicit_code, str) else default_code
     message = (
         exception.detail
         if isinstance(exception.detail, str)

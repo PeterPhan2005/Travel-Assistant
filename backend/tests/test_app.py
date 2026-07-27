@@ -10,11 +10,13 @@ from app.main import create_app
 TEST_DATABASE_URL = (
     "postgresql+asyncpg://unused:never-connect@database.invalid:9999/unused"
 )
+TEST_FIREBASE_PROJECT_ID = "travel-assistant-test"
 
 
 def test_factory_creates_independent_fastapi_apps() -> None:
     settings = Settings(
         database_url=SecretStr(TEST_DATABASE_URL),
+        firebase_project_id=TEST_FIREBASE_PROJECT_ID,
         application_environment=ApplicationEnvironment.TEST,
     )
 
@@ -29,6 +31,7 @@ def test_factory_creates_independent_fastapi_apps() -> None:
 def test_health_is_safe_liveness_without_database() -> None:
     settings = Settings(
         database_url=SecretStr(TEST_DATABASE_URL),
+        firebase_project_id=TEST_FIREBASE_PROJECT_ID,
         application_name="Travel Assistant Test API",
         application_environment=ApplicationEnvironment.TEST,
         application_version="test-version",

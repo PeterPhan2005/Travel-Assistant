@@ -12,11 +12,13 @@ from app.main import create_app
 from app.middleware.request_id import MAX_REQUEST_ID_LENGTH, REQUEST_ID_HEADER
 
 TEST_DATABASE_URL = "postgresql+asyncpg://unused:unused@localhost/unused"
+TEST_FIREBASE_PROJECT_ID = "travel-assistant-test"
 
 
 def _client() -> TestClient:
     settings = Settings(
         database_url=SecretStr(TEST_DATABASE_URL),
+        firebase_project_id=TEST_FIREBASE_PROJECT_ID,
         application_environment=ApplicationEnvironment.TEST,
     )
     app = create_app(settings)

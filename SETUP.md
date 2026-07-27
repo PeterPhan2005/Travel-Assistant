@@ -376,8 +376,10 @@ Trên Windows, cài Python 3.12 từ
 Các lệnh `python --version`, `docker --version`, `docker info`, `node --version`
 và `codex --version` vẫn là kiểm tra bắt buộc.
 
-Backend yêu cầu `DATABASE_URL` hợp lệ ngay khi tạo application, nhưng T023 chưa
-mở kết nối database. Từ repository root, tạo `.env` local nếu chưa có:
+Backend yêu cầu `DATABASE_URL` và `FIREBASE_PROJECT_ID` hợp lệ ngay khi tạo
+application, nhưng vẫn chưa mở kết nối database. `FIREBASE_PROJECT_ID` chọn đúng
+Firebase development project mà backend chấp nhận token; đây là identifier,
+không phải secret. Từ repository root, tạo `.env` local nếu chưa có:
 
 ```bash
 cp .env.example .env
@@ -393,10 +395,25 @@ set +a
 python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-`DATABASE_URL` là biến bắt buộc. `APP_NAME`, `APP_ENVIRONMENT`, `APP_VERSION` và
-`LOG_LEVEL` có default an toàn cho local development và có thể được override
-bằng environment. Không commit `.env` hoặc dùng credential trong `.env.example`
-ngoài máy development.
+`DATABASE_URL` và `FIREBASE_PROJECT_ID` là biến bắt buộc. `APP_NAME`,
+`APP_ENVIRONMENT`, `APP_VERSION` và `LOG_LEVEL` có default an toàn cho local
+development và có thể được override bằng environment. Không commit `.env` hoặc
+dùng credential trong `.env.example` ngoài máy development.
+
+Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
+trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
+credential. Khi phát triển local, service-account JSON là server secret: lưu nó
+bên ngoài repository rồi trỏ biến process
+`GOOGLE_APPLICATION_CREDENTIALS` tới file bên ngoài đó. Ví dụ chỉ dùng
+placeholder:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="<absolute-path-outside-repository>"
+```
+
+Không thêm biến này hoặc nội dung JSON vào `.env`, không copy file vào
+`backend/`, `data/` hoặc `.github/`, và không commit hay log đường dẫn/nội dung
+credential. Application không tự đọc JSON; ADC xử lý credential.
 
 Trong terminal khác, gọi liveness endpoint:
 
@@ -405,12 +422,25 @@ curl --include http://127.0.0.1:8000/health
 curl --include \
   --header 'X-Request-ID: local-check-001' \
   http://127.0.0.1:8000/health
+curl --include http://127.0.0.1:8000/auth/me
+curl --include \
+  --header 'Authorization: Bearer <Firebase-ID-token>' \
+  http://127.0.0.1:8000/auth/me
 curl --include http://127.0.0.1:8000/missing
 ```
 
 Mọi response có header `X-Request-ID`; JSON error cũng chứa cùng request ID.
 `GET /health` không cần authentication và chỉ kiểm tra process liveness. Nó
 không kiểm tra PostgreSQL readiness hoặc bất kỳ external service nào.
+`GET /auth/me` chỉ chấp nhận `Authorization: Bearer <ID-token>` và chỉ trả về
+Firebase UID sau khi Firebase Admin xác minh chữ ký, audience/project, expiry,
+revocation và trạng thái disabled. Revocation checking có thể gọi Firebase qua
+mạng; lỗi credential, certificate hoặc mạng trả lỗi service có kiểm soát.
+Không đặt token thật trong command history hoặc tài liệu.
+
+Android app chưa có transport tới backend và chưa lấy Firebase ID token để gọi
+`/auth/me`; phần đó vẫn là task tích hợp sau. Không thêm networking Android để
+kiểm tra endpoint trong T024.
 
 Dừng server bằng `Ctrl+C`. Có thể deactivate virtual environment bằng:
 
@@ -424,8 +454,8 @@ deactivate
 - Firebase development project đã đăng ký Android package
   `com.kltn.travelassistant`; email/password và Google provider phải được bật,
   SHA-1/SHA-256 debug phải được đăng ký và config debug phải chứa OAuth client
-  dành cho Credential Manager. Backend Firebase ID-token verification vẫn thuộc
-  task sau.
+  dành cho Credential Manager. Backend dùng cùng expected development project
+  ID và ADC; service-account local phải nằm ngoài repository.
 - Google Cloud project nếu dùng Google Maps/Places.
 - OpenAI API project/key cho backend agent.
 - PostgreSQL/PostGIS local qua Docker; cloud deployment chọn sau.

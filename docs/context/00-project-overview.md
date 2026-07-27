@@ -62,6 +62,7 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   background tracking hoặc lưu vị trí chính xác.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có. Backend hiện có
   FastAPI application factory, settings validation, liveness health check,
-  request correlation IDs và JSON error envelope. Database connectivity,
-  schema/migrations, Firebase token verification, data pipeline và agent runtime
-  chưa được triển khai.
+  request correlation IDs, JSON error envelope và Firebase Admin ID-token
+  verification với revocation checking cho endpoint UID-only `/auth/me`.
+  Database connectivity, schema/migrations, Android-to-backend transport, data
+  pipeline và agent runtime chưa được triển khai.

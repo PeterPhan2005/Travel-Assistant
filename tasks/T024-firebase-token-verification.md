@@ -1,7 +1,7 @@
 ---
 id: T024
 title: Verify Firebase tokens in backend
-status: todo
+status: done
 depends_on: [T023, T020]
 area: backend
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Private endpoint rejects missing/invalid token.
-- [ ] Valid token maps to UID.
-- [ ] Authorization headers are redacted from logs.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Private endpoint rejects missing/invalid token.
+- [x] Valid token maps to UID.
+- [x] Authorization headers are redacted from logs.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 
