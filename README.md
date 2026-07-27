@@ -55,7 +55,10 @@ timeout/lỗi và provenance chuẩn hóa. Canonical `GET /pois/nearby` API hi�
 app-scoped async engine, request-scoped read-only session và optional Firebase
 Bearer authentication để trả normalized curated POI với distance metre,
 provenance/freshness và bounded `is_complete`. Chưa có live Google Places,
-Android networking hoặc AI runtime; Android app chưa gọi backend này.
+Android networking hoặc AI runtime; Android app chưa gọi backend này. Backend
+cũng có builder offline, database-free để tạo và verify static travel-package
+schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit,
+nhưng Android download/activation vẫn chưa được triển khai.
 
 ## Android app identifiers
 

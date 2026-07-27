@@ -1,7 +1,7 @@
 ---
 id: T034
 title: Build travel package artifact
-status: todo
+status: done
 depends_on: [T031]
 area: backend
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Checksum is generated.
-- [ ] Package contains only approved fields.
-- [ ] Repeated build is deterministic for unchanged data.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Checksum is generated.
+- [x] Package contains only approved fields.
+- [x] Repeated build is deterministic for unchanged data.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

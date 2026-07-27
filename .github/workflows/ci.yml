@@ -115,6 +115,10 @@ jobs:
         working-directory: backend
         run: python -m app.data_pipeline validate
 
+      - name: Check committed travel-package artifact
+        working-directory: backend
+        run: python -m app.travel_packages check
+
       - name: Run pytest
         working-directory: backend
         run: pytest tests

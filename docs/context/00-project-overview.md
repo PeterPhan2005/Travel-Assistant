@@ -73,4 +73,7 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   Bearer authentication, app-scoped async engine và request-scoped read-only
   session để trả normalized curated POI với distance metre,
   provenance/freshness và bounded `is_complete`. Android-to-backend transport,
-  live Google Places và agent runtime chưa được triển khai.
+  live Google Places và agent runtime chưa được triển khai. Backend có thêm
+  deterministic offline builder cho static travel-package data/manifest schema
+  version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
+  Android download/activation vẫn chưa được triển khai.

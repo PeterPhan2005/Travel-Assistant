@@ -78,12 +78,16 @@ controlled error; `/auth/me` remains strict. Each non-injected app owns a lazy
 async engine for its lifespan and closes one read-only session per nearby
 request without committing. `/health` opens no session or database connection.
 Provider failures map to stable sanitized 400/429/501/502/503/500 errors with
-matching request IDs and preserved cancellation. Live Google Places, Android
-networking and the AI runtime remain unimplemented.
+matching request IDs and preserved cancellation. A database-free static
+travel-package builder now converts exactly one validated T031 city package per
+invocation into schema-version-1 public data plus a schema-version-1 manifest.
+The committed HCMC pair is byte-deterministic and independently verifiable by
+exact byte size and SHA-256. Live Google Places, Android package
+download/activation, Android networking and the AI runtime remain unimplemented.
 
 ## Current goal
 
-T033 nearby POI API is complete. Do not begin another task until it is
+T034 travel-package artifact is complete. Do not begin another task until it is
 explicitly assigned.
 
 ## Completed
@@ -116,6 +120,7 @@ explicitly assigned.
 - T031 Build curated data pipeline.
 - T032 Define POI provider adapters.
 - T033 Implement nearby POI API.
+- T034 Build travel package artifact.
 
 ## In progress
 
@@ -123,7 +128,7 @@ explicitly assigned.
 
 ## Next up
 
-- T034 Build travel package artifact.
+- T035 Download and activate travel package.
 
 ## Open questions
 
@@ -298,8 +303,8 @@ explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T024 and T030–T033 are complete; T034 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. Package downloading, Android networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` now validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android networking and agent runtime are not implemented. |
+| Task sequence | T000 through T004, T010 through T024 and T030–T034 are complete; T035 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. The backend now builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint. Android package downloading/activation, Android networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` now validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android networking and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -722,3 +727,65 @@ anonymous HCMC/Bangkok nearby calls and filtered nearby search; invalid bounds
 returned controlled 422, malformed optional Authorization returned controlled
 401 and unauthenticated `/auth/me` remained 401. Live access records contained
 only `/pois/nearby` without query strings, confirming origin/query redaction.
+
+T034 completed on 2026-07-27 with separate immutable Pydantic contracts for
+manifest schema version 1 and artifact/data schema version 1. The offline
+builder validates exactly one canonical T031 YAML package before creating an
+output directory or writing an artifact; it never reads PostgreSQL, calls the
+nearby API, initializes FastAPI/Firebase/provider clients or uses the current
+clock. The committed artifact is
+`data/travel-packages/hcmc/1.0.0/`, containing
+`hcmc-starter-v1-1.0.0.data.json` and
+`hcmc-starter-v1-1.0.0.manifest.json`. It contains the two approved HCMC POIs
+and zero aliases, menu items or narrations; no records were added to approach
+the future 30–50 target.
+
+The manifest allowlist is exactly `schemaVersion`, `artifactSchemaVersion`,
+`packageId`, `city`, `contentVersion`, `publishedAt`, `dataFilename`,
+`mediaType`, `byteSize` and `sha256`. Approved data sections are
+`packageMetadata`, `pois`, `aliases`, `menuItems` and `narrations`, plus the
+top-level `formatVersion`; nested models expose only Android/Room-compatible
+stable identifiers, names/category/address/coordinates, optional area and
+description, package publication metadata, aliases when supported, integer
+minor-unit menu data with source type/freshness, and grounded narration with
+source label/freshness. T031 source documents, URLs, raw metadata, provider
+payloads, user/trip/preference/location/request data and credentials cannot
+cross the extra-forbidden recursive model boundary.
+
+Canonical JSON is UTF-8 with Unicode preserved, lexicographically sorted keys,
+stable-ID-sorted entity arrays, compact separators and exactly one final
+newline. Datetimes are derived from validated input: manifest publication is
+canonical UTC RFC 3339 and Android-facing timestamps are Unix epoch
+milliseconds. SHA-256 is lowercase hexadecimal over the exact data-file bytes;
+the manifest stores the matching byte count and only a safe relative filename.
+Both files are fully serialized, checksummed and model-validated before staged
+temporary files are written. Staged files are fsynced and atomically replaced;
+handled replacement failures remove temporary files and restore any prior
+known artifact without deleting unrelated output files.
+
+Verification is database/network-free and rejects unreadable or malformed
+manifest/data JSON, unsupported schema versions, unsafe/traversing filenames,
+missing data, size/checksum mismatch, invalid public data, noncanonical entity
+order/reference identity, and package/city/version/publication/filename
+inconsistency. CI regenerates and byte-compares the committed HCMC pair before
+pytest. The downloadable shapes map to current T014 seed DTO types and every
+required Room version-2 column, so no Room migration is required. The T014
+startup validator itself remains intentionally HCMC-only with a five-POI
+bundled-demo minimum; T035 must add downloaded-package staging/activation
+around this compatible data shape rather than reuse that startup policy
+unchanged. Bangkok can be built generically but is not committed. There is no
+package HTTP endpoint, compression, Android download, WorkManager, checksum
+activation or Room activation in T034.
+
+T034 required checks passed on Python 3.12.13: dependency installation and
+`pip check`, Ruff, strict mypy over app/tests, curated JSON Schema drift check,
+both curated package validations, artifact build/check/verify commands, all
+219 pytest tests and compileall. Two HCMC builds in different temporary
+directories had byte-identical data and manifest files, identical names and
+identical SHA-256. macOS `shasum -a 256` returned
+`daa7678e1998348c6904f12f6e96026aa7ac33068fab7d8dcdc2ec0b23ae6be3`,
+matching the 934-byte manifest. Appending one byte caused verification to fail.
+A loopback Python static server plus curl preserved both files byte-for-byte
+and the downloaded pair verified successfully. The recursive privacy scan
+passed, and build/verify/check also passed while PostgreSQL was stopped; the
+local database service was restored healthy afterward.

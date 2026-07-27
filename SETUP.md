@@ -326,6 +326,82 @@ dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ
 có nguồn review được; mục tiêu 30–50 POI thuộc T092/T093, chưa hoàn thành ở
 T031.
 
+### Static travel-package artifact
+
+T034 tạo hai static JSON file cho đúng một city mỗi lần chạy: một public data
+file và một manifest chứa SHA-256 của chính xác các byte data file. Đây không
+phải HTTP API endpoint. Builder chạy offline, không đọc PostgreSQL, không khởi
+tạo FastAPI/Firebase và chỉ map các field public đã duyệt từ package T031 qua
+allowlist Pydantic strict.
+
+Từ `backend/`, regenerate HCMC artifact đã commit:
+
+```bash
+python -m app.travel_packages build \
+  --city hcmc \
+  --output-dir ../data/travel-packages/hcmc/1.0.0
+```
+
+Build Bangkok vào thư mục tạm riêng:
+
+```bash
+PACKAGE_TMP_DIR="$(mktemp -d)"
+python -m app.travel_packages build \
+  --city bkk \
+  --output-dir "$PACKAGE_TMP_DIR"
+```
+
+Verify HCMC manifest/data pair và kiểm tra artifact committed không drift so
+với YAML canonical hoặc builder:
+
+```bash
+python -m app.travel_packages verify \
+  --manifest ../data/travel-packages/hcmc/1.0.0/hcmc-starter-v1-1.0.0.manifest.json
+python -m app.travel_packages check
+```
+
+Serialization luôn dùng UTF-8, key sort tăng dần, entity sort theo stable ID,
+separator không có whitespace và đúng một newline cuối file. Publication time
+đến từ input đã validate; builder không dùng clock, random value, working
+directory hoặc database ordering. Vì vậy input và builder không đổi sẽ tạo file
+name, data bytes, manifest bytes và checksum giống hệt nhau ở mọi output
+directory. File generated không được sửa tay.
+
+Kiểm tra SHA-256 trực tiếp trên macOS:
+
+```bash
+shasum -a 256 \
+  ../data/travel-packages/hcmc/1.0.0/hcmc-starter-v1-1.0.0.data.json
+```
+
+Giá trị phải khớp field `sha256` trong manifest; `byteSize` phải khớp chính xác
+kích thước data file. Manifest dùng relative `dataFilename`, không chứa output
+directory, hostname, user máy, credential hoặc checksum đệ quy.
+
+Hai file có thể được host như static file thông thường. Từ repository root,
+chạy server local:
+
+```bash
+python3 -m http.server 8000 \
+  --directory data/travel-packages/hcmc/1.0.0
+```
+
+Trong terminal khác, download cả manifest và data:
+
+```bash
+DOWNLOAD_TMP_DIR="$(mktemp -d)"
+curl --fail --silent --show-error \
+  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.manifest.json" \
+  http://127.0.0.1:8000/hcmc-starter-v1-1.0.0.manifest.json
+curl --fail --silent --show-error \
+  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.data.json" \
+  http://127.0.0.1:8000/hcmc-starter-v1-1.0.0.data.json
+shasum -a 256 "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.data.json"
+```
+
+T034 chưa download, stage, import hoặc activate package trên Android. WorkManager,
+checksum-before-activation và atomic Room activation vẫn thuộc T035.
+
 ### POI provider và nearby HTTP API
 
 T032 thêm contract bất biến, provider-neutral tại `app/providers/poi/` và
