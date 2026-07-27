@@ -1,7 +1,7 @@
 ---
 id: T023
 title: Create FastAPI service
-status: todo
+status: done
 depends_on: [T000, T001, T003]
 area: backend
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Health endpoint returns success.
-- [ ] Settings validate required environment.
-- [ ] Backend tests pass.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Health endpoint returns success.
+- [x] Settings validate required environment.
+- [x] Backend tests pass.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

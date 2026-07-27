@@ -42,7 +42,11 @@ và process restart đều đã qua. Profile cũng hỗ trợ Google authenticat
 Credential Manager; Google ID credential chỉ được đổi tạm thời sang Firebase,
 hủy picker không tạo lỗi, Firebase vẫn là nguồn phiên duy nhất và đăng xuất xóa
 Credential Manager state. Backend token verification, networking và các tính
-năng sản phẩm khác vẫn chưa được triển khai.
+năng sản phẩm khác vẫn chưa được triển khai. Backend hiện có FastAPI application
+factory, settings được validation, liveness endpoint `/health`, request ID và
+JSON error envelope thống nhất. Backend chưa kết nối PostgreSQL, chưa có schema
+hoặc migration, chưa xác minh Firebase token và chưa có AI runtime. Android app
+chưa được kết nối với backend này.
 
 ## Android app identifiers
 

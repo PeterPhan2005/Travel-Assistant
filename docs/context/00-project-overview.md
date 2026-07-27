@@ -60,6 +60,8 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   đăng xuất và chọn lại tài khoản đều hoạt động. Backend token verification,
   networking và các hành vi sản phẩm khác vẫn chưa hoàn thành. Không có
   background tracking hoặc lưu vị trí chính xác.
-- Local PostgreSQL/PostGIS Docker Compose infrastructure đã có; backend
-  application, database schema/migrations, data pipeline và agent runtime chưa
-  được triển khai.
+- Local PostgreSQL/PostGIS Docker Compose infrastructure đã có. Backend hiện có
+  FastAPI application factory, settings validation, liveness health check,
+  request correlation IDs và JSON error envelope. Database connectivity,
+  schema/migrations, Firebase token verification, data pipeline và agent runtime
+  chưa được triển khai.

@@ -223,8 +223,8 @@ postgresql+asyncpg://travel_assistant:local_dev_only_change_me@localhost:5433/tr
 ```
 
 Nếu credential chứa ký tự đặc biệt, phần user/password trong URL phải được
-percent-encode. `DATABASE_URL` được chuẩn bị cho task backend sau; T003 chưa tạo
-FastAPI, SQLAlchemy hoặc Alembic application.
+percent-encode. FastAPI settings hiện validation URL này nhưng không mở kết nối.
+SQLAlchemy, database session và Alembic vẫn chưa được triển khai.
 
 Dừng container nhưng giữ dữ liệu local:
 
@@ -358,24 +358,65 @@ cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 python --version
-python -m pip install --upgrade pip
+python -m pip install --requirement requirements-dev.txt
 ```
 
-Windows PowerShell (giữ lại quy trình tương ứng):
+Windows PowerShell:
 
 ```powershell
 cd backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python --version
-python -m pip install --upgrade pip
-pip install fastapi "uvicorn[standard]" openai-agents pydantic-settings sqlalchemy asyncpg alembic "psycopg[binary]" httpx pytest pytest-asyncio ruff mypy
+python -m pip install --requirement requirements-dev.txt
 ```
 
 Trên Windows, cài Python 3.12 từ
 [python.org](https://www.python.org/downloads/) và bật **Add Python to PATH**.
 Các lệnh `python --version`, `docker --version`, `docker info`, `node --version`
 và `codex --version` vẫn là kiểm tra bắt buộc.
+
+Backend yêu cầu `DATABASE_URL` hợp lệ ngay khi tạo application, nhưng T023 chưa
+mở kết nối database. Từ repository root, tạo `.env` local nếu chưa có:
+
+```bash
+cp .env.example .env
+```
+
+Sau đó, từ `backend/`, nạp các biến local vào shell hiện tại và chạy Uvicorn ở
+factory mode:
+
+```bash
+set -a
+source ../.env
+set +a
+python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+`DATABASE_URL` là biến bắt buộc. `APP_NAME`, `APP_ENVIRONMENT`, `APP_VERSION` và
+`LOG_LEVEL` có default an toàn cho local development và có thể được override
+bằng environment. Không commit `.env` hoặc dùng credential trong `.env.example`
+ngoài máy development.
+
+Trong terminal khác, gọi liveness endpoint:
+
+```bash
+curl --include http://127.0.0.1:8000/health
+curl --include \
+  --header 'X-Request-ID: local-check-001' \
+  http://127.0.0.1:8000/health
+curl --include http://127.0.0.1:8000/missing
+```
+
+Mọi response có header `X-Request-ID`; JSON error cũng chứa cùng request ID.
+`GET /health` không cần authentication và chỉ kiểm tra process liveness. Nó
+không kiểm tra PostgreSQL readiness hoặc bất kỳ external service nào.
+
+Dừng server bằng `Ctrl+C`. Có thể deactivate virtual environment bằng:
+
+```bash
+deactivate
+```
 
 ## Tài khoản dịch vụ cần chuẩn bị
 

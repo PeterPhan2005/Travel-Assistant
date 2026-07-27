@@ -44,11 +44,15 @@ ephemerally for Firebase credentials, cancellation is controlled, and Firebase
 current-user state remains the single session source of truth. Explicit sign-out
 clears Firebase and Credential Manager state; a clearing failure keeps the app
 SignedOut with a recoverable warning. Production/release configuration remains
-separate and absent.
+separate and absent. The backend now has an independent FastAPI application
+factory, immutable validated environment settings, an unauthenticated liveness
+endpoint, validated request correlation IDs and one sanitized JSON error
+envelope. It does not connect to PostgreSQL or initialize Firebase, providers or
+the AI runtime.
 
 ## Current goal
 
-T022 Google authentication is complete. Do not begin T023 until it is explicitly
+T023 FastAPI service is complete. Do not begin T024 until it is explicitly
 assigned.
 
 ## Completed
@@ -75,6 +79,7 @@ assigned.
 - T020 Integrate Firebase configuration.
 - T021 Implement email authentication.
 - T022 Implement Google authentication.
+- T023 Create FastAPI service.
 
 ## In progress
 
@@ -82,7 +87,7 @@ assigned.
 
 ## Next up
 
-- T023 Create FastAPI service.
+- T024 Verify Firebase tokens in backend.
 
 ## Open questions
 
@@ -145,6 +150,12 @@ assigned.
   state, local persistence or logs. Cancellation is distinct from failure.
   Firebase current-user observation remains the sole persistent session source,
   and the common sign-out path clears both Firebase and Credential Manager state.
+- The backend application is created only through a typed FastAPI factory. Its
+  required `DATABASE_URL` is stored as a redacted secret and restricted to the
+  planned `postgresql+asyncpg` scheme, but T023 opens no database connection.
+  `/health` is liveness-only. Safe caller request IDs are preserved; invalid
+  values are replaced by UUIDs, and all application JSON errors share a typed,
+  sanitized envelope containing the response request ID.
 - POI-owned aliases, menus and narrations cascade on POI deletion. Itinerary
   items cascade on itinerary deletion, while a deleted POI sets an optional
   itinerary-item POI reference to null so the user's itinerary item remains.
@@ -164,8 +175,8 @@ assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004 and T010 through T022 are complete; T023 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration and backend Firebase ID-token verification remain absent. There is no background tracking or exact-location persistence. Package downloading, networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists; backend application, server database schema/migrations, data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004 and T010 through T023 are complete; T024 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration and backend Firebase ID-token verification remain absent. There is no background tracking or exact-location persistence. Package downloading, networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs and sanitized error envelope are implemented; Firebase token verification, database connectivity/schema/migrations, data pipeline and agent runtime are not. |
 
 ## Session notes
 
@@ -444,3 +455,18 @@ dark themes, no automatic picker, explicit Credential Manager launch, harmless
 cancellation, live Google/Firebase authentication, restored session after cold
 launch, sign-out with renewed account selection, preserved Explore/Room package
 data and location permission, and a localized offline authentication failure.
+
+T023 completed on 2026-07-27. The backend now pins its minimal production and
+test dependencies and exposes a typed `create_app` factory without module-level
+application construction. Settings are immutable, load from environment, require
+a redacted `DATABASE_URL` using `postgresql+asyncpg`, and constrain environment
+and log-level values. `GET /health` returns only safe service liveness metadata
+without touching PostgreSQL or another service. Pure ASGI middleware validates
+or generates `X-Request-ID` values, keeps them request-scoped and adds them to
+success and controlled-error responses. Typed handlers normalize HTTP,
+validation and unexpected failures into one sanitized JSON envelope; the 500
+path exposes no exception detail. Tests cover settings, independent factories,
+database-free health, request-ID validation and all error paths. CI now caches
+both dependency files and applies strict mypy checks to application and test
+code. Firebase verification, database connectivity/schema/migrations, protected
+routes, provider adapters, AI runtime and Android networking remain unimplemented.
