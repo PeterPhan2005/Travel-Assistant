@@ -1,7 +1,7 @@
 ---
 id: T030
 title: Create server database schema
-status: todo
+status: done
 depends_on: [T003, T023]
 area: backend
 ---

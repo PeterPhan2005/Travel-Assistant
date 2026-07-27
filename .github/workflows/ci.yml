@@ -53,6 +53,27 @@ jobs:
   backend:
     name: Backend lint, type check, and test
     runs-on: ubuntu-24.04
+    env:
+      DATABASE_URL: postgresql+asyncpg://travel_assistant:ci_only@localhost:5432/travel_assistant
+      FIREBASE_PROJECT_ID: travel-assistant-ci
+    services:
+      database:
+        image: kartoza/postgis:18.4-3.6.4--v2026.06.21
+        env:
+          POSTGRES_DB: travel_assistant
+          POSTGRES_USER: travel_assistant
+          POSTGRES_PASS: ci_only
+          POSTGRES_MULTIPLE_EXTENSIONS: postgis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "PGPASSWORD=ci_only pg_isready
+          --host=127.0.0.1
+          --username=travel_assistant
+          --dbname=travel_assistant"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -77,6 +98,10 @@ jobs:
       - name: Run mypy
         working-directory: backend
         run: mypy --strict app tests
+
+      - name: Run Alembic upgrade
+        working-directory: backend
+        run: alembic upgrade head
 
       - name: Run pytest
         working-directory: backend

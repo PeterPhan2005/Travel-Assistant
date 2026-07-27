@@ -64,5 +64,7 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   FastAPI application factory, settings validation, liveness health check,
   request correlation IDs, JSON error envelope và Firebase Admin ID-token
   verification với revocation checking cho endpoint UID-only `/auth/me`.
-  Database connectivity, schema/migrations, Android-to-backend transport, data
-  pipeline và agent runtime chưa được triển khai.
+  SQLAlchemy 2 typed schema và Alembic migration foundation đã có cho dữ liệu
+  người dùng, trip/itinerary và curated POI/content trên PostGIS. Runtime
+  engine/session, Android-to-backend transport, data pipeline và agent runtime
+  chưa được triển khai.

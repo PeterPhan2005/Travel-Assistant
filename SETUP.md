@@ -224,7 +224,33 @@ postgresql+asyncpg://travel_assistant:local_dev_only_change_me@localhost:5433/tr
 
 Nếu credential chứa ký tự đặc biệt, phần user/password trong URL phải được
 percent-encode. FastAPI settings hiện validation URL này nhưng không mở kết nối.
-SQLAlchemy, database session và Alembic vẫn chưa được triển khai.
+SQLAlchemy models và Alembic migration đã có. T030 chưa tạo runtime
+engine/session và không kết nối database khi FastAPI khởi động.
+
+### Chạy migration backend
+
+Export cấu hình local từ `.env`, rồi chạy Alembic trong `backend/`:
+
+```bash
+set -a
+source .env
+set +a
+cd backend
+alembic upgrade head
+alembic current
+```
+
+Migration đầu tiên chạy `CREATE EXTENSION IF NOT EXISTS postgis`. Database role
+phải có quyền cài extension nếu hạ tầng chưa cài PostGIS; downgrade không xóa
+extension dùng chung. Kiểm tra round trip trên database rỗng bằng:
+
+```bash
+alembic downgrade base
+alembic upgrade head
+```
+
+Không chạy downgrade trên database có dữ liệu cần giữ. Migration chỉ đọc
+`DATABASE_URL`; không cần Firebase credential hoặc service-account file.
 
 Dừng container nhưng giữ dữ liệu local:
 

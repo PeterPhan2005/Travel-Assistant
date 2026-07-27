@@ -45,8 +45,10 @@ Credential Manager state. Android networking và các tính năng sản phẩm k
 chưa được triển khai. Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.
-Backend chưa kết nối PostgreSQL, chưa có schema hoặc migration và chưa có AI
-runtime. Android app chưa lấy ID token để gọi backend này.
+Backend đã có SQLAlchemy 2 typed models và Alembic migration đầu tiên cho dữ
+liệu người dùng, chuyến đi, itinerary và curated POI/content trên
+PostgreSQL/PostGIS. Chưa có engine/session ở runtime, API dữ liệu, seed pipeline
+hoặc AI runtime. Android app chưa lấy ID token để gọi backend này.
 
 ## Android app identifiers
 
