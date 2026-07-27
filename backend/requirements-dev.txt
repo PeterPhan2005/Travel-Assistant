@@ -1,4 +1,6 @@
-# CI-only development tooling. Production dependencies belong to T023.
+-r requirements.txt
+
+httpx2==2.9.1
 mypy==2.3.0
 pytest==9.1.1
 ruff==0.15.22
