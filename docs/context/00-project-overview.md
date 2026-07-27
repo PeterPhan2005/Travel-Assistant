@@ -69,6 +69,8 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   pipeline schema version 1 đã có YAML canonical packages cho HCMC và Bangkok,
   strict validation/JSON Schema cùng async transactional idempotent seed.
   Provider-neutral POI contract và curated PostGIS adapter đã có với timeout,
-  lỗi và provenance được chuẩn hóa. Runtime engine/session cho route,
-  Android-to-backend transport, nearby API, live Google Places và agent runtime
-  chưa được triển khai.
+  lỗi và provenance được chuẩn hóa. `GET /pois/nearby` dùng optional Firebase
+  Bearer authentication, app-scoped async engine và request-scoped read-only
+  session để trả normalized curated POI với distance metre,
+  provenance/freshness và bounded `is_complete`. Android-to-backend transport,
+  live Google Places và agent runtime chưa được triển khai.

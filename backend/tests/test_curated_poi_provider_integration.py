@@ -14,6 +14,8 @@ import asyncpg  # type: ignore[import-untyped]
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
 from sqlalchemy import event
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import (
@@ -29,6 +31,8 @@ from app.data_pipeline.seeder import (
     in_memory_loaded_package,
     seed_loaded_package,
 )
+from app.core.settings import ApplicationEnvironment, Settings
+from app.main import create_app
 from app.providers.poi.curated import CuratedPoiProvider
 from app.providers.poi.errors import PoiProviderError, ProviderErrorCode
 from app.providers.poi.models import (
@@ -576,3 +580,166 @@ def test_real_database_cancellation_propagates(
     provider_database_url: str,
 ) -> None:
     _run(_cancel_while_database_is_blocked(provider_database_url))
+
+
+def _endpoint_client(database_url: str) -> TestClient:
+    settings = Settings(
+        database_url=SecretStr(database_url),
+        firebase_project_id="travel-assistant-postgis-test",
+        application_environment=ApplicationEnvironment.TEST,
+    )
+    return TestClient(
+        create_app(settings),
+        raise_server_exceptions=False,
+    )
+
+
+def test_nearby_endpoint_uses_seeded_postgis_without_mutation(
+    provider_database_url: str,
+) -> None:
+    before = _run(_database_snapshot(provider_database_url))
+
+    with _endpoint_client(provider_database_url) as client:
+        health = client.get("/health")
+        hcmc = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.7799,
+                "longitude": 106.7,
+            },
+        )
+        bangkok = client.get(
+            "/pois/nearby",
+            params={
+                "city": "bkk",
+                "latitude": 13.746508,
+                "longitude": 100.493096,
+            },
+        )
+        category = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.7799,
+                "longitude": 106.7,
+                "category": "museum",
+            },
+        )
+        text = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.7799,
+                "longitude": 106.7,
+                "query": "chiến tranh",
+            },
+        )
+        radius = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.7799,
+                "longitude": 106.7,
+                "radius_metres": 100,
+            },
+        )
+        limited = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.7799,
+                "longitude": 106.7,
+                "limit": 1,
+            },
+        )
+
+    after = _run(_database_snapshot(provider_database_url))
+    assert health.status_code == 200
+    assert hcmc.status_code == 200
+    assert bangkok.status_code == 200
+    assert category.status_code == 200
+    assert text.status_code == 200
+    assert radius.status_code == 200
+    assert limited.status_code == 200
+    assert before == after
+
+    hcmc_body = hcmc.json()
+    bangkok_body = bangkok.json()
+    assert [item["provider_id"] for item in hcmc_body["items"]] == [
+        "hcmc-poi-central-post-office",
+        "hcmc-poi-war-remnants-museum",
+    ]
+    assert [item["provider_id"] for item in bangkok_body["items"]] == [
+        "bkk-poi-wat-pho"
+    ]
+    assert {item["city"] for item in hcmc_body["items"]} == {"hcmc"}
+    assert {item["city"] for item in bangkok_body["items"]} == {"bkk"}
+    assert [item["provider_id"] for item in category.json()["items"]] == [
+        "hcmc-poi-war-remnants-museum"
+    ]
+    assert [item["provider_id"] for item in text.json()["items"]] == [
+        "hcmc-poi-war-remnants-museum"
+    ]
+    assert [item["provider_id"] for item in radius.json()["items"]] == [
+        "hcmc-poi-central-post-office"
+    ]
+    assert limited.json()["returned_count"] == 1
+    assert limited.json()["is_complete"] is False
+
+    first = hcmc_body["items"][0]
+    assert first["distance_metres"] == pytest.approx(0.0, abs=0.01)
+    assert first["coordinates"] == {
+        "latitude": pytest.approx(10.7799),
+        "longitude": pytest.approx(106.7),
+    }
+    assert first["sources"]
+    assert first["retrieved_at"]
+    assert hcmc_body["freshness_at"]
+    assert first["rating"] is None
+    assert first["price_level"] is None
+    assert first["opening_hours_summary"] is None
+    assert "origin" not in hcmc.text
+    assert "payload" not in hcmc.text
+    assert "metadata" not in hcmc.text
+    source_ids = [
+        source["source_id"] for source in first["sources"]
+    ]
+    assert source_ids == sorted(set(source_ids))
+
+
+def test_nearby_endpoint_preserves_distance_then_stable_id_order(
+    provider_database_url: str,
+) -> None:
+    _run(_insert_tie_fixtures(provider_database_url))
+
+    with _endpoint_client(provider_database_url) as client:
+        response = client.get(
+            "/pois/nearby",
+            params={
+                "city": "hcmc",
+                "latitude": 10.78,
+                "longitude": 106.71,
+                "radius_metres": 100,
+                "query": "Tie POI",
+                "limit": 20,
+            },
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["provider_id"] for item in body["items"]] == [
+        "hcmc-poi-tie-a",
+        "hcmc-poi-tie-b",
+    ]
+    assert all(
+        item["distance_metres"] == pytest.approx(0.0, abs=0.01)
+        for item in body["items"]
+    )
+    assert [
+        source["source_id"]
+        for source in body["items"][0]["sources"]
+    ] == [
+        "hcmc-source-tie-a",
+        "hcmc-source-tie-b",
+    ]

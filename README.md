@@ -51,9 +51,11 @@ PostgreSQL/PostGIS. Curated pipeline version 1 dùng YAML/JSON contract strict,
 JSON Schema sinh từ Pydantic và async transactional upsert để validate/seed các
 starter package có nguồn cho HCMC và Bangkok một cách offline, idempotent.
 POI provider boundary nội bộ và curated PostGIS adapter đã có với contract,
-timeout/lỗi và provenance chuẩn hóa. Chưa có engine/session cho FastAPI route,
-API dữ liệu, live Google Places hoặc AI runtime. Android app chưa lấy ID token
-để gọi backend này.
+timeout/lỗi và provenance chuẩn hóa. Canonical `GET /pois/nearby` API hiện dùng
+app-scoped async engine, request-scoped read-only session và optional Firebase
+Bearer authentication để trả normalized curated POI với distance metre,
+provenance/freshness và bounded `is_complete`. Chưa có live Google Places,
+Android networking hoặc AI runtime; Android app chưa gọi backend này.
 
 ## Android app identifiers
 

@@ -223,9 +223,12 @@ postgresql+asyncpg://travel_assistant:local_dev_only_change_me@localhost:5433/tr
 ```
 
 Nếu credential chứa ký tự đặc biệt, phần user/password trong URL phải được
-percent-encode. FastAPI settings hiện validation URL này nhưng không mở kết nối.
-SQLAlchemy models và Alembic migration đã có. T030 chưa tạo runtime
-engine/session và không kết nối database khi FastAPI khởi động.
+percent-encode. FastAPI settings validation URL này. T033 tạo async SQLAlchemy
+engine theo lifespan của từng app, nhưng engine chỉ kết nối khi nearby route cần
+session: import và `GET /health` không mở database session hoặc chạy readiness
+query. `GET /pois/nearby` tạo rồi luôn đóng một request-scoped `AsyncSession`.
+SQLAlchemy models và Alembic migration vẫn quản lý schema; FastAPI không tạo
+table ở runtime.
 
 ### Chạy migration backend
 
@@ -323,31 +326,46 @@ dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ
 có nguồn review được; mục tiêu 30–50 POI thuộc T092/T093, chưa hoàn thành ở
 T031.
 
-### POI provider boundary nội bộ
+### POI provider và nearby HTTP API
 
 T032 thêm contract bất biến, provider-neutral tại `app/providers/poi/` và
 curated adapter đọc các bảng T030 bằng một `AsyncSession` được caller inject.
-Adapter không tự tạo engine/session ở import time, không được wire vào
-`create_app()` và không lưu hoặc log origin/query. Nó lọc theo city, bán kính
-metre, category và text tối giản; PostGIS geography thực hiện radius/distance,
-sau đó kết quả được sắp theo distance metre và stable POI ID.
+T033 wire adapter này vào canonical route `GET /pois/nearby`; app factory không
+tạo engine/session ở import time và route không lưu hoặc log origin/query. Nó
+lọc theo city, bán kính metre, category và text tối giản; PostGIS geography thực
+hiện radius/distance, sau đó kết quả được sắp theo distance metre và stable POI
+ID mà HTTP layer không xếp hạng lại.
 Provenance/freshness được map sang model typed; SQLAlchemy/GeoAlchemy row và
 payload tùy ý không đi qua boundary.
 
-Đây là application-internal boundary, chưa phải HTTP API. T032 không thêm
-`/pois`, `/nearby` hoặc search route. Chưa có live Google Places adapter, HTTP
-call, SDK hoặc Google Places API-key setting, nên T032 không cần API key.
+Chỉ có route `GET /pois/nearby`; không có alias `/pois` hoặc `/nearby`. Query
+bắt buộc gồm `city` (`hcmc` hoặc `bkk`), `latitude`, `longitude`.
+`radius_metres` mặc định 5.000, phải từ 1 đến 50.000; `limit` mặc định 5, phải
+từ 1 đến 20. `query` và `category` là filter tùy chọn. Response chỉ chứa
+normalized destination POI, `distance_metres`, typed `sources`, `retrieved_at`,
+`freshness_at`, `returned_count` và `is_complete`; request origin không được
+echo hoặc persist. Facts chưa được provider hỗ trợ như rating, price level và
+opening hours giữ `null` thay vì được tự điền.
+
+Authentication của nearby route là tùy chọn: thiếu `Authorization` được phép và
+không gọi Firebase verifier; nếu header được gửi thì phải là Firebase `Bearer`
+token hợp lệ. Token malformed, invalid, expired hoặc revoked bị từ chối bằng
+controlled auth error, không bị coi là anonymous. Kết quả không personalize
+theo UID và không trả UID. `/auth/me` vẫn bắt buộc authentication, còn
+`/health` vẫn public và database-free.
+
+Chưa có live Google Places adapter, HTTP call, SDK hoặc Google Places API-key
+setting, nên T033 không cần Google API key.
 `google_places` mới chỉ là provider namespace dành cho adapter tương lai; field
 mask, Google type/price/hour và lỗi provider phải được normalize bên trong
 adapter đó thay vì lộ payload Google.
 
-Để gọi curated adapter trực tiếp trong test/tooling, caller phải chủ động tạo
-async engine/session từ database development/test đã migrate, inject session
-vào `CuratedPoiProvider`, tạo `PoiDiscoveryRequest` đã validate rồi gọi
-`await provider.discover(request)`. Deadline được inject bằng
-`ProviderTimeoutPolicy`; hết deadline luôn trả failure code `timeout`, còn
-caller cancellation tiếp tục propagate. T033 sẽ dùng boundary này để triển khai
-nearby HTTP API; không có route/session runtime nào được thêm trong T032.
+Trước khi gọi nearby API local, database phải healthy, đã migration đến head và
+đã seed cả hai city bằng các lệnh ở phần trên. Provider deadline vẫn được bound;
+timeout/unavailable/misconfigured map thành 503, rate limit thành 429, invalid
+request thành 400, invalid response thành 502, unsupported thành 501 và internal
+failure thành sanitized 500. Caller cancellation tiếp tục propagate, không có
+retry/backoff hoặc giá trị `Retry-After` được tự tạo.
 
 Dừng container nhưng giữ dữ liệu local:
 
@@ -500,21 +518,25 @@ Các lệnh `python --version`, `docker --version`, `docker info`, `node --versi
 và `codex --version` vẫn là kiểm tra bắt buộc.
 
 Backend yêu cầu `DATABASE_URL` và `FIREBASE_PROJECT_ID` hợp lệ ngay khi tạo
-application, nhưng vẫn chưa mở kết nối database. `FIREBASE_PROJECT_ID` chọn đúng
-Firebase development project mà backend chấp nhận token; đây là identifier,
-không phải secret. Từ repository root, tạo `.env` local nếu chưa có:
+application. Engine được tạo theo app lifespan nhưng chỉ kết nối khi nearby
+route cần session; `/health` không chạm database. `FIREBASE_PROJECT_ID` chọn
+đúng Firebase development project mà backend chấp nhận token; đây là
+identifier, không phải secret. Từ repository root, tạo `.env` local nếu chưa có:
 
 ```bash
 cp .env.example .env
 ```
 
-Sau đó, từ `backend/`, nạp các biến local vào shell hiện tại và chạy Uvicorn ở
-factory mode:
+Sau đó, từ `backend/`, nạp các biến local, migrate và seed trước khi chạy
+Uvicorn ở factory mode:
 
 ```bash
 set -a
 source ../.env
 set +a
+alembic upgrade head
+python -m app.data_pipeline seed --city hcmc
+python -m app.data_pipeline seed --city bkk
 python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
@@ -549,6 +571,25 @@ curl --include http://127.0.0.1:8000/auth/me
 curl --include \
   --header 'Authorization: Bearer <Firebase-ID-token>' \
   http://127.0.0.1:8000/auth/me
+curl --include --get \
+  --data-urlencode 'city=hcmc' \
+  --data-urlencode 'latitude=10.7799' \
+  --data-urlencode 'longitude=106.7000' \
+  http://127.0.0.1:8000/pois/nearby
+curl --include --get \
+  --data-urlencode 'city=bkk' \
+  --data-urlencode 'latitude=13.746508' \
+  --data-urlencode 'longitude=100.493096' \
+  http://127.0.0.1:8000/pois/nearby
+curl --include --get \
+  --data-urlencode 'city=hcmc' \
+  --data-urlencode 'latitude=10.7799' \
+  --data-urlencode 'longitude=106.7000' \
+  --data-urlencode 'query=chiến tranh' \
+  --data-urlencode 'category=museum' \
+  --data-urlencode 'radius_metres=2000' \
+  --data-urlencode 'limit=3' \
+  http://127.0.0.1:8000/pois/nearby
 curl --include http://127.0.0.1:8000/missing
 ```
 
@@ -561,9 +602,18 @@ revocation và trạng thái disabled. Revocation checking có thể gọi Fireb
 mạng; lỗi credential, certificate hoặc mạng trả lỗi service có kiểm soát.
 Không đặt token thật trong command history hoặc tài liệu.
 
+`GET /pois/nearby` không cần authentication khi header bị thiếu; có thể thêm
+placeholder `Authorization: Bearer <Firebase-ID-token>` để thử optional-auth
+trong môi trường development. Một header đã gửi nhưng không hợp lệ luôn bị từ
+chối. `distance_metres` luôn dùng metre; `sources`, `retrieved_at` và
+`freshness_at` mô tả provenance/freshness an toàn khi dữ liệu nguồn có sẵn.
+Ngay trước khi server ghi access log, query string được bỏ khỏi ASGI scope nên
+tọa độ origin, query text và category không xuất hiện trong access-log request
+line; route vẫn nhận đủ query parameters để validation và discovery.
+
 Android app chưa có transport tới backend và chưa lấy Firebase ID token để gọi
-`/auth/me`; phần đó vẫn là task tích hợp sau. Không thêm networking Android để
-kiểm tra endpoint trong T024.
+`/auth/me` hoặc `/pois/nearby`; phần đó vẫn là task tích hợp sau. Không thêm
+networking Android để kiểm tra endpoint trong T033.
 
 Dừng server bằng `Ctrl+C`. Có thể deactivate virtual environment bằng:
 
