@@ -65,6 +65,8 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   request correlation IDs, JSON error envelope và Firebase Admin ID-token
   verification với revocation checking cho endpoint UID-only `/auth/me`.
   SQLAlchemy 2 typed schema và Alembic migration foundation đã có cho dữ liệu
-  người dùng, trip/itinerary và curated POI/content trên PostGIS. Runtime
-  engine/session, Android-to-backend transport, data pipeline và agent runtime
-  chưa được triển khai.
+  người dùng, trip/itinerary và curated POI/content trên PostGIS. Curated
+  pipeline schema version 1 đã có YAML canonical packages cho HCMC và Bangkok,
+  strict validation/JSON Schema cùng async transactional idempotent seed.
+  Runtime engine/session cho route, Android-to-backend transport, provider/API
+  và agent runtime chưa được triển khai.

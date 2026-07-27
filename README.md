@@ -47,8 +47,11 @@ validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.
 Backend đã có SQLAlchemy 2 typed models và Alembic migration đầu tiên cho dữ
 liệu người dùng, chuyến đi, itinerary và curated POI/content trên
-PostgreSQL/PostGIS. Chưa có engine/session ở runtime, API dữ liệu, seed pipeline
-hoặc AI runtime. Android app chưa lấy ID token để gọi backend này.
+PostgreSQL/PostGIS. Curated pipeline version 1 dùng YAML/JSON contract strict,
+JSON Schema sinh từ Pydantic và async transactional upsert để validate/seed các
+starter package có nguồn cho HCMC và Bangkok một cách offline, idempotent.
+Chưa có engine/session cho FastAPI route, API dữ liệu, provider adapter hoặc AI
+runtime. Android app chưa lấy ID token để gọi backend này.
 
 ## Android app identifiers
 

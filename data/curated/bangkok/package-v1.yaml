@@ -1,0 +1,28 @@
+schema_version: 1
+package:
+  package_id: bkk-starter-v1
+  city_code: bkk
+  content_version: "1.0.0"
+  published_at: "2026-07-26T17:00:00Z"
+sources:
+  - id: bkk-source-wat-pho-trip
+    city_code: bkk
+    source_type: official_operator
+    label: Wat Pho — Trip to Wat Pho
+    publisher: Wat Pho
+    url: https://watpho.com/en/contact/trip
+    retrieved_at: "2026-07-26T17:00:00Z"
+pois:
+  - id: bkk-poi-wat-pho
+    city_code: bkk
+    canonical_name: Wat Pho
+    area: Phra Nakhon
+    category: temple
+    address: 2 Sanam Chai Road, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.746508
+      longitude: 100.493096
+    source_ids:
+      - bkk-source-wat-pho-trip
+menu_items: []
+narrations: []

@@ -1,0 +1,43 @@
+schema_version: 1
+package:
+  package_id: hcmc-starter-v1
+  city_code: hcmc
+  content_version: "1.0.0"
+  published_at: "2026-07-26T17:00:00Z"
+sources:
+  - id: hcmc-source-vnat-central-post-office
+    city_code: hcmc
+    source_type: official_government
+    label: Vietnam National Authority of Tourism — Saigon Central Post Office
+    publisher: Vietnam National Authority of Tourism
+    url: https://vietnamtourism.gov.vn/en/post/18661
+    retrieved_at: "2026-07-26T17:00:00Z"
+  - id: hcmc-source-war-remnants-museum-visit
+    city_code: hcmc
+    source_type: official_institution
+    label: War Remnants Museum — Visit
+    publisher: War Remnants Museum
+    url: https://baotangchungtichchientranh.vn/en/visit
+    retrieved_at: "2026-07-26T17:00:00Z"
+pois:
+  - id: hcmc-poi-central-post-office
+    city_code: hcmc
+    canonical_name: Bưu điện Trung tâm Sài Gòn
+    category: landmark
+    location:
+      latitude: 10.7799
+      longitude: 106.7
+    source_ids:
+      - hcmc-source-vnat-central-post-office
+  - id: hcmc-poi-war-remnants-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Chứng tích Chiến tranh
+    category: museum
+    address: 28 Võ Văn Tần, Phường Xuân Hòa, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.7795
+      longitude: 106.692
+    source_ids:
+      - hcmc-source-war-remnants-museum-visit
+menu_items: []
+narrations: []

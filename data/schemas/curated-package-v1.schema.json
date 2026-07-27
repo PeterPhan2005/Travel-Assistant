@@ -1,0 +1,489 @@
+{
+  "$defs": {
+    "CityCode": {
+      "description": "Stable city identifiers accepted by the initial pipeline.",
+      "enum": [
+        "hcmc",
+        "bkk"
+      ],
+      "title": "CityCode",
+      "type": "string"
+    },
+    "Coordinates": {
+      "additionalProperties": false,
+      "description": "Canonical WGS84 latitude/longitude authoring shape.",
+      "properties": {
+        "latitude": {
+          "maximum": 90,
+          "minimum": -90,
+          "title": "Latitude",
+          "type": "number"
+        },
+        "longitude": {
+          "maximum": 180,
+          "minimum": -180,
+          "title": "Longitude",
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "title": "Coordinates",
+      "type": "object"
+    },
+    "MenuItemRecord": {
+      "additionalProperties": false,
+      "description": "Integer minor-unit menu price with direct source freshness.",
+      "properties": {
+        "city_code": {
+          "$ref": "#/$defs/CityCode"
+        },
+        "currency_code": {
+          "maxLength": 3,
+          "minLength": 3,
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency Code",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "item_name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Item Name",
+          "type": "string"
+        },
+        "poi_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Poi Id",
+          "type": "string"
+        },
+        "price_minor_units": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Price Minor Units",
+          "type": "integer"
+        },
+        "source_id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceType"
+        },
+        "source_updated_at": {
+          "format": "date-time",
+          "title": "Source Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "city_code",
+        "poi_id",
+        "source_id",
+        "item_name",
+        "price_minor_units",
+        "currency_code",
+        "source_type",
+        "source_updated_at"
+      ],
+      "title": "MenuItemRecord",
+      "type": "object"
+    },
+    "NarrationRecord": {
+      "additionalProperties": false,
+      "description": "Grounded narration or an explicitly labelled fallback.",
+      "properties": {
+        "city_code": {
+          "$ref": "#/$defs/CityCode"
+        },
+        "content": {
+          "maxLength": 4000,
+          "minLength": 20,
+          "title": "Content",
+          "type": "string"
+        },
+        "fallback_source_label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallback Source Label"
+        },
+        "id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "language_code": {
+          "maxLength": 16,
+          "minLength": 2,
+          "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$",
+          "title": "Language Code",
+          "type": "string"
+        },
+        "poi_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Poi Id",
+          "type": "string"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "verification_status": {
+          "$ref": "#/$defs/VerificationStatus"
+        }
+      },
+      "required": [
+        "id",
+        "city_code",
+        "poi_id",
+        "language_code",
+        "content",
+        "verification_status"
+      ],
+      "title": "NarrationRecord",
+      "type": "object"
+    },
+    "PackageMetadata": {
+      "additionalProperties": false,
+      "description": "Package identity and publication metadata.",
+      "properties": {
+        "city_code": {
+          "$ref": "#/$defs/CityCode"
+        },
+        "content_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[0-9]+(?:\\.[0-9]+){0,2}$",
+          "title": "Content Version",
+          "type": "string"
+        },
+        "package_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Package Id",
+          "type": "string"
+        },
+        "published_at": {
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "package_id",
+        "city_code",
+        "content_version",
+        "published_at"
+      ],
+      "title": "PackageMetadata",
+      "type": "object"
+    },
+    "PoiRecord": {
+      "additionalProperties": false,
+      "description": "Curated point of interest with explicit record provenance.",
+      "properties": {
+        "address": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address"
+        },
+        "area": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Area"
+        },
+        "canonical_name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Canonical Name",
+          "type": "string"
+        },
+        "category": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "city_code": {
+          "$ref": "#/$defs/CityCode"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Coordinates"
+        },
+        "short_description": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Description"
+        },
+        "source_ids": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "city_code",
+        "canonical_name",
+        "category",
+        "location",
+        "source_ids"
+      ],
+      "title": "PoiRecord",
+      "type": "object"
+    },
+    "SourceRecord": {
+      "additionalProperties": false,
+      "description": "Reusable provenance metadata without copied source bodies.",
+      "properties": {
+        "city_code": {
+          "$ref": "#/$defs/CityCode"
+        },
+        "id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publisher"
+        },
+        "retrieved_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retrieved At"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceType"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "id",
+        "city_code",
+        "source_type",
+        "label"
+      ],
+      "title": "SourceRecord",
+      "type": "object"
+    },
+    "SourceType": {
+      "description": "Reviewable source classes stored in the T030 source_type column.",
+      "enum": [
+        "official_government",
+        "official_institution",
+        "official_operator",
+        "official_tourism"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    },
+    "VerificationStatus": {
+      "description": "Grounding status accepted for authored narrations.",
+      "enum": [
+        "verified",
+        "fallback"
+      ],
+      "title": "VerificationStatus",
+      "type": "string"
+    }
+  },
+  "$id": "https://travel-assistant.invalid/schemas/curated-package-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Complete schema-version-1 curated package.",
+  "properties": {
+    "menu_items": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/MenuItemRecord"
+      },
+      "title": "Menu Items",
+      "type": "array"
+    },
+    "narrations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NarrationRecord"
+      },
+      "title": "Narrations",
+      "type": "array"
+    },
+    "package": {
+      "$ref": "#/$defs/PackageMetadata"
+    },
+    "pois": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PoiRecord"
+      },
+      "title": "Pois",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "sources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SourceRecord"
+      },
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package"
+  ],
+  "title": "CuratedPackageV1",
+  "type": "object"
+}

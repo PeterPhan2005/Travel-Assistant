@@ -252,6 +252,77 @@ alembic upgrade head
 Không chạy downgrade trên database có dữ liệu cần giữ. Migration chỉ đọc
 `DATABASE_URL`; không cần Firebase credential hoặc service-account file.
 
+### Curated data HCMC và Bangkok
+
+T031 dùng YAML làm định dạng authoring chuẩn. JSON cũng được loader chấp nhận
+cho tooling, nhưng các package được track nằm tại:
+
+```text
+data/curated/hcmc/package-v1.yaml
+data/curated/bangkok/package-v1.yaml
+```
+
+Mọi lệnh validation dưới đây hoàn toàn offline: không cần PostgreSQL đang chạy,
+không khởi tạo FastAPI/Firebase và không gọi provider hay AI. Từ `backend/`,
+validate cả hai package:
+
+```bash
+python -m app.data_pipeline validate
+```
+
+Validate một city hoặc một file YAML/JSON cụ thể:
+
+```bash
+python -m app.data_pipeline validate --city hcmc
+python -m app.data_pipeline validate --city bkk
+python -m app.data_pipeline validate --path ../data/curated/hcmc/package-v1.yaml
+```
+
+JSON Schema version 1 được sinh trực tiếp từ Pydantic contract để tránh drift.
+Regenerate sau khi chủ động thay đổi contract rồi kiểm tra file committed:
+
+```bash
+python -m app.data_pipeline schema --write
+python -m app.data_pipeline schema --check
+```
+
+Luôn chạy validation trước seed. Seed thay đổi database được chọn bởi
+`DATABASE_URL`; chỉ dùng database development local hoặc database test dùng một
+lần. Không seed production một cách tùy tiện. Loader từ chối database không có
+dấu hiệu local/development/test. Sau khi nạp `.env` và chạy migration, seed từng
+city từ `backend/`:
+
+```bash
+set -a
+source ../.env
+set +a
+alembic upgrade head
+python -m app.data_pipeline seed --city hcmc
+python -m app.data_pipeline seed --city bkk
+```
+
+Mỗi package được ghi trong một transaction. Seed lại hai lệnh trên để xác nhận
+idempotency an toàn; stable ID được upsert, record không đổi không bị rewrite,
+không truncate dữ liệu và không xóa record chỉ vì nó vắng khỏi package:
+
+```bash
+python -m app.data_pipeline seed --city hcmc
+python -m app.data_pipeline seed --city bkk
+```
+
+Chạy toàn bộ test, gồm test tích hợp tạo database PostGIS tạm có tên T031, từ
+`backend/` khi disposable PostGIS service đang healthy:
+
+```bash
+pytest
+```
+
+Pipeline chỉ đọc nội dung repository, không fetch web/runtime, không sinh nội
+dung bằng AI, không chứa user/preferences/trip/itinerary, không lưu vị trí người
+dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ giữ fact
+có nguồn review được; mục tiêu 30–50 POI thuộc T092/T093, chưa hoàn thành ở
+T031.
+
 Dừng container nhưng giữ dữ liệu local:
 
 ```bash

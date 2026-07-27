@@ -54,14 +54,20 @@ exposes only the verified UID. The backend now also has typed SQLAlchemy 2
 metadata and one async Alembic foundation migration for explicit user
 ownership, trips and ordered itineraries, stable curated POI/content IDs,
 normalized sources, menu prices, grounded narrations and PostGIS geography
-points. Models and `/health` remain database-free at import/startup; runtime
-engine/session wiring, providers and the AI runtime are intentionally not
-present. Android still does not call the backend.
+points. A repository-owned curated pipeline now validates canonical YAML (and
+accepted JSON) against immutable Pydantic schema version 1 plus a generated
+JSON Schema, then seeds the fixed T030 schema with async, transaction-scoped,
+idempotent upserts. Starter packages contain two HCMC POIs and one Bangkok POI,
+each linked to reviewable official sources with retrieval timestamps. Models,
+validation and `/health` remain database-free at import/startup; runtime
+engine/session wiring for routes, providers and the AI runtime are intentionally
+not present. Android still does not call the backend or synchronize these
+packages.
 
 ## Current goal
 
-T030 server database schema is complete. Do not begin T031 until it is
-explicitly assigned.
+T031 curated data pipeline is complete. Do not begin T032 until it is explicitly
+assigned.
 
 ## Completed
 
@@ -90,6 +96,7 @@ explicitly assigned.
 - T023 Create FastAPI service.
 - T024 Verify Firebase tokens in backend.
 - T030 Create server database schema.
+- T031 Build curated data pipeline.
 
 ## In progress
 
@@ -97,7 +104,9 @@ explicitly assigned.
 
 ## Next up
 
-- T031 Build curated data pipeline.
+- T032 Define POI provider adapters. It is the next backend dependency for T033,
+  and can now normalize access to the completed curated store without beginning
+  the nearby API itself.
 
 ## Open questions
 
@@ -183,6 +192,28 @@ explicitly assigned.
   index; no user location history is modeled. Composite trip/owner references
   prevent cross-owner itineraries. Retained curated records restrict source
   deletion so provenance cannot disappear silently.
+- Curated package schema version 1 uses YAML as the canonical authoring format
+  and accepts strict JSON through the same typed boundary. Stable lowercase
+  hyphenated identifiers are city-prefixed with `hcmc-` or `bkk-`; supported
+  city codes are exactly `hcmc` and `bkk`. The generated Draft 2020-12 JSON
+  Schema is committed and CI checks it byte-for-byte against the frozen
+  Pydantic contract.
+- T031 package validation forbids unknown fields, rejects unsupported versions,
+  malformed/naive/future timestamps, unsafe identifiers, invalid HTTP(S) URLs,
+  duplicate IDs, broken references, city mismatches, non-finite/swapped/out-of-
+  city coordinates, floating/negative money, malformed currencies and
+  ungrounded narrations. Errors carry file, stable code, entity, optional record
+  ID, JSONPath-like field and sanitized message in deterministic order.
+- T031 sources preserve source type, label/publisher, URL and available
+  publication/retrieval timestamps. POIs retain normalized source links; menu
+  rows retain a direct source, matching source type, integer minor units,
+  currency and source update timestamp; narrations retain a direct source or
+  explicit fallback label. Missing facts remain absent.
+- Curated seed validation completes before engine creation. Each package uses
+  one async SQLAlchemy transaction in dependency-safe source → POI → link →
+  menu → narration order. Stable-ID conflict updates are conditional, so an
+  identical second seed does not rewrite rows; absent input never triggers
+  deletion. Any late failure rolls back the whole package.
 
 ## T002 baseline consistency review
 
@@ -199,8 +230,8 @@ explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T024 and T030 are complete; T031 is the sole next task. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. Package downloading, Android networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public. Typed SQLAlchemy metadata and an async Alembic migration now create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema and round-trip on real PostgreSQL/PostGIS. Runtime engine/session wiring, the T031 data pipeline and agent runtime are not implemented. |
+| Task sequence | T000 through T004, T010 through T024 and T030–T031 are complete; T032 is the sole next task. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Local package version and publication metadata is visible only in Downloads. Assistant and Downloads explain Internet-only future actions, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. Package downloading, Android networking and AI remain incomplete. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. Runtime route sessions, provider/API behavior and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -530,3 +561,28 @@ deletion preserves itinerary items through `SET NULL`, and itinerary deletion
 cascades to items. Model import and FastAPI `/health` remain database-free.
 Runtime engine/session creation, APIs, user provisioning, seed/import behavior
 and T031 work remain intentionally unimplemented.
+
+T031 completed on 2026-07-27 with repository-owned curated package schema
+version 1. YAML is canonical and JSON is accepted through the same frozen,
+extra-forbidden Pydantic boundary; a generated Draft 2020-12 JSON Schema is
+committed with deterministic write/check commands. Validation is entirely
+offline and reports sorted, sanitized file/code/entity/record/JSONPath errors
+for structural, identifier, reference, city, timestamp, URL, coordinate,
+provenance, narration and integer-money failures before database access. Stable
+city codes are `hcmc` and `bkk`. Starter packages are `hcmc-starter-v1` with two
+POIs/two sources and `bkk-starter-v1` with one POI/one source. They deliberately
+contain no unverified menus or AI-authored narrations and do not claim the
+future 30–50 POI target.
+
+The async SQLAlchemy seed command uses only `DATABASE_URL`, refuses targets not
+visibly local/development/test, converts validated longitude-first coordinates
+to `GEOGRAPHY(POINT, 4326)`, and writes source → POI → source-link → menu →
+narration in one transaction. Stable-ID upserts update changed supported fields
+without deleting absent rows; unchanged second runs do not rewrite records, and
+late failures roll back the package. Real disposable PostGIS tests confirmed
+both cities remain separate, row counts remain stable on second import, spatial
+type/SRID, provenance/freshness mappings, deterministic updates, rollback, and
+zero writes to user-owned tables. CI now checks dependency consistency, schema
+drift and both packages before pytest. FastAPI CRUD/nearby APIs, provider
+adapters, runtime route sessions, Android travel-package synchronization and AI
+remain incomplete.
