@@ -1,7 +1,7 @@
 ---
 id: T032
 title: Define POI provider adapters
-status: todo
+status: done
 depends_on: [T023, T030]
 area: backend
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No provider payload escapes adapter layer.
-- [ ] Timeout/error shape is standardized.
-- [ ] Curated adapter is implemented first.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No provider payload escapes adapter layer.
+- [x] Timeout/error shape is standardized.
+- [x] Curated adapter is implemented first.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

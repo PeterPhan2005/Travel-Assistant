@@ -68,5 +68,7 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   người dùng, trip/itinerary và curated POI/content trên PostGIS. Curated
   pipeline schema version 1 đã có YAML canonical packages cho HCMC và Bangkok,
   strict validation/JSON Schema cùng async transactional idempotent seed.
-  Runtime engine/session cho route, Android-to-backend transport, provider/API
-  và agent runtime chưa được triển khai.
+  Provider-neutral POI contract và curated PostGIS adapter đã có với timeout,
+  lỗi và provenance được chuẩn hóa. Runtime engine/session cho route,
+  Android-to-backend transport, nearby API, live Google Places và agent runtime
+  chưa được triển khai.

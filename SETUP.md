@@ -323,6 +323,32 @@ dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ
 có nguồn review được; mục tiêu 30–50 POI thuộc T092/T093, chưa hoàn thành ở
 T031.
 
+### POI provider boundary nội bộ
+
+T032 thêm contract bất biến, provider-neutral tại `app/providers/poi/` và
+curated adapter đọc các bảng T030 bằng một `AsyncSession` được caller inject.
+Adapter không tự tạo engine/session ở import time, không được wire vào
+`create_app()` và không lưu hoặc log origin/query. Nó lọc theo city, bán kính
+metre, category và text tối giản; PostGIS geography thực hiện radius/distance,
+sau đó kết quả được sắp theo distance metre và stable POI ID.
+Provenance/freshness được map sang model typed; SQLAlchemy/GeoAlchemy row và
+payload tùy ý không đi qua boundary.
+
+Đây là application-internal boundary, chưa phải HTTP API. T032 không thêm
+`/pois`, `/nearby` hoặc search route. Chưa có live Google Places adapter, HTTP
+call, SDK hoặc Google Places API-key setting, nên T032 không cần API key.
+`google_places` mới chỉ là provider namespace dành cho adapter tương lai; field
+mask, Google type/price/hour và lỗi provider phải được normalize bên trong
+adapter đó thay vì lộ payload Google.
+
+Để gọi curated adapter trực tiếp trong test/tooling, caller phải chủ động tạo
+async engine/session từ database development/test đã migrate, inject session
+vào `CuratedPoiProvider`, tạo `PoiDiscoveryRequest` đã validate rồi gọi
+`await provider.discover(request)`. Deadline được inject bằng
+`ProviderTimeoutPolicy`; hết deadline luôn trả failure code `timeout`, còn
+caller cancellation tiếp tục propagate. T033 sẽ dùng boundary này để triển khai
+nearby HTTP API; không có route/session runtime nào được thêm trong T032.
+
 Dừng container nhưng giữ dữ liệu local:
 
 ```bash
