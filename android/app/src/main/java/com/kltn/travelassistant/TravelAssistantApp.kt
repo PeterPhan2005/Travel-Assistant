@@ -18,6 +18,8 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
 import com.kltn.travelassistant.navigation.TopLevelDestination
@@ -32,6 +34,7 @@ fun TravelAssistantApp(
     appShellViewModel: AppShellViewModel,
     homeViewModel: HomeViewModel,
     profileViewModel: ProfileViewModel,
+    downloadsViewModel: DownloadsViewModel,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult,
@@ -41,10 +44,12 @@ fun TravelAssistantApp(
     val appShellUiState by appShellViewModel.uiState.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val downloadsUiState by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     TravelAssistantAppContent(
         appShellUiState = appShellUiState,
         homeUiState = homeUiState,
         profileUiState = profileUiState,
+        downloadsUiState = downloadsUiState,
         onUseCurrentLocation = onUseCurrentLocation,
         onOpenLocationSettings = onOpenLocationSettings,
         onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
@@ -59,6 +64,8 @@ fun TravelAssistantApp(
         onAuthSignOut = profileViewModel::signOut,
         onAuthRetrySession = profileViewModel::retrySessionObservation,
         onDismissOfflineWarning = appShellViewModel::dismissOfflineWarning,
+        onDownloadPackage = downloadsViewModel::download,
+        onRetryPackageDownload = downloadsViewModel::retry,
         onOpenExternalNavigation = onOpenExternalNavigation,
         modifier = modifier,
     )
@@ -69,6 +76,7 @@ fun TravelAssistantAppContent(
     homeUiState: HomeUiState,
     appShellUiState: AppShellUiState = AppShellUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
+    downloadsUiState: DownloadsUiState? = null,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
@@ -83,6 +91,8 @@ fun TravelAssistantAppContent(
     onAuthSignOut: () -> Unit = {},
     onAuthRetrySession: () -> Unit = {},
     onDismissOfflineWarning: () -> Unit = {},
+    onDownloadPackage: () -> Unit = {},
+    onRetryPackageDownload: () -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult = {
         ExternalNavigationResult.LaunchFailed
@@ -129,6 +139,7 @@ fun TravelAssistantAppContent(
                     profileUiState = profileUiState,
                     connectivityUiState = appShellUiState.connectivity,
                     localPackageUiState = appShellUiState.localPackage,
+                    downloadsUiState = downloadsUiState,
                     onUseCurrentLocation = onUseCurrentLocation,
                     onOpenLocationSettings = onOpenLocationSettings,
                     onNearbyQueryChanged = onNearbyQueryChanged,
@@ -142,6 +153,8 @@ fun TravelAssistantAppContent(
                     onAuthResendVerificationEmail = onAuthResendVerificationEmail,
                     onAuthSignOut = onAuthSignOut,
                     onAuthRetrySession = onAuthRetrySession,
+                    onDownloadPackage = onDownloadPackage,
+                    onRetryPackageDownload = onRetryPackageDownload,
                     onOpenExternalNavigation = onOpenExternalNavigation,
                     poiDetailContent = poiDetailContent,
                     modifier = Modifier.weight(1f),

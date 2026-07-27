@@ -1,7 +1,7 @@
 ---
 id: T035
 title: Download and activate travel package
-status: todo
+status: done
 depends_on: [T013, T034, T024]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Interrupted download resumes/retries.
-- [ ] Bad checksum never replaces active data.
-- [ ] Previous package remains usable.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Interrupted download resumes/retries.
+- [x] Bad checksum never replaces active data.
+- [x] Previous package remains usable.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

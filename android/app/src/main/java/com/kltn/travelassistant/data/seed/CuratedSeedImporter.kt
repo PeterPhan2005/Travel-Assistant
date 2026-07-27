@@ -60,11 +60,8 @@ class RoomCuratedSeedImporter @Inject constructor(
         return try {
             database.withTransaction {
                 val metadata = seed.travelPackage
-                val existingPackage = database.travelPackageDao().getPackageByIdAndVersion(
-                    packageId = metadata.packageId,
-                    version = metadata.version,
-                )
-                if (existingPackage != null) {
+                val activePackage = database.travelPackageDao().getLatestPackage(metadata.city)
+                if (activePackage?.isValidActivePackageFor(metadata.city) == true) {
                     return@withTransaction SeedImportResult.AlreadyImported
                 }
 
@@ -84,4 +81,12 @@ class RoomCuratedSeedImporter @Inject constructor(
             SeedImportResult.Failed(SeedImportFailure.DATABASE)
         }
     }
+
+    private fun com.kltn.travelassistant.data.local.entity.TravelPackageEntity
+        .isValidActivePackageFor(expectedCity: String): Boolean =
+        city == expectedCity &&
+            packageId.isNotBlank() &&
+            version.isNotBlank() &&
+            manifestJson.isNotBlank() &&
+            publishedAtEpochMillis > 0
 }

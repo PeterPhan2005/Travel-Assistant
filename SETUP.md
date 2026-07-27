@@ -402,6 +402,83 @@ shasum -a 256 "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.data.json"
 T034 chưa download, stage, import hoặc activate package trên Android. WorkManager,
 checksum-before-activation và atomic Room activation vẫn thuộc T035.
 
+### Đồng bộ travel package HCMC trên Android
+
+T035 chỉ tải static artifact; không có backend package route và không gửi
+Firebase token, UID, vị trí hoặc truy vấn. Debug build dùng endpoint local typed:
+
+```text
+http://10.0.2.2:8081/hcmc-starter-v1-1.0.0.manifest.json
+```
+
+Từ repository root, phục vụ đúng thư mục artifact đã commit và chỉ bind
+loopback:
+
+```bash
+cd data/travel-packages/hcmc/1.0.0
+python3 -m http.server 8081 --bind 127.0.0.1
+```
+
+Không dùng `127.0.0.1` trong Android emulator: địa chỉ đó trỏ vào chính emulator.
+`10.0.2.2` mới trỏ tới loopback của host. Không bind server bằng `0.0.0.0` và
+không expose server development này ra Internet.
+
+Trong terminal khác, build/cài debug app bằng JDK 21:
+
+```bash
+cd android
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew installDebug
+adb shell am start -n com.kltn.travelassistant/.MainActivity
+```
+
+Mở **Đã tải**, chọn **Tải gói dữ liệu** hoặc **Kiểm tra và cập nhật**. UI phải
+đi qua các pha chờ/tải, kiểm tra, kích hoạt rồi báo thành công. Gói active phải
+hiển thị phiên bản `1.0.0`; Khám phá phải đọc hai POI của artifact T034.
+
+Kiểm tra khôi phục sau process restart và offline:
+
+```bash
+adb shell am force-stop com.kltn.travelassistant
+adb shell am start -n com.kltn.travelassistant/.MainActivity
+```
+
+Xác nhận Downloads vẫn hiển thị gói đã tải phiên bản `1.0.0`, sau đó dừng static
+server bằng `Ctrl-C` và xác nhận Khám phá vẫn dùng dữ liệu Room.
+
+Để kiểm tra checksum lỗi mà không sửa artifact committed, tạo bản tạm:
+
+```bash
+PACKAGE_BAD_DIR="$(mktemp -d)"
+cp data/travel-packages/hcmc/1.0.0/* "$PACKAGE_BAD_DIR/"
+python3 - "$PACKAGE_BAD_DIR/hcmc-starter-v1-1.0.0.data.json" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+data = bytearray(path.read_bytes())
+data[0] ^= 1
+path.write_bytes(data)
+PY
+cd "$PACKAGE_BAD_DIR"
+python3 -m http.server 8081 --bind 127.0.0.1
+```
+
+Giữ nguyên manifest để checksum không còn khớp. Trigger update lại trong
+Downloads: app phải báo gói không hợp lệ, vẫn hiển thị phiên bản active `1.0.0`
+và Explore vẫn dùng POI trước đó. Không package lỗi nào được thay dữ liệu active.
+
+Chỉ khi chủ động kiểm tra first-install mới xóa toàn bộ debug app data:
+
+```bash
+adb shell pm clear com.kltn.travelassistant
+```
+
+Xóa app data cũng xóa mọi package offline đang active và trạng thái WorkManager.
+Release package hosting chưa được cấu hình; release không cho cleartext.
+Package sync chỉ chạy do người dùng yêu cầu, không có periodic/background
+auto-update.
+
 ### POI provider và nearby HTTP API
 
 T032 thêm contract bất biến, provider-neutral tại `app/providers/poi/` và

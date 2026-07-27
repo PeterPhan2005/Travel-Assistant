@@ -5,9 +5,11 @@ import com.kltn.travelassistant.data.repository.DefaultAppInfoRepository
 import com.kltn.travelassistant.data.repository.RoomLocalTravelPackageRepository
 import com.kltn.travelassistant.data.repository.RoomNearbySearchRepository
 import com.kltn.travelassistant.data.repository.RoomPoiDetailRepository
+import com.kltn.travelassistant.data.repository.DefaultPackageSyncRepository
 import com.kltn.travelassistant.feature.appshell.domain.LocalTravelPackageRepository
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
 import com.kltn.travelassistant.feature.poi.domain.PoiDetailRepository
+import com.kltn.travelassistant.feature.downloads.domain.PackageSyncRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -40,4 +42,10 @@ abstract class RepositoryModule {
     abstract fun bindLocalTravelPackageRepository(
         implementation: RoomLocalTravelPackageRepository,
     ): LocalTravelPackageRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPackageSyncRepository(
+        implementation: DefaultPackageSyncRepository,
+    ): PackageSyncRepository
 }

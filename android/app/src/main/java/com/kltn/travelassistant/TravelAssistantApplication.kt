@@ -2,6 +2,8 @@ package com.kltn.travelassistant
 
 import android.app.Application
 import android.util.Log
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.kltn.travelassistant.data.seed.SeedImportResult
 import com.kltn.travelassistant.data.seed.SeedStartupCoordinator
 import dagger.hilt.android.HiltAndroidApp
@@ -13,9 +15,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @HiltAndroidApp
-class TravelAssistantApplication : Application() {
+class TravelAssistantApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var seedStartupCoordinator: SeedStartupCoordinator
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     private val seedFailureHandler = CoroutineExceptionHandler { _, _ ->
         Log.w(TAG, "Bundled seed initialization failed")

@@ -76,4 +76,9 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   live Google Places và agent runtime chưa được triển khai. Backend có thêm
   deterministic offline builder cho static travel-package data/manifest schema
   version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
-  Android download/activation vẫn chưa được triển khai.
+  Android Downloads nay có HCMC-only package sync do người dùng kích hoạt qua
+  WorkManager. App tải/resume static artifact vào app-private staging, kiểm tra
+  strict manifest/data contract, exact byte size và SHA-256 trước khi kích hoạt
+  nguyên tử trong Room; package active trước đó và itinerary vẫn được giữ khi
+  mọi lỗi xảy ra. Bundled seed chỉ import khi chưa có active HCMC package hợp lệ.
+  Debug endpoint dùng emulator localhost; release hosting chưa được cấu hình.

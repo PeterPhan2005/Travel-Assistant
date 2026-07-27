@@ -19,6 +19,7 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInFailure
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInResult
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
 import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +40,7 @@ class MainActivity : ComponentActivity() {
     private val appShellViewModel: AppShellViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
+    private val downloadsViewModel: DownloadsViewModel by viewModels()
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 appShellViewModel = appShellViewModel,
                 homeViewModel = homeViewModel,
                 profileViewModel = profileViewModel,
+                downloadsViewModel = downloadsViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
                 onOpenLocationSettings = ::openLocationSettings,
                 onOpenExternalNavigation = externalNavigationCoordinator::open,

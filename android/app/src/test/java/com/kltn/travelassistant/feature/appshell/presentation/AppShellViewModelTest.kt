@@ -4,6 +4,7 @@ import com.kltn.travelassistant.data.connectivity.ConnectivityObserver
 import com.kltn.travelassistant.data.connectivity.ConnectivityStatus
 import com.kltn.travelassistant.feature.appshell.domain.LocalTravelPackageMetadata
 import com.kltn.travelassistant.feature.appshell.domain.LocalTravelPackageRepository
+import com.kltn.travelassistant.feature.downloads.domain.PackageOrigin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -210,8 +211,10 @@ class AppShellViewModelTest {
 
     private companion object {
         val metadata = LocalTravelPackageMetadata(
+            packageId = "downloaded-hcmc",
             version = "2026.07.1",
             publishedAtEpochMillis = 1_721_510_400_000L,
+            origin = PackageOrigin.DOWNLOADED,
         )
     }
 }

@@ -79,4 +79,10 @@ interface PoiContentDao {
 
     @Query("DELETE FROM local_pois WHERE poi_id = :poiId")
     suspend fun deletePoi(poiId: String): Int
+
+    @Query("DELETE FROM local_pois WHERE city = :city")
+    suspend fun deletePoisByCity(city: String): Int
+
+    @Query("DELETE FROM local_culture_items WHERE city = :city")
+    suspend fun deleteCultureByCity(city: String): Int
 }

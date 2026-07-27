@@ -24,6 +24,12 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileScreen
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.downloads.domain.ActivePackageMetadata
+import com.kltn.travelassistant.feature.downloads.domain.PackageCity
+import com.kltn.travelassistant.feature.downloads.domain.PackageOrigin
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsScreen
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsStatus
+import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
 import com.kltn.travelassistant.navigation.external.ExternalNavigationResult
@@ -70,6 +76,7 @@ fun TravelAssistantNavHost(
     profileUiState: ProfileUiState = ProfileUiState(),
     connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
     localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
+    downloadsUiState: DownloadsUiState? = null,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
@@ -83,6 +90,8 @@ fun TravelAssistantNavHost(
     onAuthResendVerificationEmail: () -> Unit = {},
     onAuthSignOut: () -> Unit = {},
     onAuthRetrySession: () -> Unit = {},
+    onDownloadPackage: () -> Unit = {},
+    onRetryPackageDownload: () -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult = {
         ExternalNavigationResult.LaunchFailed
@@ -128,18 +137,11 @@ fun TravelAssistantNavHost(
             PlaceholderDestinationScreen(titleRes = R.string.destination_itinerary)
         }
         composable(TopLevelDestination.DOWNLOADS.route) {
-            PlaceholderDestinationScreen(
-                titleRes = R.string.destination_downloads,
-                unavailableExplanationRes = if (
-                    connectivityUiState == ConnectivityUiState.Offline
-                ) {
-                    R.string.downloads_offline_explanation
-                } else {
-                    null
-                },
-                additionalContent = {
-                    LocalPackageMetadataSection(uiState = localPackageUiState)
-                },
+            DownloadsScreen(
+                uiState = downloadsUiState ?: localPackageUiState.toDownloadsUiState(),
+                connectivity = connectivityUiState,
+                onDownload = onDownloadPackage,
+                onRetry = onRetryPackageDownload,
             )
         }
         composable(TopLevelDestination.PROFILE.route) {
@@ -171,6 +173,26 @@ fun TravelAssistantNavHost(
             poiDetailContent(poiId) { navController.popBackStack() }
         }
     }
+}
+
+private fun LocalPackageUiState.toDownloadsUiState(): DownloadsUiState = when (this) {
+    LocalPackageUiState.Loading -> DownloadsUiState()
+    LocalPackageUiState.Unavailable,
+    LocalPackageUiState.Error -> DownloadsUiState(
+        isLoading = false,
+        status = DownloadsStatus.Idle,
+    )
+    is LocalPackageUiState.Available -> DownloadsUiState(
+        isLoading = false,
+        activePackage = ActivePackageMetadata(
+            packageId = "local-package",
+            city = PackageCity.HCMC,
+            contentVersion = version,
+            publishedAtEpochMillis = publishedAtEpochMillis,
+            origin = PackageOrigin.DOWNLOADED,
+        ),
+        status = DownloadsStatus.Idle,
+    )
 }
 
 fun NavHostController.navigateToTopLevelDestination(destination: TopLevelDestination) {

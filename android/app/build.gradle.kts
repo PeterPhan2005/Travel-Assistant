@@ -27,7 +27,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "HCMC_PACKAGE_MANIFEST_URL",
+                "\"http://10.0.2.2:8081/hcmc-starter-v1-1.0.0.manifest.json\"",
+            )
+        }
         release {
+            buildConfigField("String", "HCMC_PACKAGE_MANIFEST_URL", "\"\"")
             optimization {
                 enable = false
             }
@@ -38,6 +46,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     room {
@@ -64,18 +73,24 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.okhttp)
     implementation(libs.firebase.auth)
     implementation(libs.googleid)
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockwebserver)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.work.testing)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

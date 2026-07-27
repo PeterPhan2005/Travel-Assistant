@@ -31,5 +31,18 @@ interface TravelPackageDao {
         LIMIT 1
         """,
     )
+    suspend fun getLatestPackage(city: String): TravelPackageEntity?
+
+    @Query(
+        """
+        SELECT * FROM travel_packages
+        WHERE city = :city
+        ORDER BY published_at_epoch_millis DESC, version DESC, package_id DESC
+        LIMIT 1
+        """,
+    )
     fun observeLatestPackage(city: String): Flow<TravelPackageEntity?>
+
+    @Query("DELETE FROM travel_packages WHERE city = :city")
+    suspend fun deletePackagesByCity(city: String): Int
 }

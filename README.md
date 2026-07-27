@@ -27,7 +27,7 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 Repository đã có Android architecture shell trong `android/`, với package hiện
 có được giữ nguyên. Hilt, ViewModel/StateFlow và repository boundaries đã được
 thiết lập trong T011. T012 đã bổ sung top-level Navigation Compose và Material 3
-theme tập trung với năm destination. Room version-1 schema và core DAO layer đã
+theme tập trung với năm destination. Room version-2 schema và core DAO layer đã
 có; một bundled HCMC demo seed được import an toàn và idempotent. Các destination
 vẫn tối giản; Explore đã có location context foreground một lần chỉ sau hành
 động người dùng và tìm kiếm POI offline trong Room theo tên, bí danh hoặc loại,
@@ -41,8 +41,14 @@ refresh/resend, sign-out và Firebase-backed session restoration; kiểm thử t
 và process restart đều đã qua. Profile cũng hỗ trợ Google authentication qua
 Credential Manager; Google ID credential chỉ được đổi tạm thời sang Firebase,
 hủy picker không tạo lỗi, Firebase vẫn là nguồn phiên duy nhất và đăng xuất xóa
-Credential Manager state. Android networking và các tính năng sản phẩm khác vẫn
-chưa được triển khai. Backend hiện có FastAPI application factory, settings được
+Credential Manager state. Downloads hiện có luồng HCMC package sync do người
+dùng kích hoạt qua WorkManager: static manifest/data được tải hoặc resume trong
+app-private staging, kiểm tra exact size/SHA-256 và strict contract trước khi
+kích hoạt nguyên tử trong Room. Gói cũ và itinerary được giữ an toàn khi tải,
+validation hoặc transaction thất bại; bundled seed chỉ chạy khi HCMC chưa có
+active package hợp lệ. Debug dùng endpoint emulator localhost riêng, còn release
+chưa có hosting và không cho cleartext. Các tính năng networking sản phẩm khác
+vẫn chưa được triển khai. Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.
 Backend đã có SQLAlchemy 2 typed models và Alembic migration đầu tiên cho dữ
@@ -57,8 +63,8 @@ Bearer authentication để trả normalized curated POI với distance metre,
 provenance/freshness và bounded `is_complete`. Chưa có live Google Places,
 Android networking hoặc AI runtime; Android app chưa gọi backend này. Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
-schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit,
-nhưng Android download/activation vẫn chưa được triển khai.
+schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
+được Android T035 tải/kích hoạt mà không cần backend package endpoint.
 
 ## Android app identifiers
 
