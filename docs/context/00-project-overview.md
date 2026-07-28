@@ -79,9 +79,13 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   schema-version-1 document theo authenticated Firebase UID. GET missing-row
   không ghi dữ liệu; PUT upsert user/preference trong một transaction với
   server timestamp. Android-to-backend transport hiện chỉ có cho preferences;
-  live Google Places và agent runtime chưa được triển khai. Backend có thêm
-  deterministic offline builder cho static travel-package data/manifest schema
-  version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
+  live Google Places và agent runtime end-to-end chưa được triển khai. T041 đã
+  bổ sung Router Agent độc lập trả strict `RouterOutput`: một OpenAI Agents SDK
+  run không tool/handoff/session khi cả key và model được cấu hình rõ ràng, hoặc
+  deterministic fallback khi thiếu cấu hình hay model thất bại. Discovery, các
+  specialist, reviewer, composer và code orchestration vẫn chưa có. Backend có
+  thêm deterministic offline builder cho static travel-package data/manifest
+  schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
   Android Downloads nay có HCMC-only package sync do người dùng kích hoạt qua
   WorkManager. App tải/resume static artifact vào app-private staging, kiểm tra
   strict manifest/data contract, exact byte size và SHA-256 trước khi kích hoạt

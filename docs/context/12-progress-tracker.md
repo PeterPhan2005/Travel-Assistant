@@ -24,8 +24,11 @@ publication metadata are observed by the app-shell state owner and displayed
 in Downloads. Assistant still explains its Internet requirement without
 claiming unfinished AI behavior works. External navigation is not disabled
 solely because the app is offline. Live Google Places, Android nearby
-transport, production hosting and the OpenAI Agents SDK runtime remain
-incomplete. The dedicated Firebase
+transport, production hosting and the end-to-end OpenAI Agents SDK runtime
+remain incomplete. T041 now provides one independent Router execution with
+strict `RouterOutput`, no tools/handoffs/sessions, explicit optional model
+configuration and a deterministic six-intent fallback. Discovery, later agents
+and application orchestration remain incomplete. The dedicated Firebase
 development client configuration is integrated only for debug through the
 Google Services plugin and Firebase Android BoM. Standard automatic
 initialization provides the default Firebase app in the debug process. Profile
@@ -93,13 +96,14 @@ connected WorkManager job gets the ID token only at request time and pushes the
 latest snapshot before any refresh. T040 now defines the complete strict,
 immutable provider-neutral contract package for Router, Discovery, Narration,
 Local Culture, Itinerary, Grounding Reviewer, Response Composer and the
-code-orchestrated runtime boundary. Live Google Places, preference taxonomy/UI
-and the OpenAI Agents SDK runtime remain unimplemented.
+code-orchestrated runtime boundary. T041 implements only the independent Router
+run and fallback; live Google Places, preference taxonomy/UI, Discovery and the
+end-to-end agent runtime remain unimplemented.
 
 ## Current goal
 
-T040 agent contract models are complete. T041 Router Agent is next by roadmap
-and dependency readiness, but must not begin until explicitly assigned.
+T041 Router Agent is complete. T042 Discovery Agent is next by roadmap and
+dependency readiness, but must not begin until explicitly assigned.
 
 ## Completed
 
@@ -135,6 +139,7 @@ and dependency readiness, but must not begin until explicitly assigned.
 - T034 Build travel package artifact.
 - T035 Download and activate travel package.
 - T040 Define agent contract models.
+- T041 Implement Router Agent.
 
 ## In progress
 
@@ -142,7 +147,7 @@ and dependency readiness, but must not begin until explicitly assigned.
 
 ## Next up
 
-- T041 Implement Router Agent.
+- T042 Implement Discovery Agent.
 
 ## Open questions
 
@@ -408,7 +413,43 @@ and dependency readiness, but must not begin until explicitly assigned.
 - T040 adds contracts and validation only. It adds no OpenAI dependency,
   prompts, instructions, tools, Runner calls, retries, timeouts, network or
   database access, FastAPI route, migration, provider implementation or Android
-  change. T041 through T050 remain unimplemented.
+  change.
+- T041 owns `backend/app/agents/router/` and pins `openai-agents==0.18.3` in
+  normal runtime requirements. Its public `RouterExecutor` protocol accepts one
+  validated `RouterRequest` and returns only a revalidated `RouterOutput`; SDK
+  result objects, IDs, usage, traces, raw JSON and exception details do not
+  cross this boundary.
+- The configured adapter creates one stable Router agent with static
+  version-controlled instructions, `output_type=RouterOutput`, empty tools,
+  handoffs and MCP servers, `tool_choice="none"`,
+  `parallel_tool_calls=false`, one maximum turn and no model retry. `Runner.run`
+  receives no session, conversation ID or previous response ID. Each run uses
+  `RunConfig(tracing_disabled=true, trace_include_sensitive_data=false)` until
+  T049.
+- Router model configuration is read lazily from nonblank `OPENAI_API_KEY` and
+  explicit `OPENAI_ROUTER_MODEL`; neither field was added to global FastAPI
+  settings. Missing configuration performs no model call. Model exceptions,
+  unexpected types and contract-invalid output use the deterministic fallback;
+  caller cancellation propagates and never triggers fallback.
+- Router model input is compact deterministic Unicode JSON containing exactly
+  the four `RouterRequest` fields. It adds no identity, token, coordinates,
+  transcript, provider/database data or environment values. Safe logs contain
+  only operation, model/fallback path, a stable reason and selected intent.
+- The pure fallback normalizes whitespace, case, Unicode and Vietnamese
+  diacritics only for matching. Its fixed precedence is itinerary drafting,
+  local culture, nearby discovery, POI information, general travel help, then
+  unsupported. Vietnamese accented/unaccented and English signals cover all six
+  intents; isolated generic `plan`/`information` language is insufficient.
+- Fallback plans are exactly Discovery; Narration; Local Culture; Discovery then
+  Itinerary; empty; and empty for the six intents respectively. Unsupported
+  input receives a safe clarification. City extraction accepts only HCMC/Ho Chi
+  Minh/Sài Gòn and Bangkok/Băng Cốc aliases, preserves an explicit request city,
+  declines conflicting query cities and never infers city from locale or
+  preferences. It invents no category, query term, POI ID or itinerary
+  constraint.
+- T041 adds no FastAPI route, database/provider/Firebase behavior, Android
+  change, specialist execution, reviewer/composer behavior, orchestration,
+  tracing export or usage accounting. T042 through T050 remain unimplemented.
 
 ## T002 baseline consistency review
 
@@ -425,7 +466,7 @@ and dependency readiness, but must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040 are complete; T041 is next but unassigned. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T041 are complete; T042 is next but unassigned. |
 | Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android nearby transport and agent runtime are not implemented. |
 
 ## Session notes
@@ -1069,3 +1110,46 @@ invalid-output checks, environment-free imports, privacy/escape-hatch scanning
 and the unchanged route set passed. No dependency, route, setting, database,
 provider, Android or generated-schema file changed. OpenAI Agents SDK execution,
 prompts, tools and orchestration remain T041–T049 work and were not started.
+
+T041 completed on 2026-07-28 with the focused Router implementation at
+`backend/app/agents/router/` and exact runtime pin `openai-agents==0.18.3`.
+`RouterService` chooses one explicitly configured `OpenAIRouterExecutor` or a
+pure deterministic fallback. The public structural `RouterExecutor` boundary
+accepts only validated `RouterRequest` and returns only revalidated
+`RouterOutput`; SDK result objects, raw output, response IDs, traces, usage and
+exceptions remain private.
+
+The configured agent has static instructions, `output_type=RouterOutput`, empty
+tools/handoffs/MCP servers, disabled parallel tool calls, `tool_choice="none"`,
+one maximum turn and zero model retry. Async `Runner.run` receives no session,
+conversation ID or previous response ID. Tracing and sensitive trace data are
+disabled until T049. Runtime configuration is read lazily only from nonblank
+`OPENAI_API_KEY` plus an explicit nonblank `OPENAI_ROUTER_MODEL`; absent
+configuration performs no network call. Invalid output or ordinary model
+failure falls back without exposing details, while cancellation propagates.
+
+The fallback's documented precedence is itinerary drafting, local culture,
+nearby discovery, POI information, general travel help and unsupported. It
+matches representative accented/unaccented Vietnamese and English signals,
+returns only canonical specialist plans and safely clarifies unsupported input.
+Entity extraction preserves an explicit request city, recognizes only accepted
+HCMC/Sài Gòn and Bangkok/Băng Cốc aliases, declines conflicting query cities and
+never infers from locale/preferences or invents category, query term, POI ID or
+itinerary constraints. Input serialization contains exactly RouterRequest
+fields as compact deterministic Unicode JSON. Safe logs contain only operation,
+path, reason and intent.
+
+Final backend verification on Python 3.12.13 passed full development dependency
+installation, `pip check`, Ruff, strict mypy over app/tests, curated schema
+drift, both curated package validations, travel-package drift, compileall and
+318 pytest tests; 22 opt-in disposable-PostGIS integration tests were skipped
+because their database environment was not enabled. The 63 focused T041 tests
+and all 35 unchanged T040 contract tests passed. Credential-free manual
+validation imported with OpenAI/database/Firebase configuration absent and
+network access blocked, exercised all six intents twice deterministically,
+validated unsupported clarification and both JSON Schemas, and confirmed the
+unchanged four-route set without external initialization. No local API
+key/model configuration was available, so no live model call was run; fake
+runner coverage proves the complete model success/failure boundary. No FastAPI
+route, database/provider/Firebase/Android behavior, Discovery or later-agent
+implementation, orchestration, tracing export or usage accounting was added.

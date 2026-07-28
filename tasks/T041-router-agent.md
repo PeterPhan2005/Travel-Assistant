@@ -1,7 +1,7 @@
 ---
 id: T041
 title: Implement Router Agent
-status: todo
+status: done
 depends_on: [T040]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No tool access.
-- [ ] Structured output only.
-- [ ] Fallback matcher covers MVP intents.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No tool access.
+- [x] Structured output only.
+- [x] Fallback matcher covers MVP intents.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

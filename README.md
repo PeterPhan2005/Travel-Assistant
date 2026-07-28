@@ -61,7 +61,11 @@ timeout/lỗi và provenance chuẩn hóa. Canonical `GET /pois/nearby` API hi�
 app-scoped async engine, request-scoped read-only session và optional Firebase
 Bearer authentication để trả normalized curated POI với distance metre,
 provenance/freshness và bounded `is_complete`. Chưa có live Google Places hoặc
-AI runtime; Android app chưa gọi nearby API này. Backend
+AI runtime end-to-end; Android app chưa gọi nearby API này. Backend đã có Router
+Agent độc lập T041 với structured `RouterOutput`, một OpenAI Agents SDK run
+không tool/handoff/session khi có cấu hình rõ ràng và deterministic fallback
+khi thiếu cấu hình hoặc model thất bại. Discovery, các specialist, reviewer,
+composer và application orchestration vẫn chưa được triển khai. Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.

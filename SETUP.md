@@ -698,6 +698,111 @@ python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 development và có thể được override bằng environment. Không commit `.env` hoặc
 dùng credential trong `.env.example` ngoài máy development.
 
+### Router Agent độc lập
+
+T041 cung cấp Router Agent độc lập trong `backend/app/agents/router/`; chưa có
+FastAPI assistant route hoặc application orchestration. Router chỉ nhận
+`RouterRequest` đã validate và chỉ trả strict `RouterOutput`. Model path dùng
+đúng một OpenAI Agents SDK run với structured output, không tool, handoff,
+session, conversation ID hoặc shared state; tracing tắt cho đến T049.
+
+Hai biến sau là tùy chọn cho riêng model path:
+
+```text
+OPENAI_API_KEY
+OPENAI_ROUTER_MODEL
+```
+
+Cả hai phải nonblank; model phải được chọn rõ ràng vì Router không dựa vào
+default model của SDK. Nếu thiếu một trong hai, Router không gọi mạng và dùng
+deterministic fallback. Model exception hoặc output không hợp lệ cũng dùng cùng
+fallback; caller cancellation vẫn propagate. Hai giá trị này là cấu hình
+runtime, không thêm vào global FastAPI `Settings`, và không cần để import package
+hoặc chạy `/health`. Không commit, in hoặc log API key/model response.
+
+Xác nhận sáu fallback intent mà không cần database, Firebase hoặc OpenAI:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_ROUTER_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python - <<'PY'
+import asyncio
+from app.agents.contracts import RouterRequest
+from app.agents.router import RouterService
+
+QUERIES = (
+    "Tìm địa điểm gần tôi",
+    "Giới thiệu chợ Bến Thành",
+    "Phong tục địa phương",
+    "Lên lịch trình một ngày",
+    "Tôi cần hỗ trợ du lịch",
+    "Viết mã Python giúp tôi",
+)
+
+async def main() -> None:
+    service = RouterService()
+    for query in QUERIES:
+        request = RouterRequest(
+            user_query=query,
+            locale="vi-VN",
+            city=None,
+            preferences=None,
+        )
+        output = await service.route(request)
+        print(output.model_dump_json())
+
+asyncio.run(main())
+PY
+```
+
+Live validation là tùy chọn và không chạy trong CI. Đọc API key im lặng, chọn
+model ID hiện có trong OpenAI project, chạy một request cho mỗi intent và chỉ in
+normalized `RouterOutput`:
+
+```bash
+printf 'OPENAI_API_KEY: '
+read -r -s OPENAI_API_KEY
+printf '\n'
+export OPENAI_API_KEY
+export OPENAI_ROUTER_MODEL="<explicit-model-id>"
+python - <<'PY'
+import asyncio
+from app.agents.contracts import RouterRequest
+from app.agents.router import RouterService
+
+QUERIES = (
+    "Tìm địa điểm gần tôi",
+    "Giới thiệu chợ Bến Thành",
+    "Phong tục địa phương",
+    "Lên lịch trình một ngày",
+    "Tôi cần hỗ trợ du lịch",
+    "Viết mã Python giúp tôi",
+)
+
+async def main() -> None:
+    service = RouterService()
+    for query in QUERIES:
+        output = await service.route(
+            RouterRequest(
+                user_query=query,
+                locale="vi-VN",
+                city=None,
+                preferences=None,
+            )
+        )
+        print(output.model_dump_json())
+
+asyncio.run(main())
+PY
+unset OPENAI_API_KEY OPENAI_ROUTER_MODEL
+```
+
+Không paste key vào command history. Nếu live command bị hủy hoặc thất bại, luôn
+unset hai biến ngay; không in raw SDK response, preference document hoặc
+exception.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó
