@@ -82,8 +82,14 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   live Google Places và agent runtime end-to-end chưa được triển khai. T041 đã
   bổ sung Router Agent độc lập trả strict `RouterOutput`: một OpenAI Agents SDK
   run không tool/handoff/session khi cả key và model được cấu hình rõ ràng, hoặc
-  deterministic fallback khi thiếu cấu hình hay model thất bại. Discovery, các
-  specialist, reviewer, composer và code orchestration vẫn chưa có. Backend có
+  deterministic fallback khi thiếu cấu hình hay model thất bại. T042 bổ sung
+  Discovery Agent độc lập trả strict `DiscoveryOutput` từ normalized T032 POI
+  provider và read-only selected-curated menu boundary. Evidence/source/claim
+  được assemble deterministic, candidate order/missing values được giữ nguyên,
+  model output phải đóng exact trên run-local tools và no-model/model-failure
+  đều có deterministic execution; không có final prose. Narration và các
+  specialist còn lại, reviewer, composer và code orchestration vẫn chưa có.
+  Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
   Android Downloads nay có HCMC-only package sync do người dùng kích hoạt qua

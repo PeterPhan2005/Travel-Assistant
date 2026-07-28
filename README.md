@@ -47,7 +47,7 @@ app-private staging, kiểm tra exact size/SHA-256 và strict contract trước 
 kích hoạt nguyên tử trong Room. Gói cũ và itinerary được giữ an toàn khi tải,
 validation hoặc transaction thất bại; bundled seed chỉ chạy khi HCMC chưa có
 active package hợp lệ. Debug dùng endpoint emulator localhost riêng, còn release
-chưa có hosting và không cho cleartext. Các tính năng networking sản phẩm khác
+chưa có hosting và không cho cleartext. Android nearby transport, live Google Places và AI runtime end-to-end
 vẫn chưa được triển khai. Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.
@@ -64,8 +64,12 @@ provenance/freshness và bounded `is_complete`. Chưa có live Google Places ho�
 AI runtime end-to-end; Android app chưa gọi nearby API này. Backend đã có Router
 Agent độc lập T041 với structured `RouterOutput`, một OpenAI Agents SDK run
 không tool/handoff/session khi có cấu hình rõ ràng và deterministic fallback
-khi thiếu cấu hình hoặc model thất bại. Discovery, các specialist, reviewer,
-composer và application orchestration vẫn chưa được triển khai. Backend
+khi thiếu cấu hình hoặc model thất bại. T042 bổ sung Discovery execution độc
+lập dùng injected normalized POI/menu tools, deterministic evidence closure và
+strict `DiscoveryOutput`; khi thiếu model hoặc model/output thất bại, cùng
+run-local tool data được assemble deterministic mà không rerank hay tạo final
+prose. Narration/các specialist còn lại, reviewer, composer và application
+orchestration vẫn chưa được triển khai. Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.

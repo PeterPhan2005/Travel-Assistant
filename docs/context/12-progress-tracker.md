@@ -27,8 +27,10 @@ solely because the app is offline. Live Google Places, Android nearby
 transport, production hosting and the end-to-end OpenAI Agents SDK runtime
 remain incomplete. T041 now provides one independent Router execution with
 strict `RouterOutput`, no tools/handoffs/sessions, explicit optional model
-configuration and a deterministic six-intent fallback. Discovery, later agents
-and application orchestration remain incomplete. The dedicated Firebase
+configuration and a deterministic six-intent fallback. T042 now provides one
+independent Discovery execution over normalized POI/menu tools with deterministic
+evidence closure and no final prose. Later agents and application orchestration
+remain incomplete. The dedicated Firebase
 development client configuration is integrated only for debug through the
 Google Services plugin and Firebase Android BoM. Standard automatic
 initialization provides the default Firebase app in the debug process. Profile
@@ -96,13 +98,17 @@ connected WorkManager job gets the ID token only at request time and pushes the
 latest snapshot before any refresh. T040 now defines the complete strict,
 immutable provider-neutral contract package for Router, Discovery, Narration,
 Local Culture, Itinerary, Grounding Reviewer, Response Composer and the
-code-orchestrated runtime boundary. T041 implements only the independent Router
-run and fallback; live Google Places, preference taxonomy/UI, Discovery and the
-end-to-end agent runtime remain unimplemented.
+code-orchestrated runtime boundary. T041 implements the independent Router run
+and fallback. T042 now implements one independent Discovery execution over the
+injected T032 provider and a selected-curated, read-only menu boundary. It
+preserves PostGIS distance/ID order and missing optionals, builds only
+tool-grounded deterministic evidence, returns safe usable partial results, and
+has no final prose. Live Google Places, preference taxonomy/UI, Narration and
+the end-to-end agent runtime remain unimplemented.
 
 ## Current goal
 
-T041 Router Agent is complete. T042 Discovery Agent is next by roadmap and
+T042 Discovery Agent is complete. T043 Narration Agent is next by roadmap and
 dependency readiness, but must not begin until explicitly assigned.
 
 ## Completed
@@ -140,6 +146,7 @@ dependency readiness, but must not begin until explicitly assigned.
 - T035 Download and activate travel package.
 - T040 Define agent contract models.
 - T041 Implement Router Agent.
+- T042 Implement Discovery Agent.
 
 ## In progress
 
@@ -147,7 +154,7 @@ dependency readiness, but must not begin until explicitly assigned.
 
 ## Next up
 
-- T042 Implement Discovery Agent.
+- T043 Implement Narration Agent.
 
 ## Open questions
 
@@ -449,7 +456,66 @@ dependency readiness, but must not begin until explicitly assigned.
   constraint.
 - T041 adds no FastAPI route, database/provider/Firebase behavior, Android
   change, specialist execution, reviewer/composer behavior, orchestration,
-  tracing export or usage accounting. T042 through T050 remain unimplemented.
+  tracing export or usage accounting. T043 through T050 remain unimplemented.
+- T042 owns `backend/app/agents/discovery/`. Its public structural
+  `DiscoveryExecutor` accepts one validated `DiscoveryRequest`, returns only a
+  revalidated `DiscoveryOutput`, and raises one sanitized typed
+  `DiscoveryExecutionError` only when a total POI failure leaves no usable
+  candidate. SDK result/tool objects, rows, spatial values, raw JSON,
+  exceptions, traces, usage and arbitrary metadata never cross the boundary.
+- Each run creates its own registry over an injected T032 `PoiProvider` and
+  injected `PoiMenuReader`; no global engine, provider, session or mutable run
+  state exists. The zero-argument agent tools derive city, origin, radius,
+  limit, query, category and selected curated provider IDs only from the
+  validated request/registry. POI runs exactly once; menu runs at most once
+  only for requested menu/price facts and never accepts model-authored IDs.
+- `SqlAlchemyPoiMenuReader` receives an `AsyncSession` owned by its caller and
+  performs one bounded parameterized join over selected POIs, menus and sources
+  ordered by POI ID then menu item ID. It creates no engine, commits no write,
+  performs no N+1 read and preserves cancellation. Current zero-menu HCMC and
+  Bangkok packages are valid empty successes.
+- Private tool models are strict, frozen, bounded, recursively
+  extra-forbidden, JSON-serializable and have no `Any`, raw payload or metadata
+  escape hatch. Unsupported/malformed source or tool data fails closed. Stable
+  provider/menu failures map to Discovery-stage timeout, unavailable or
+  invalid-output issues without exception text.
+- Evidence assembly is pure and deterministic: normalized real sources are
+  de-duplicated by exact identity; source timestamps are unchanged; SHA-256
+  derivations produce stable claim/evidence IDs without clocks or randomness.
+  Claims are created only for requested facts supported by normalized tools.
+  Menu/price claims use the real menu source, integer minor units, currency and
+  source freshness. Missing rating, opening hours, menu and price create no
+  claim, and deterministic distance has no synthetic source.
+- Candidate order is exactly T032 PostGIS distance then stable-ID order; no
+  model or assembler reranking occurs. T040's prior validator incorrectly
+  required globally lexicographic candidate IDs, conflicting with valid
+  distance order, so T042 narrowly relaxed that check to uniqueness while
+  retaining the same public fields/schema and all evidence/partial invariants.
+- The configured Discovery agent has exactly two normalized function tools,
+  `output_type=DiscoveryOutput`, no handoffs, sessions, MCP, hosted tools or
+  agent-as-tool behavior, `parallel_tool_calls=false`, three maximum turns and
+  zero model retry. `OPENAI_API_KEY` plus explicit
+  `OPENAI_DISCOVERY_MODEL` are read lazily; missing/blank configuration runs
+  normalized tools deterministically. Tracing and sensitive trace data remain
+  disabled until T049.
+- After every model attempt, the same registry completes only missing
+  operations. Exact output closure requires every candidate, source, claim,
+  failure, order, completeness and truncation value to equal deterministic
+  registry output. Plain text, model/SDK failure or any invented/modified value
+  returns that deterministic output without another successful provider/menu
+  call. Caller cancellation always propagates.
+- POI success plus menu failure or truncation retains usable candidates and
+  evidence as `PARTIAL`; zero menus and absent optional facts remain
+  `COMPLETE`. Empty successful POI search is empty `COMPLETE`. Total POI
+  failure never fabricates a partial result. Output and safe logs contain no
+  request origin or final user-facing prose; logs contain only path, city,
+  candidate count, completeness and stable failure code.
+- T042 adds no FastAPI route, migration, schema field, curated production
+  content, Android change, Google Places adapter, narration, reviewer,
+  composer, orchestration, tracing export, usage accounting or retry policy.
+  Alembic now preserves already-imported application logger enablement during
+  in-process migration tests; this one-line isolation fixes the pre-existing
+  T041 CI log-capture failure without changing Router behavior.
 
 ## T002 baseline consistency review
 
@@ -466,8 +532,8 @@ dependency readiness, but must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T041 are complete; T042 is next but unassigned. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android nearby transport and agent runtime are not implemented. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T042 are complete; T043 is next but unassigned. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. Live Google Places, Android nearby transport, Narration and end-to-end orchestration are not implemented. |
 
 ## Session notes
 
@@ -1153,3 +1219,54 @@ key/model configuration was available, so no live model call was run; fake
 runner coverage proves the complete model success/failure boundary. No FastAPI
 route, database/provider/Firebase/Android behavior, Discovery or later-agent
 implementation, orchestration, tracing export or usage accounting was added.
+
+T042 completed on 2026-07-28 with the focused Discovery implementation at
+`backend/app/agents/discovery/`. `DiscoveryService` selects one explicit
+OpenAI-backed executor only when both `OPENAI_API_KEY` and
+`OPENAI_DISCOVERY_MODEL` are nonblank; otherwise it runs the same normalized
+tools directly. The public `DiscoveryExecutor` protocol accepts one validated
+T040 request and returns only `DiscoveryOutput`. Total POI failure raises a
+sanitized typed execution error because T040 correctly forbids candidate-free
+partial output.
+
+The POI tool maps the request exactly into T032 and calls the injected provider
+once without SQL or HTTP. The optional menu tool has no model arguments and
+uses only curated provider IDs selected by that POI result. Its injected-session
+adapter executes one read-only selected-POI query ordered by POI/menu stable ID,
+maps integer prices and source freshness exactly, and treats zero rows as
+success. Both operations preserve cancellation and normalize invalid or failed
+results without raw exception text.
+
+Pure evidence assembly de-duplicates exact sources, preserves source
+timestamps/Unicode and uses stable SHA-256-derived evidence/claim IDs. Only
+requested facts actually present in normalized results become claims; menu and
+price claims use the real menu source and price freshness, while distance gets
+no synthetic source. Missing rating, menu, price and opening hours remain
+absent. Model output must equal every deterministic candidate, source, claim,
+failure, completeness/truncation value and order from its own registry; any
+plain text, exception or invented/modified value falls back over already
+successful tool data without retry. T040 candidate validation was narrowly
+relaxed from global ID sorting to uniqueness because global sorting contradicted
+T032's distance-first order for valid origins; the public schema/fields and
+other closure rules are unchanged.
+
+Final backend verification on Python 3.12.13 passed dependency consistency,
+Ruff, strict mypy over app/tests, curated schema drift, both curated package
+validations, travel-package drift, compileall and all 378 pytest tests with
+local disposable PostGIS enabled. The 32 focused Discovery unit tests and 16
+curated-provider/menu integration tests passed. Alembic now uses
+`disable_existing_loggers=false`, fixing the pre-existing T041 CI failure where
+in-process migration setup disabled Router (and Discovery) loggers before
+privacy tests; Router source and behavior remain unchanged.
+
+Credential-free manual validation migrated and idempotently seeded both starter
+packages, then executed each request twice through one request-owned session.
+HCMC returned Central Post Office then War Remnants Museum; Bangkok returned
+Wat Pho. Both were `complete`, untruncated, zero-menu results with missing
+rating/price/opening-hours facts preserved, byte-identical repeated JSON, no
+origin and no final prose. No local OpenAI configuration was available, so live
+model validation was not run; fake-runner tests cover valid closure, altered
+candidate/order/evidence rejection, plain-text/exception fallback, single-call
+reuse, no retry and cancellation. No route, migration revision, database
+schema, production data, Android, Google Places, narration, orchestration,
+tracing export or usage-accounting change was added.

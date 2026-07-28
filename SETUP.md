@@ -803,6 +803,142 @@ Không paste key vào command history. Nếu live command bị hủy hoặc th�
 unset hai biến ngay; không in raw SDK response, preference document hoặc
 exception.
 
+### Discovery Agent độc lập
+
+T042 cung cấp Discovery Agent độc lập tại
+`backend/app/agents/discovery/`; chưa có assistant route, orchestration hoặc
+narration generation. Public boundary nhận một `DiscoveryRequest` đã validate
+và chỉ trả `DiscoveryOutput`. POI tool gọi trực tiếp provider-neutral boundary
+T032 được inject, không gọi HTTP `/pois/nearby`; menu reader dùng cùng
+`AsyncSession` do caller sở hữu, chỉ đọc menu của curated POI đã được POI tool
+chọn và không commit.
+
+Hai biến sau là tùy chọn cho riêng model path:
+
+```text
+OPENAI_API_KEY
+OPENAI_DISCOVERY_MODEL
+```
+
+Cả hai phải nonblank và model phải được chọn rõ ràng. Nếu thiếu một trong hai,
+Discovery vẫn gọi normalized POI/menu tools nhưng không gọi OpenAI: evidence,
+source/claim ID, completeness và output được assemble hoàn toàn deterministic.
+Model failure hoặc output không khớp exact run-local registry cũng dùng cùng
+deterministic result, không retry provider/database call đã thành công. Tracing
+và sensitive trace data vẫn tắt đến T049. Không commit, in hoặc log API key,
+model response, origin, query, source URL hoặc menu content.
+
+Để reproduce dữ liệu local hiện tại, khởi động PostGIS rồi migrate, validate và
+seed hai package từ `backend/`:
+
+```bash
+set -a
+source ../.env
+set +a
+alembic upgrade head
+python -m app.data_pipeline validate
+python -m app.data_pipeline seed --city hcmc
+python -m app.data_pipeline seed --city bkk
+```
+
+Sau đó xác nhận deterministic Discovery cho HCMC và Bangkok mà không cần
+Firebase hoặc OpenAI:
+
+```bash
+unset OPENAI_API_KEY OPENAI_DISCOVERY_MODEL FIREBASE_PROJECT_ID
+python - <<'PY'
+import asyncio
+import os
+
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from app.agents.contracts import (
+    DiscoveryOrigin,
+    DiscoveryRequest,
+    FactKind,
+    SupportedCity,
+)
+from app.agents.discovery import DiscoveryService, SqlAlchemyPoiMenuReader
+from app.providers.poi.curated import CuratedPoiProvider
+
+REQUESTS = (
+    DiscoveryRequest(
+        city=SupportedCity.HCMC,
+        origin=DiscoveryOrigin(latitude=10.7799, longitude=106.7),
+        radius_metres=5_000,
+        limit=5,
+        query=None,
+        category=None,
+        requested_fact_kinds=(
+            FactKind.CATEGORY,
+            FactKind.IDENTITY,
+            FactKind.MENU_ITEM,
+            FactKind.OPENING_HOURS,
+            FactKind.PRICE,
+            FactKind.RATING,
+        ),
+    ),
+    DiscoveryRequest(
+        city=SupportedCity.BANGKOK,
+        origin=DiscoveryOrigin(latitude=13.746508, longitude=100.493096),
+        radius_metres=5_000,
+        limit=5,
+        query=None,
+        category=None,
+        requested_fact_kinds=(
+            FactKind.CATEGORY,
+            FactKind.IDENTITY,
+            FactKind.MENU_ITEM,
+            FactKind.OPENING_HOURS,
+            FactKind.PRICE,
+            FactKind.RATING,
+        ),
+    ),
+)
+
+async def main() -> None:
+    engine = create_async_engine(os.environ["DATABASE_URL"])
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with sessions() as session:
+            service = DiscoveryService(
+                CuratedPoiProvider(session),
+                SqlAlchemyPoiMenuReader(session),
+            )
+            for request in REQUESTS:
+                first = await service.discover(request)
+                second = await service.discover(request)
+                assert first.model_dump_json() == second.model_dump_json()
+                serialized = first.model_dump(mode="json", exclude_none=True)
+                assert "origin" not in serialized
+                print(first.model_dump_json(exclude_none=True))
+    finally:
+        await engine.dispose()
+
+asyncio.run(main())
+PY
+```
+
+Starter data hiện tại phải trả hai HCMC POI theo distance/ID order và một Wat
+Pho ở Bangkok. Cả hai city có zero menu rows; rating, price và opening hours
+không được tự điền. Output không có origin hoặc final prose.
+
+Live-model check là tùy chọn. Đọc key im lặng, đặt một model ID được OpenAI
+project hỗ trợ, chạy cùng script trên và chỉ in normalized `DiscoveryOutput`;
+sau đó unset ngay:
+
+```bash
+printf 'OPENAI_API_KEY: '
+read -r -s OPENAI_API_KEY
+printf '\n'
+export OPENAI_API_KEY
+export OPENAI_DISCOVERY_MODEL="<explicit-model-id>"
+# Chạy script deterministic ở trên.
+unset OPENAI_API_KEY OPENAI_DISCOVERY_MODEL
+```
+
+Không dùng model identifier từ provider khác nếu chưa có adapter được duyệt.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

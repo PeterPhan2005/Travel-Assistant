@@ -24,6 +24,12 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
+from app.agents.discovery.menu import (
+    MenuErrorCode,
+    MenuReaderError,
+    MenuTimeoutPolicy,
+    SqlAlchemyPoiMenuReader,
+)
 from app.data_pipeline.loader import load_package
 from app.data_pipeline.paths import CITY_PACKAGE_PATHS
 from app.data_pipeline.seeder import (
@@ -743,3 +749,264 @@ def test_nearby_endpoint_preserves_distance_then_stable_id_order(
         "hcmc-source-tie-a",
         "hcmc-source-tie-b",
     ]
+
+
+async def _read_menus(
+    database_url: str,
+    selected_ids: tuple[str, ...],
+) -> Any:
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            return await SqlAlchemyPoiMenuReader(session).read_menu_items(
+                selected_ids
+            )
+    finally:
+        await engine.dispose()
+
+
+def test_menu_reader_accepts_current_zero_menu_production_data_by_city(
+    provider_database_url: str,
+) -> None:
+    hcmc = _run(
+        _read_menus(
+            provider_database_url,
+            (
+                "hcmc-poi-central-post-office",
+                "hcmc-poi-war-remnants-museum",
+            ),
+        )
+    )
+    bangkok = _run(
+        _read_menus(
+            provider_database_url,
+            ("bkk-poi-wat-pho",),
+        )
+    )
+
+    assert hcmc.items == ()
+    assert bangkok.items == ()
+
+
+def test_menu_reader_maps_only_selected_pois_with_exact_source_and_money(
+    provider_database_url: str,
+) -> None:
+    _run(
+        seed_loaded_package(
+            in_memory_loaded_package(valid_package("hcmc")),
+            provider_database_url,
+        )
+    )
+    _run(
+        seed_loaded_package(
+            in_memory_loaded_package(valid_package("bkk")),
+            provider_database_url,
+        )
+    )
+
+    hcmc = _run(
+        _read_menus(
+            provider_database_url,
+            ("hcmc-poi-test",),
+        )
+    )
+    unrelated = _run(
+        _read_menus(
+            provider_database_url,
+            ("hcmc-poi-central-post-office",),
+        )
+    )
+    none_selected = _run(_read_menus(provider_database_url, ()))
+
+    assert len(hcmc.items) == 1
+    item = hcmc.items[0]
+    assert item.menu_item_id == "hcmc-menu-test"
+    assert item.poi_provider_id == "hcmc-poi-test"
+    assert item.item_name == "Test menu item"
+    assert item.price_minor_units == 12_500
+    assert item.currency == "VND"
+    assert item.source.source_id == "hcmc-source-test"
+    assert item.source.source_type.value == "official_operator"
+    assert item.source.publisher == "Test publisher"
+    assert str(item.source.url) == "https://example.test/source"
+    assert item.source_updated_at == datetime(
+        2026,
+        1,
+        1,
+        tzinfo=timezone.utc,
+    )
+    assert unrelated.items == ()
+    assert none_selected.items == ()
+
+
+async def _menu_read_with_statement_capture(
+    database_url: str,
+    selected_ids: tuple[str, ...],
+) -> tuple[Any, list[str], bool]:
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    statements: list[str] = []
+
+    def capture(
+        connection: object,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        del connection, cursor, parameters, context, executemany
+        statements.append(statement)
+
+    event.listen(engine.sync_engine, "before_cursor_execute", capture)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            result = await SqlAlchemyPoiMenuReader(
+                session
+            ).read_menu_items(selected_ids)
+            return result, statements, session.is_active
+    finally:
+        event.remove(engine.sync_engine, "before_cursor_execute", capture)
+        await engine.dispose()
+
+
+def test_menu_reader_is_one_parameterized_read_without_mutation_or_n_plus_one(
+    provider_database_url: str,
+) -> None:
+    _run(
+        seed_loaded_package(
+            in_memory_loaded_package(valid_package("hcmc")),
+            provider_database_url,
+        )
+    )
+    _run(_insert_user_fixture(provider_database_url))
+    before = _run(_database_snapshot(provider_database_url))
+
+    result, statements, session_remained_active = _run(
+        _menu_read_with_statement_capture(
+            provider_database_url,
+            (
+                "hcmc-poi-central-post-office",
+                "hcmc-poi-test",
+            ),
+        )
+    )
+    after = _run(_database_snapshot(provider_database_url))
+
+    assert [item.menu_item_id for item in result.items] == [
+        "hcmc-menu-test"
+    ]
+    assert len(statements) == 1
+    normalized_sql = statements[0].casefold()
+    assert normalized_sql.lstrip().startswith("select")
+    assert "menu_items.poi_id in" in normalized_sql
+    assert "order by menu_items.poi_id, menu_items.id" in normalized_sql
+    for user_table in USER_TABLES:
+        assert user_table not in normalized_sql
+    assert session_remained_active is True
+    assert after == before
+
+
+async def _hold_menu_lock(database_url: str) -> asyncpg.Connection:
+    connection = await asyncpg.connect(_asyncpg_dsn(make_url(database_url)))
+    await connection.execute("BEGIN")
+    await connection.execute("LOCK TABLE menu_items IN ACCESS EXCLUSIVE MODE")
+    return connection
+
+
+async def _menu_timeout_while_database_is_blocked(database_url: str) -> None:
+    lock = await _hold_menu_lock(database_url)
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            reader = SqlAlchemyPoiMenuReader(
+                session,
+                timeout_policy=MenuTimeoutPolicy(seconds=0.01),
+            )
+            with pytest.raises(MenuReaderError) as captured:
+                await reader.read_menu_items(
+                    ("hcmc-poi-central-post-office",)
+                )
+            assert captured.value.code is MenuErrorCode.TIMEOUT
+    finally:
+        await lock.execute("ROLLBACK")
+        await lock.close()
+        await engine.dispose()
+
+
+def test_real_menu_database_deadline_maps_to_sanitized_timeout(
+    provider_database_url: str,
+) -> None:
+    _run(_menu_timeout_while_database_is_blocked(provider_database_url))
+
+
+async def _cancel_menu_while_database_is_blocked(database_url: str) -> None:
+    lock = await _hold_menu_lock(database_url)
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            reader = SqlAlchemyPoiMenuReader(session)
+            task = asyncio.create_task(
+                reader.read_menu_items(
+                    ("hcmc-poi-central-post-office",)
+                )
+            )
+            await asyncio.sleep(0.05)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+    finally:
+        await lock.execute("ROLLBACK")
+        await lock.close()
+        await engine.dispose()
+
+
+def test_real_menu_database_cancellation_propagates(
+    provider_database_url: str,
+) -> None:
+    _run(_cancel_menu_while_database_is_blocked(provider_database_url))
+
+
+async def _corrupt_menu_source_type(database_url: str) -> None:
+    connection = await asyncpg.connect(_asyncpg_dsn(make_url(database_url)))
+    try:
+        await connection.execute(
+            """
+            UPDATE sources
+            SET source_type = 'unsupported_source'
+            WHERE id = 'hcmc-source-test'
+            """
+        )
+        await connection.execute(
+            """
+            UPDATE menu_items
+            SET source_type = 'unsupported_source'
+            WHERE id = 'hcmc-menu-test'
+            """
+        )
+    finally:
+        await connection.close()
+
+
+def test_malformed_database_source_data_fails_closed(
+    provider_database_url: str,
+) -> None:
+    _run(
+        seed_loaded_package(
+            in_memory_loaded_package(valid_package("hcmc")),
+            provider_database_url,
+        )
+    )
+    _run(_corrupt_menu_source_type(provider_database_url))
+
+    with pytest.raises(MenuReaderError) as captured:
+        _run(
+            _read_menus(
+                provider_database_url,
+                ("hcmc-poi-test",),
+            )
+        )
+    assert captured.value.code is MenuErrorCode.INVALID_OUTPUT

@@ -95,7 +95,8 @@ class DiscoveryOutput(ContractModel):
     def validate_discovery_result(self) -> DiscoveryOutput:
         """Enforce stable candidates, evidence closure, and partial semantics."""
         candidate_ids = tuple(item.id for item in self.candidates)
-        validate_sorted_unique(candidate_ids, label="Candidate IDs")
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("Candidate IDs must be unique.")
         known_sources = self.evidence.source_ids
         for candidate in self.candidates:
             candidate_source_ids = {

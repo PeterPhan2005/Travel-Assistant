@@ -1,7 +1,7 @@
 ---
 id: T042
 title: Implement Discovery Agent
-status: todo
+status: done
 depends_on: [T040, T032, T033]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No final prose.
-- [ ] Missing fields remain missing.
-- [ ] Provider failures return partial evidence safely.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No final prose.
+- [x] Missing fields remain missing.
+- [x] Provider failures return partial evidence safely.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 
