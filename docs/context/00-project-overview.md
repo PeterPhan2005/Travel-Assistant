@@ -113,7 +113,12 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   model tùy chọn không thể làm yếu deterministic rejection, tạo ID/fact/
   timestamp hoặc viết lại specialist content. Agent không có
   tool/handoff/session/retrieval, route/database/provider access và tracing vẫn
-  tắt. Composer và code orchestration vẫn chưa có.
+  tắt. T047 đã bổ sung Response Composer độc lập nhận đúng strict approved
+  `EvidenceBundle`, approved claim IDs, approved specialist outputs và warning
+  an toàn. Pure renderer trả Vietnamese plain text deterministic, giữ exact
+  specialist/claim fragments, Discovery order, UI omission và exact
+  claim/source union; optional model output chỉ được nhận khi bằng toàn bộ
+  baseline deterministic. Code orchestration vẫn chưa có.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

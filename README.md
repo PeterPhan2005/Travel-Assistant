@@ -87,7 +87,12 @@ timestamp, duplicate/conflicting identity và specialist reference sai đi qua
 normal validation rồi được deterministic reviewer quyết định. Approved
 `EvidenceBundle` toàn cục vẫn source-closed và không đổi; reviewer không tạo
 fact/timestamp/ID/text thay thế. Model tùy chọn không thể làm yếu quyết định an
-toàn. Response Composer và application orchestration vẫn chưa được triển khai.
+toàn. T047 đã bổ sung Response Composer độc lập chỉ nhận strict approved
+`EvidenceBundle`, approved claim IDs, approved specialist outputs và warning an
+toàn. Renderer deterministic giữ nguyên factual fragments, thứ tự Discovery,
+missing POI fields, warning và exact claim/source union; model output chỉ được
+chấp nhận khi bằng chính xác baseline này. Application orchestration vẫn chưa
+được triển khai.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và

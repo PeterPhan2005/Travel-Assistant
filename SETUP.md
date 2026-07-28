@@ -1355,6 +1355,57 @@ Live-model validation là tùy chọn, không chạy trong CI; đọc key im l�
 explicit `OPENAI_GROUNDING_MODEL`, chỉ in normalized `GroundingReviewOutput`,
 rồi unset ngay cả hai biến.
 
+### Response Composer độc lập
+
+T047 cung cấp Response Composer tại `backend/app/agents/composer/`; chưa có
+assistant route hoặc application orchestration. Public boundary nhận đúng một
+`ResponseComposerRequest` đã validate và chỉ trả `ResponseComposerOutput`.
+Request phải chứa strict approved `EvidenceBundle`, approved claim IDs, approved
+specialist outputs và warning an toàn đã được application code chuẩn bị; Composer
+không đọc `GroundingReviewOutput` hoặc tự dựng approved evidence.
+
+Renderer deterministic luôn được dựng trước, dùng thứ tự cố định Narration →
+Local Culture → Itinerary draft → Discovery/POI → remaining approved claim.
+Factual fragments được copy nguyên văn, duplicate normalized chỉ xuất hiện một
+lần, warning giữ nguyên toàn bộ và used source IDs là exact sorted union của used
+claim IDs. Discovery giữ distance-first input order; missing address/rating/
+rating count/price/opening hours giữ `None` và bị omit với `exclude_none=True`.
+`price_level` không bao giờ thành tiền; `PriceFact` chỉ xuất hiện khi đúng một
+approved PRICE claim hoàn chỉnh thuộc đúng POI.
+
+Model path chỉ bật khi cả hai biến sau nonblank:
+
+```text
+OPENAI_API_KEY
+OPENAI_COMPOSER_MODEL
+```
+
+Model ID phải được chọn rõ ràng. Agent dùng một run, không tool, handoff, MCP,
+session, retry hoặc shared state; tracing và sensitive trace data vẫn tắt đến
+T049. Complete model output chỉ được chấp nhận khi bằng chính xác renderer
+deterministic. Missing configuration, SDK/type/content/closure failure quay về
+baseline; caller cancellation luôn propagate.
+
+Xác nhận import và focused tests không cần credential, database, Firebase hoặc
+network từ `backend/`:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_COMPOSER_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python -c \
+  'import app.agents.composer; print("composer import ok")'
+
+pytest -q tests/test_agent_contracts.py tests/test_response_composer.py
+```
+
+Có thể sinh schema bằng `ResponseComposerRequest.model_json_schema()` và
+`ResponseComposerOutput.model_json_schema()` mà không cần external service.
+Live-model validation là tùy chọn, không chạy trong CI; đọc key im lặng, đặt
+explicit `OPENAI_COMPOSER_MODEL`, chỉ in normalized `ResponseComposerOutput`,
+rồi unset ngay cả hai biến.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

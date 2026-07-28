@@ -44,8 +44,12 @@ a one-day draft over supplied candidates/evidence, preserves candidate input
 order, applies required/excluded/preferred/max-stop constraints, divides the
 exact local window into non-overlapping whole-minute items and always uses two
 fixed explicit assumptions. Invalid or unavailable model output uses the same
-deterministic planner; no saved itinerary is read or mutated. Reviewer,
-composer and application orchestration remain incomplete. The dedicated Firebase
+deterministic planner; no saved itinerary is read or mutated. T046 provides the
+independent closed-world Grounding Reviewer. T047 now provides one independent
+Response Composer over strict approved evidence/content only, with exact warning
+preservation, deterministic Vietnamese rendering, Discovery-order POI
+presentation, optional-field omission and exact claim/source closure.
+Application orchestration remains incomplete. The dedicated Firebase
 development client configuration is integrated only for debug through the
 Google Services plugin and Firebase Android BoM. Standard automatic
 initialization provides the default Firebase app in the debug process. Profile
@@ -127,16 +131,17 @@ rejection and content-free limited fallback. T045 implements the independent
 one-day Itinerary Agent with a no-tool optional model run, strict candidate and
 evidence closure, deterministic no-model planning, exact non-overlapping time
 allocation and no saved-itinerary access. Live Google Places, preference
-taxonomy/UI, composer stage and the end-to-end agent runtime remain
-unimplemented. T046 implements the independent Grounding Reviewer with pure
-closed-world claim/source/freshness decisions, specialist-output approval,
-optional isolated model review and deterministic safety fallback.
+taxonomy/UI and the end-to-end agent runtime remain unimplemented. T046
+implements the independent Grounding Reviewer with pure closed-world
+claim/source/freshness decisions, specialist-output approval, optional isolated
+model review and deterministic safety fallback. T047 implements the independent
+Response Composer with a pure deterministic safety baseline and optional
+exact-equality model execution.
 
 ## Current goal
 
-T046 Grounding Reviewer and its candidate-evidence boundary repair are
-complete. T047 Response Composer is next but must not begin until explicitly
-assigned.
+T047 Response Composer is complete. T048 strict multi-agent orchestrator is next
+but must not begin until explicitly assigned.
 
 ## Completed
 
@@ -178,6 +183,7 @@ assigned.
 - T044 Implement Local Culture Agent.
 - T045 Implement Itinerary Agent.
 - T046 Implement Grounding Reviewer Agent.
+- T047 Implement Response Composer Agent.
 
 ## In progress
 
@@ -185,7 +191,7 @@ assigned.
 
 ## Next up
 
-- T047 Implement Response Composer Agent.
+- T048 Implement code orchestrator.
 
 ## Open questions
 
@@ -464,6 +470,50 @@ assigned.
   consistency. Partial requires usable composer output plus an issue; success
   rejects failures; failed rejects final output. No model/token/trace usage was
   speculated because tracing and usage belong to T049.
+- T047 owns `backend/app/agents/composer/`. Its public structural
+  `ResponseComposerExecutor.compose()` accepts one already validated
+  `ResponseComposerRequest` and returns only one revalidated
+  `ResponseComposerOutput`. It never interprets `GroundingReviewOutput` or
+  constructs approved evidence; T048 remains responsible for that application
+  orchestration.
+- The pure renderer consumes only `request.evidence`,
+  `approved_claim_ids`, `approved_specialist_outputs` and exact request
+  warnings. It renders complete Narration, complete Local Culture, Itinerary
+  draft content, Discovery presentation and remaining approved claim statements
+  in fixed priority order. Exact approved fragments are never paraphrased;
+  normalized duplicates appear once and the evidence-free result is one fixed
+  Vietnamese safety message.
+- Presented POIs preserve approved Discovery candidate order. The prior global
+  lexicographic POI-ID check conflicted with distance-first Discovery order, so
+  T047 narrowly changes it to uniqueness only without changing fields or schema
+  shape. Candidate coordinates, provider IDs and source metadata are excluded.
+  Missing address, rating, rating count, price and opening-hours values remain
+  `None` and disappear under `exclude_none=True`; no placeholder or zero fact is
+  introduced.
+- A POI price is copied only when exactly one approved POI-scoped `PRICE` claim
+  has complete typed `PriceFact`; zero or multiple applicable claims and
+  another POI's price remain omitted. Provider `price_level` is never converted
+  into money.
+- Composer warnings equal the request tuple exactly, including order and every
+  field. Used claim IDs are sorted approved IDs that actually contribute to
+  text or structured POI presentation; used source IDs are the exact sorted
+  union attached to those claims. Discovery distance without a claim creates no
+  synthetic reference.
+- Optional model execution reads only nonblank `OPENAI_API_KEY` plus explicit
+  `OPENAI_COMPOSER_MODEL` lazily. The stable `travel_response_composer` agent
+  has structured output, no tools/handoffs/MCP/session/shared state,
+  `tool_choice=none`, disabled parallel calls, one maximum turn and zero retry.
+  Tracing and sensitive trace data remain disabled until T049.
+- The deterministic result is built before configuration or model execution.
+  A configured model result is accepted only when its complete normalized
+  output equals that baseline exactly. Missing configuration, factory/SDK/type
+  failure, altered prose/POI/order/warning/reference or any closure failure
+  returns the baseline; caller cancellation propagates unchanged. Safe logs
+  contain only operation, path, stable reason and aggregate POI/warning/claim
+  counts, never content, identity, price, configuration or exception text.
+- T047 adds no route, global setting, dependency, database/provider/Firebase
+  access, migration, Android behavior, T048 orchestration, tracing export or
+  usage accounting.
 - T040 adds contracts and validation only. It adds no OpenAI dependency,
   prompts, instructions, tools, Runner calls, retries, timeouts, network or
   database access, FastAPI route, migration, provider implementation or Android
@@ -721,8 +771,13 @@ assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T046 are complete; T047 is next but unassigned. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T047 are complete; T048 is next but unassigned. |
 | Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. The independent Grounding Reviewer creates complete deterministic claim decisions, applies request-supplied source/freshness/price rules, approves only closed specialist outputs and prevents model output from weakening safety or authoring new facts/IDs. Live Google Places, Android nearby transport, Response Composer and end-to-end orchestration are not implemented. |
+
+T047 update to the implementation-state row: the independent Response Composer
+is now implemented with deterministic approved-only rendering and exact optional
+model closure. Live Google Places, Android nearby transport and end-to-end
+orchestration remain unimplemented.
 
 ## Session notes
 
@@ -1686,3 +1741,61 @@ without new text or IDs. No local
 validation was not run; fake-runner tests cover accepted structured output,
 plain/wrong output, weakened and unsupported stricter decisions, exception
 fallback, one call/no retry, cancellation and privacy.
+
+T047 completed on 2026-07-28 with the independent Response Composer package at
+`backend/app/agents/composer/`. The public `ResponseComposerExecutor.compose()`
+accepts one already validated `ResponseComposerRequest` and returns only one
+revalidated `ResponseComposerOutput`; SDK results, raw model text/JSON, response
+IDs, usage, traces, prompts, exceptions and arbitrary metadata remain private.
+The request continues to accept only the unchanged strict approved
+`EvidenceBundle`, approved claim IDs, approved specialist outputs and safe
+warnings. T047 does not interpret Grounding Reviewer decisions or build approved
+evidence; that application work remains T048.
+
+The pure renderer uses a fixed priority of complete Narration, complete Local
+Culture, Itinerary draft, Discovery/POI presentation and remaining approved
+claim statements. Exact approved factual fragments are copied without
+paraphrase, normalized duplicate fragments appear once, unsafe markup/internal
+runtime fragments fail closed, and empty approved content returns one fixed
+Vietnamese safety message. The output is deterministic, bounded by
+`PlainOutputText`, uses no clock/random/environment/network/database state and
+preserves Unicode.
+
+POI presentation is built only from approved Discovery candidates and preserves
+their distance-first input order. T047 narrowly changes the existing composer
+POI validator from global lexicographic sorting to uniqueness, matching T042
+without changing any public field or schema shape. Candidate coordinates,
+provider IDs, price levels and raw source metadata never enter the output.
+Missing optional values remain `None` and are omitted by `exclude_none=True`.
+Price is present only for exactly one complete approved POI-scoped `PRICE`
+claim; zero/multiple/other-POI prices remain omitted.
+
+Warnings equal the input tuple exactly. Used claims are unique sorted approved
+IDs that contribute to prose or structured POI values, and used sources equal
+the exact sorted union attached to those claims. Evidence-free distance creates
+no synthetic claim/source. The optional model path requires nonblank
+`OPENAI_API_KEY` plus explicit `OPENAI_COMPOSER_MODEL`, uses stable agent name
+`travel_response_composer`, structured output, no tools/handoffs/MCP/session,
+`tool_choice=none`, disabled parallel calls, one turn, zero retry and disabled
+tracing/sensitive trace data. A model result is accepted only when the entire
+normalized output equals the deterministic baseline. Missing configuration,
+factory/SDK/type/content/closure failure returns that baseline; cancellation
+propagates unchanged. Logs contain only operation/path/stable reason and
+aggregate POI/warning/claim counts.
+
+Final verification on Python 3.12.13 passed development dependency installation,
+`pip check`, Ruff, strict mypy over all 138 app/test files, curated schema drift,
+both package validations, exact travel-package drift, compileall, 61 focused
+T040/T047 tests and all 624 pytest tests with healthy local PostGIS enabled.
+Credential-free manual validation blocked network access, imported with
+OpenAI/database/Firebase configuration absent, generated both Composer JSON
+Schemas, confirmed the unchanged four-route set and produced byte-identical
+results twice with one approved Discovery output, one approved Narration output
+and one partial warning. Discovery order, missing-field omission, exact warning,
+claim/source union, Unicode and absence of coordinates/provider identity were
+confirmed. No local Composer model configuration was available, so optional
+live-model validation was not run; fake-runner tests cover exact structured
+success, altered prose/POI/order/warnings, plain/wrong output, exception fallback,
+one call/no retry, cancellation and privacy. T047 added no dependency, route,
+global setting, database/provider/Firebase access, migration, Android behavior,
+T048 orchestration, tracing export or usage accounting.

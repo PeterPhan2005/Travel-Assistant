@@ -121,7 +121,8 @@ class ResponseComposerOutput(ContractModel):
     def validate_output_shape(self) -> ResponseComposerOutput:
         """Reject duplicate POIs and internal runtime terminology."""
         poi_ids = tuple(item.poi_id for item in self.poi_items)
-        validate_sorted_unique(poi_ids, label="Presented POI IDs")
+        if len(poi_ids) != len(set(poi_ids)):
+            raise ValueError("Presented POI IDs must be unique.")
         lowered = self.final_text.casefold()
         internal_terms = {
             AgentKind.ROUTER.value,

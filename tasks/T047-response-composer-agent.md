@@ -1,7 +1,7 @@
 ---
 id: T047
 title: Implement Response Composer
-status: todo
+status: done
 depends_on: [T046]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No new facts appear.
-- [ ] POI fields follow UI omission rules.
-- [ ] Partial failure warning is preserved.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No new facts appear.
+- [x] POI fields follow UI omission rules.
+- [x] Partial failure warning is preserved.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 
