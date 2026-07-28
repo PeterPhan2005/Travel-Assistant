@@ -114,7 +114,8 @@ class ItineraryRequest(ContractModel):
         if self.start_local_time >= self.end_local_time:
             raise ValueError("Itinerary start must be before end.")
         candidate_ids = tuple(candidate.id for candidate in self.candidates)
-        validate_sorted_unique(candidate_ids, label="Candidate POI IDs")
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("Candidate POI IDs must be unique.")
         if any(candidate.city is not self.city for candidate in self.candidates):
             raise ValueError("Candidate city does not match itinerary city.")
         known_candidates = set(candidate_ids)

@@ -39,7 +39,13 @@ source-closed culture/etiquette claims, enforces canonical guidance IDs and
 exact claim/source unions, rejects stereotypes, unsafe generalizations and
 legal/medical content, and otherwise returns deterministic content-free
 `LIMITED`. It has no tools, handoffs, sessions, retrieval, provider or database
-access. Later agents and application orchestration remain incomplete. The dedicated Firebase
+access. T045 now provides one independent Itinerary execution that creates only
+a one-day draft over supplied candidates/evidence, preserves candidate input
+order, applies required/excluded/preferred/max-stop constraints, divides the
+exact local window into non-overlapping whole-minute items and always uses two
+fixed explicit assumptions. Invalid or unavailable model output uses the same
+deterministic planner; no saved itinerary is read or mutated. Reviewer,
+composer and application orchestration remain incomplete. The dedicated Firebase
 development client configuration is integrated only for debug through the
 Google Services plugin and Firebase Android BoM. Standard automatic
 initialization provides the default Firebase app in the debug process. Profile
@@ -117,14 +123,17 @@ Agent with lazy explicit model configuration, one no-tool run, fail-closed
 output validation and deterministic limited fallback. T044 implements the
 independent source-closed Local Culture Agent with lazy explicit model
 configuration, one no-tool run, deterministic guidance identity, stereotype
-rejection and content-free limited fallback. Live Google Places, preference
-taxonomy/UI, the Itinerary/reviewer/composer stages and the end-to-end agent
-runtime remain unimplemented.
+rejection and content-free limited fallback. T045 implements the independent
+one-day Itinerary Agent with a no-tool optional model run, strict candidate and
+evidence closure, deterministic no-model planning, exact non-overlapping time
+allocation and no saved-itinerary access. Live Google Places, preference
+taxonomy/UI, reviewer/composer stages and the end-to-end agent runtime remain
+unimplemented.
 
 ## Current goal
 
-T044 Local Culture Agent is complete. T045 Itinerary Agent is next by roadmap
-and dependency readiness, but must not begin until explicitly assigned.
+T045 Itinerary Agent is complete. T046 Grounding Reviewer Agent is next by
+roadmap and dependency readiness, but must not begin until explicitly assigned.
 
 ## Completed
 
@@ -164,6 +173,7 @@ and dependency readiness, but must not begin until explicitly assigned.
 - T042 Implement Discovery Agent.
 - T043 Implement Narration Agent.
 - T044 Implement Local Culture Agent.
+- T045 Implement Itinerary Agent.
 
 ## In progress
 
@@ -171,7 +181,7 @@ and dependency readiness, but must not begin until explicitly assigned.
 
 ## Next up
 
-- T045 Implement Itinerary Agent.
+- T046 Implement Grounding Reviewer Agent.
 
 ## Open questions
 
@@ -621,6 +631,60 @@ and dependency readiness, but must not begin until explicitly assigned.
   function/hosted tool, handoff, session, migration, curated production
   content, Android behavior, Itinerary, reviewer, composer, orchestration,
   tracing export or usage accounting.
+- T045 owns `backend/app/agents/itinerary/`. Its public structural
+  `ItineraryExecutor` accepts one validated `ItineraryRequest` and returns only
+  one revalidated `ItineraryOutput`; SDK results, raw model data, response IDs,
+  usage, traces, exceptions, prompts and arbitrary metadata stay private.
+- T042 candidates intentionally arrive in distance-then-stable-ID order. The
+  prior Itinerary request validator incorrectly required global lexicographic
+  ID ordering, so T045 narrowly changed only this check to uniqueness. Public
+  fields/JSON Schema, candidate order, city closure, constraint references and
+  bounds remain unchanged.
+- The pure planner first removes excluded POIs, always selects all required
+  POIs, then fills available capacity with preferred-category candidates and
+  remaining candidates. Selection never exceeds `maximum_stops`, never repeats
+  a POI and filters the original candidate tuple to preserve exact input order.
+  Empty usable selection and unsatisfiable required constraints raise one
+  sanitized typed `ItineraryExecutionError`.
+- The planner uses the exact request date, IANA timezone and local window.
+  Minute-aligned windows are divided by integer `divmod`; earlier items receive
+  remainder minutes, every item has positive duration, the first item begins at
+  request start and the final item ends at request end. Optional selection is
+  capped by available positive minutes; insufficient minutes for all required
+  POIs fail closed. No route distance, travel time, opening hours, weather,
+  traffic, queues or availability are calculated.
+- Deterministic items use sequential `itinerary-item-NNN` IDs, exact candidate
+  POI IDs and exact canonical titles. They use empty claim/source collections
+  instead of invented evidence. Assumptions are exactly the two fixed
+  application-owned Vietnamese draft/travel-time caveats; warnings are empty
+  and `draft_only=true`.
+- Complete output closure revalidates exact request window, unique canonical
+  item IDs/POIs, candidate identity/title/input order, required/excluded/
+  max-stop constraints, chronological non-overlap, whole-minute boundaries,
+  fixed assumptions and empty warnings. Each evidenced item may use only
+  sorted known claims scoped to its POI, and source IDs must equal the exact
+  sorted union attached to those claims. Semantic prose review remains T046.
+- Optional model execution reads only nonblank `OPENAI_API_KEY` plus explicit
+  `OPENAI_ITINERARY_MODEL` lazily. The stable `travel_itinerary` agent has
+  `output_type=ItineraryOutput`, no tools/handoffs/MCP/session/shared state,
+  `tool_choice=none`, disabled parallel calls, one maximum turn and zero retry.
+  Tracing and sensitive trace data remain disabled until T049.
+- Compact sorted Unicode model input includes only city/date/timezone/window,
+  candidate ID/name/category/optional distance, typed constraints, candidate-
+  scoped approved claim statements/IDs/source IDs and fixed assumptions. It
+  excludes origin/destination coordinates, provider/source metadata, URLs,
+  identity/preferences outside constraints, database/trip/saved-itinerary
+  identities, credentials, SQL and raw provider data.
+- Missing/blank configuration, factory failure, ordinary SDK failure, plain
+  text, unexpected types and any output closure failure return the pure planner
+  result without retry. Caller cancellation propagates unchanged. Safe logs
+  contain only operation, model/deterministic path, city, item count and stable
+  reason; candidate names/IDs, origin, notes, evidence, model/key values, raw
+  output and exception text are excluded.
+- T045 reads or mutates no saved trip/itinerary, opens no database/session,
+  calls no discovery/provider/Firebase/map/web service, and adds no route,
+  setting, migration, dependency, Android behavior, T046 reviewer behavior,
+  composer, orchestration, tracing export or usage accounting.
 
 ## T002 baseline consistency review
 
@@ -637,8 +701,8 @@ and dependency readiness, but must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T044 are complete; T045 is next but unassigned. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. Live Google Places, Android nearby transport, Itinerary, reviewer/composer and end-to-end orchestration are not implemented. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T045 are complete; T046 is next but unassigned. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. Live Google Places, Android nearby transport, reviewer/composer and end-to-end orchestration are not implemented. |
 
 ## Session notes
 
@@ -1469,3 +1533,49 @@ imperative guidance. Regression coverage verifies dress, tipping and
 photography failures over an unrelated claim, sanitized content-free fallback
 and logs, direct validator rejection, plus complete evidence-supported dress
 and photography guidance with exact claim/source closure.
+
+T045 completed on 2026-07-28 with the focused Itinerary implementation at
+`backend/app/agents/itinerary/`. `ItineraryService` first proves a deterministic
+draft is possible, then optionally attempts one explicit OpenAI-backed executor
+when both `OPENAI_API_KEY` and `OPENAI_ITINERARY_MODEL` are nonblank. The public
+`ItineraryExecutor` accepts one validated request and returns only a
+revalidated `ItineraryOutput`; cancellation propagates and all ordinary
+model/configuration/closure failures return the pure planner result.
+
+The planner preserves T042 distance-ranked candidate order while applying
+excluded, required, preferred-category and maximum-stop constraints. It divides
+the exact minute-aligned local window among selected stops with earlier
+remainder allocation, canonical sequential item IDs, exact candidate titles,
+positive durations, no gaps or overlap, empty evidence references and exactly
+two fixed draft/travel-time assumptions. Impossible usable selection and
+required-stop time windows raise one sanitized typed execution error. T040's
+Itinerary candidate validator was narrowly corrected from global ID sorting to
+uniqueness; public fields/schema and all city/constraint/bound validation are
+unchanged.
+
+The configured agent has static instructions, `output_type=ItineraryOutput`,
+empty tools/handoffs/MCP, no session/shared state, `tool_choice=none`, disabled
+parallel calls, one maximum turn and zero retry. Model input is compact sorted
+Unicode JSON containing only approved planning fields and candidate-scoped
+claims/source IDs. Output validation enforces exact request/candidate closure,
+input order, canonical IDs/titles, required/excluded/max-stop rules, whole-
+minute non-overlap, fixed assumptions, empty warnings and exact item-specific
+claim/source unions. Semantic grounding remains T046.
+
+Final backend verification on Python 3.12.13 passed dependency installation and
+`pip check`, Ruff, strict mypy over all 124 app/test files, curated schema drift
+and both package validations, exact travel-package drift, compileall, 77 focused
+T045-and-contract tests, and all 550 pytest tests with local
+disposable PostGIS enabled. Credential-free manual validation blocked network
+access, imported with OpenAI/database/Firebase configuration absent, executed
+the two HCMC starter candidates twice with byte-identical output, confirmed
+canonical IDs, exact window, no overlap, fixed assumptions, draft-only status,
+both JSON Schemas, no origin/saved identity and the unchanged four-route set.
+No local Itinerary model configuration was available, so live-model validation
+was not run; fake-runner tests cover valid output, invalid types/content,
+exception fallback, no retry and cancellation.
+
+T045 added no dependency, route, global setting, database/provider/Firebase
+access, migration, curated data, Android behavior, saved-itinerary mutation,
+T046 reviewer behavior, composer, orchestration, tracing export or usage
+accounting.

@@ -75,8 +75,14 @@ hình rõ ràng, ép exact requested range trong 100–200 từ và fail closed 
 T044 đã bổ sung Local Culture Agent độc lập, chỉ nhận claim culture/etiquette có
 nguồn, yêu cầu exact claim/source closure và ID hướng dẫn tuần tự, từ chối
 stereotype/khái quát tuyệt đối cùng nội dung legal/medical, và trả `LIMITED`
-không nội dung khi evidence, cấu hình hoặc output không đủ an toàn. Itinerary,
-reviewer, composer và application orchestration vẫn chưa được triển khai.
+không nội dung khi evidence, cấu hình hoặc output không đủ an toàn. T045 đã bổ
+sung Itinerary Agent độc lập tạo lịch trình nháp một ngày từ đúng candidate và
+evidence được cung cấp. Fallback không model giữ thứ tự candidate, áp dụng
+required/excluded/preferred/max-stop, chia toàn bộ phút trong khung giờ thành
+các mục không chồng lấn và luôn nêu hai giả định cố định; model output phải đóng
+exact trên request hoặc quay về cùng planner deterministic. Agent không đọc hay
+ghi itinerary đã lưu. Reviewer, composer và application orchestration vẫn chưa
+được triển khai.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và

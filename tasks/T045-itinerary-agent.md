@@ -1,7 +1,7 @@
 ---
 id: T045
 title: Implement Itinerary Agent
-status: todo
+status: done
 depends_on: [T040, T033]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No overlapping items in accepted fixtures.
-- [ ] Assumptions are explicit.
-- [ ] No mutation of saved itinerary.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No overlapping items in accepted fixtures.
+- [x] Assumptions are explicit.
+- [x] No mutation of saved itinerary.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

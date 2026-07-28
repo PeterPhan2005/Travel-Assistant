@@ -1171,6 +1171,132 @@ unset OPENAI_API_KEY OPENAI_LOCAL_CULTURE_MODEL
 
 Không dùng model identifier từ provider khác khi chưa có adapter được duyệt.
 
+### Itinerary Agent độc lập
+
+T045 cung cấp Itinerary Agent độc lập tại
+`backend/app/agents/itinerary/`; chưa có assistant route, saved-itinerary
+mutation, Grounding Reviewer, Response Composer hoặc orchestration. Public
+boundary nhận đúng một `ItineraryRequest` đã validate và chỉ trả
+`ItineraryOutput`.
+
+Planner không model loại candidate bị exclude, luôn giữ mọi candidate required,
+điền preferred category trước rồi candidate còn lại, nhưng sequence cuối luôn
+giữ exact input order và không vượt `maximum_stops`. Candidate input có thể theo
+distance-then-ID order của T042; chỉ duplicate ID bị từ chối. Planner chia toàn
+bộ số phút nguyên trong exact local date/timezone/window cho các stop, phân
+remainder cho item sớm hơn, tạo ID `itinerary-item-NNN`, dùng canonical candidate
+title, không chồng lấn và không tạo claim/source. Hai assumption cố định luôn nói
+rõ đây là draft chia đều và chưa tính travel time, opening hours, tình trạng
+thực tế hoặc thời gian chờ.
+
+Model path chỉ bật khi cả hai biến sau nonblank:
+
+```text
+OPENAI_API_KEY
+OPENAI_ITINERARY_MODEL
+```
+
+Model ID phải được chọn rõ ràng. Agent dùng một run, không tool, handoff, MCP,
+session, retry hoặc shared state; tracing/sensitive trace data vẫn tắt đến T049.
+Model input không chứa origin coordinates, destination coordinates, provider
+metadata, source URL/body, user identity, database/trip/saved-itinerary ID hoặc
+credential. Model output phải đóng exact trên candidate identity/order,
+required/excluded/max-stop, window, canonical item ID/title, assumptions,
+warnings rỗng và item-specific claim/source union; nếu không, deterministic
+planner được dùng. Caller cancellation luôn propagate. Khi ngay cả planner
+không thể tạo một stop hợp lệ hoặc không đủ phút cho mọi required stop, service
+raise `ItineraryExecutionError` đã sanitize thay vì tạo kết quả.
+
+Xác nhận deterministic fallback không cần OpenAI, database hoặc Firebase từ
+`backend/`:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_ITINERARY_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python - <<'PY'
+import asyncio
+from datetime import date, time
+
+from app.agents.contracts import (
+    DiscoveryCandidate,
+    EvidenceBundle,
+    ItineraryConstraints,
+    ItineraryRequest,
+    SupportedCity,
+)
+from app.agents.itinerary import ItineraryService
+from app.providers.poi.models import (
+    Coordinates,
+    PoiProviderKind,
+)
+
+def candidate(provider_id, name, category, distance):
+    return DiscoveryCandidate(
+        id=f"curated:{provider_id}",
+        provider=PoiProviderKind.CURATED,
+        provider_id=provider_id,
+        canonical_name=name,
+        city=SupportedCity.HCMC,
+        category=category,
+        coordinates=Coordinates(latitude=10.7799, longitude=106.7),
+        distance_metres=distance,
+        is_curated=True,
+        is_externally_supplied=False,
+    )
+
+request = ItineraryRequest(
+    city=SupportedCity.HCMC,
+    local_date=date(2026, 8, 1),
+    timezone="Asia/Ho_Chi_Minh",
+    start_local_time=time(9, 0),
+    end_local_time=time(17, 0),
+    candidates=(
+        candidate(
+            "hcmc-poi-central-post-office",
+            "Bưu điện Trung tâm Sài Gòn",
+            "landmark",
+            100.0,
+        ),
+        candidate(
+            "hcmc-poi-war-remnants-museum",
+            "Bảo tàng Chứng tích Chiến tranh",
+            "museum",
+            200.0,
+        ),
+    ),
+    evidence=EvidenceBundle(),
+    constraints=ItineraryConstraints(maximum_stops=2),
+)
+
+async def main():
+    service = ItineraryService()
+    first = await service.draft(request)
+    second = await service.draft(request)
+    assert first.model_dump_json() == second.model_dump_json()
+    assert first.items[0].start_local_time == request.start_local_time
+    assert first.items[-1].end_local_time == request.end_local_time
+    assert all(
+        current.end_local_time <= following.start_local_time
+        for current, following in zip(first.items, first.items[1:])
+    )
+    serialized = first.model_dump_json()
+    assert "origin" not in serialized
+    assert "trip" not in serialized
+    print(serialized)
+
+asyncio.run(main())
+PY
+```
+
+Có thể sinh schema bằng `ItineraryRequest.model_json_schema()` và
+`ItineraryOutput.model_json_schema()` mà không cần external service. Live-model
+validation là tùy chọn, không chạy trong CI; đọc key im lặng, đặt explicit
+`OPENAI_ITINERARY_MODEL`, chỉ in normalized `ItineraryOutput`, rồi unset ngay cả
+hai biến. Không dùng model identifier từ provider khác khi chưa có adapter được
+duyệt.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

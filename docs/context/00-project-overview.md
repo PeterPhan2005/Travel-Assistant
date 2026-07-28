@@ -97,8 +97,13 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   hoặc etiquette được cung cấp, bắt buộc exact claim/source closure và guidance
   ID tuần tự, từ chối stereotype/khái quát tuyệt đối cùng legal/medical advice,
   và fail closed thành `LIMITED` không nội dung. Agent không có
-  tool/handoff/session/retrieval và tracing vẫn tắt. Itinerary specialist,
-  reviewer, composer và code orchestration vẫn chưa có.
+  tool/handoff/session/retrieval và tracing vẫn tắt. T045 đã bổ sung Itinerary
+  Agent độc lập chỉ tạo lịch trình nháp một ngày từ candidate/evidence được cung
+  cấp. Planner deterministic giữ thứ tự candidate, áp dụng constraint, chia đều
+  toàn bộ phút trong exact local window, không chồng lấn và dùng hai assumption
+  cố định; model output không đóng exact sẽ quay về cùng planner. Agent không có
+  route/tool/handoff/session/database/provider access và không đọc hoặc sửa
+  itinerary đã lưu. Reviewer, composer và code orchestration vẫn chưa có.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
