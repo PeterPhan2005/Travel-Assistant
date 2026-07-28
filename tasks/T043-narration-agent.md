@@ -1,7 +1,7 @@
 ---
 id: T043
 title: Implement Narration Agent
-status: todo
+status: done
 depends_on: [T040, T031]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Word limit enforced.
-- [ ] Source IDs are returned.
-- [ ] Unsupported claim tests fail/reject.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Word limit enforced.
+- [x] Source IDs are returned.
+- [x] Unsupported claim tests fail/reject.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -87,8 +87,14 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   provider và read-only selected-curated menu boundary. Evidence/source/claim
   được assemble deterministic, candidate order/missing values được giữ nguyên,
   model output phải đóng exact trên run-local tools và no-model/model-failure
-  đều có deterministic execution; không có final prose. Narration và các
-  specialist còn lại, reviewer, composer và code orchestration vẫn chưa có.
+  đều có deterministic execution; không có final prose. T043 đã bổ sung
+  Narration Agent độc lập nhận một `NarrationRequest` đã validate và chỉ trả
+  `NarrationOutput`: complete output phải dùng claim/source đúng POI, plain text
+  trong exact requested range thuộc 100–200 từ; thiếu evidence, cấu hình hoặc
+  output an toàn trả deterministic content-free `LIMITED`. Narration run không
+  có tool/handoff/session, không discovery/database/provider access và tracing
+  vẫn tắt. Các specialist còn lại, reviewer, composer và code orchestration vẫn
+  chưa có.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

@@ -68,8 +68,12 @@ khi thiếu cấu hình hoặc model thất bại. T042 bổ sung Discovery exec
 lập dùng injected normalized POI/menu tools, deterministic evidence closure và
 strict `DiscoveryOutput`; khi thiếu model hoặc model/output thất bại, cùng
 run-local tool data được assemble deterministic mà không rerank hay tạo final
-prose. Narration/các specialist còn lại, reviewer, composer và application
-orchestration vẫn chưa được triển khai. Backend
+prose. T043 bổ sung Narration Agent độc lập: chỉ dùng factual claims đã duyệt
+cho đúng một POI, thực thi một model run không tool/handoff/session khi có cấu
+hình rõ ràng, ép exact requested range trong 100–200 từ và fail closed thành
+`LIMITED` không nội dung khi evidence/configuration/output không đủ an toàn.
+Local Culture/Itinerary, reviewer, composer và application orchestration vẫn
+chưa được triển khai. Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.

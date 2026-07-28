@@ -939,6 +939,128 @@ unset OPENAI_API_KEY OPENAI_DISCOVERY_MODEL
 
 Không dùng model identifier từ provider khác nếu chưa có adapter được duyệt.
 
+### Narration Agent độc lập
+
+T043 cung cấp Narration Agent độc lập tại
+`backend/app/agents/narration/`; chưa có assistant route, orchestration,
+Grounding Reviewer hoặc Response Composer. Public boundary nhận đúng một
+`NarrationRequest` đã validate và chỉ trả `NarrationOutput`. Agent không có
+tool, handoff, MCP, session, provider call hoặc database access.
+
+Model path chỉ được bật khi cả hai biến sau nonblank:
+
+```text
+OPENAI_API_KEY
+OPENAI_NARRATION_MODEL
+```
+
+Model ID phải được chọn rõ ràng; Narration không dùng default model của SDK.
+Nếu thiếu cấu hình, không có claim/source dùng được, model lỗi hoặc output
+không đóng exact trên request, service trả deterministic `LIMITED` với
+`narration_text=None`, key points/claim IDs/source IDs rỗng và một lý do an
+toàn. Caller cancellation vẫn propagate; không retry. Tracing và sensitive
+trace data vẫn tắt đến T049.
+
+Complete output chỉ được thử khi evidence có ít nhất một factual claim gắn đúng
+POI và mọi source reference đã đóng trong `EvidenceBundle`. Source label, URL,
+publisher, POI name và category không tự trở thành fact. Output complete phải
+là plain text, nằm trong exact requested word range và đồng thời trong biên
+100–200 từ; used source IDs phải bằng đúng sorted union source IDs của used
+claim IDs. HTML, Markdown, unknown/unrelated references và internal runtime
+terminology đều fail closed thành `LIMITED`. Starter package hiện có zero
+production narration record; đây là trạng thái hợp lệ và không được bù bằng
+fact tự tạo.
+
+Xác nhận fallback không cần OpenAI, database hoặc Firebase từ `backend/`:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_NARRATION_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python - <<'PY'
+import asyncio
+from datetime import datetime, timezone
+
+from app.agents.contracts import (
+    EvidenceBundle,
+    FactKind,
+    FactualClaim,
+    NarrationRequest,
+    NarrationWordRange,
+    PoiIdentity,
+    SourceRecord,
+    SourceType,
+    SupportedCity,
+)
+from app.agents.narration import NarrationService
+
+source = SourceRecord(
+    source_id="manual-source",
+    source_type=SourceType.OFFICIAL_INSTITUTION,
+    label="Nguồn chính thức",
+    publisher=None,
+    url=None,
+    published_at=None,
+    retrieved_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+)
+claim = FactualClaim(
+    claim_id="manual-claim",
+    evidence_id="manual-evidence",
+    fact_kind=FactKind.HISTORY,
+    statement="Một fact lịch sử đã được nguồn chính thức xác nhận.",
+    supporting_source_ids=("manual-source",),
+    poi_id="curated:manual-poi",
+    freshness_at=None,
+    price=None,
+)
+request = NarrationRequest(
+    poi=PoiIdentity(
+        poi_id="curated:manual-poi",
+        canonical_name="POI kiểm tra",
+        city=SupportedCity.HCMC,
+        category="museum",
+    ),
+    evidence=EvidenceBundle(sources=(source,), claims=(claim,)),
+    locale="vi-VN",
+    word_range=NarrationWordRange(
+        minimum_words=100,
+        maximum_words=200,
+    ),
+)
+
+async def main() -> None:
+    service = NarrationService()
+    first = await service.narrate(request)
+    second = await service.narrate(request)
+    assert first.model_dump_json() == second.model_dump_json()
+    assert first.narration_text is None
+    assert first.key_points == ()
+    assert first.used_claim_ids == ()
+    assert first.used_source_ids == ()
+    print(first.model_dump_json())
+
+asyncio.run(main())
+PY
+```
+
+Live-model validation là tùy chọn, không chạy trong CI. Đọc API key im lặng,
+đặt một OpenAI model ID được project hỗ trợ, dùng request có đủ factual claims
+đã duyệt và chỉ in normalized `NarrationOutput`. Không in/store model input,
+source statements hoặc API key; luôn unset ngay sau kiểm tra:
+
+```bash
+printf 'OPENAI_API_KEY: '
+read -r -s OPENAI_API_KEY
+printf '\n'
+export OPENAI_API_KEY
+export OPENAI_NARRATION_MODEL="<explicit-model-id>"
+# Chạy request NarrationService có evidence đã duyệt.
+unset OPENAI_API_KEY OPENAI_NARRATION_MODEL
+```
+
+Không dùng model identifier từ provider khác khi chưa có adapter được duyệt.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó
