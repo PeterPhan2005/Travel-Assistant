@@ -72,8 +72,12 @@ prose. T043 bổ sung Narration Agent độc lập: chỉ dùng factual claims �
 cho đúng một POI, thực thi một model run không tool/handoff/session khi có cấu
 hình rõ ràng, ép exact requested range trong 100–200 từ và fail closed thành
 `LIMITED` không nội dung khi evidence/configuration/output không đủ an toàn.
-Local Culture/Itinerary, reviewer, composer và application orchestration vẫn
-chưa được triển khai. Backend
+T044 đã bổ sung Local Culture Agent độc lập, chỉ nhận claim culture/etiquette có
+nguồn, yêu cầu exact claim/source closure và ID hướng dẫn tuần tự, từ chối
+stereotype/khái quát tuyệt đối cùng nội dung legal/medical, và trả `LIMITED`
+không nội dung khi evidence, cấu hình hoặc output không đủ an toàn. Itinerary,
+reviewer, composer và application orchestration vẫn chưa được triển khai.
+Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.

@@ -1061,6 +1061,116 @@ unset OPENAI_API_KEY OPENAI_NARRATION_MODEL
 
 Không dùng model identifier từ provider khác khi chưa có adapter được duyệt.
 
+### Local Culture Agent độc lập
+
+T044 cung cấp Local Culture Agent độc lập tại
+`backend/app/agents/local_culture/`; chưa có assistant route, orchestration,
+Grounding Reviewer, Response Composer hoặc Itinerary Agent. Public boundary
+nhận đúng một `LocalCultureRequest` đã validate và chỉ trả
+`LocalCultureOutput`. Agent không có tool, handoff, MCP, session, provider call,
+database access hoặc external retrieval.
+
+Model path chỉ được bật khi cả hai biến sau nonblank:
+
+```text
+OPENAI_API_KEY
+OPENAI_LOCAL_CULTURE_MODEL
+```
+
+Model ID phải được chọn rõ ràng; Local Culture không dùng default model của SDK.
+Nếu thiếu cấu hình, không có culture/etiquette claim có source dùng được, model
+lỗi hoặc output không an toàn, service trả deterministic `LIMITED` với guidance
+rỗng, `respectful_caution=None` và một lý do an toàn. Caller cancellation vẫn
+propagate; không retry. Tracing và sensitive trace data vẫn tắt đến T049.
+
+Complete output chỉ dùng claim `culture`/`etiquette` đã cung cấp. Mỗi guidance
+item có ID tuần tự `culture-guidance-001`, `culture-guidance-002`, ... và
+`source_ids` phải bằng đúng sorted union source IDs của `claim_ids`. Source
+metadata, city, locale và topic không tự trở thành cultural evidence. HTML,
+Markdown, internal terminology, stereotype, population-wide absolute
+generalization, identity-group personality description, superiority/inferiority
+comparison và legal/medical advice đều fail closed. `respectful_caution` chỉ
+được để `None` hoặc dùng đúng một generic application-owned caution; model
+không được tự tạo factual caution. Starter package hiện có không chứa dedicated
+culture/etiquette claim; đây là trạng thái hợp lệ và phải trả `LIMITED`.
+
+Xác nhận fallback không cần OpenAI, database hoặc Firebase từ `backend/`:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_LOCAL_CULTURE_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python - <<'PY'
+import asyncio
+from datetime import datetime, timezone
+
+from app.agents.contracts import (
+    EvidenceBundle,
+    FactKind,
+    FactualClaim,
+    LocalCultureRequest,
+    SourceRecord,
+    SourceType,
+    SupportedCity,
+)
+from app.agents.local_culture import LocalCultureService
+
+source = SourceRecord(
+    source_id="manual-culture-source",
+    source_type=SourceType.OFFICIAL_INSTITUTION,
+    label="Nguồn chính thức",
+    retrieved_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+)
+claim = FactualClaim(
+    claim_id="manual-culture-claim",
+    evidence_id="manual-culture-evidence",
+    fact_kind=FactKind.ETIQUETTE,
+    statement="Tại địa điểm này, khách được đề nghị nói nhỏ.",
+    supporting_source_ids=("manual-culture-source",),
+)
+request = LocalCultureRequest(
+    city=SupportedCity.HCMC,
+    topic="Ứng xử tại địa điểm",
+    locale="vi-VN",
+    evidence=EvidenceBundle(sources=(source,), claims=(claim,)),
+)
+
+async def main() -> None:
+    service = LocalCultureService()
+    first = await service.advise(request)
+    second = await service.advise(request)
+    assert first.model_dump_json() == second.model_dump_json()
+    assert first.guidance == ()
+    assert first.respectful_caution is None
+    print(first.model_dump_json())
+
+asyncio.run(main())
+PY
+```
+
+Có thể sinh schema qua
+`LocalCultureRequest.model_json_schema()` và
+`LocalCultureOutput.model_json_schema()` mà không cần external service.
+
+Live-model validation là tùy chọn, không chạy trong CI. Đọc API key im lặng,
+đặt một OpenAI model ID được project hỗ trợ, dùng request có đủ claim
+culture/etiquette đã duyệt và chỉ in normalized `LocalCultureOutput`. Không
+in/store API key, model input, claim statement, source metadata hoặc raw SDK
+response; luôn unset ngay sau kiểm tra:
+
+```bash
+printf 'OPENAI_API_KEY: '
+read -r -s OPENAI_API_KEY
+printf '\n'
+export OPENAI_API_KEY
+export OPENAI_LOCAL_CULTURE_MODEL="<explicit-model-id>"
+# Chạy request LocalCultureService có evidence đã duyệt.
+unset OPENAI_API_KEY OPENAI_LOCAL_CULTURE_MODEL
+```
+
+Không dùng model identifier từ provider khác khi chưa có adapter được duyệt.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

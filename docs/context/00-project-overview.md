@@ -93,8 +93,12 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   trong exact requested range thuộc 100–200 từ; thiếu evidence, cấu hình hoặc
   output an toàn trả deterministic content-free `LIMITED`. Narration run không
   có tool/handoff/session, không discovery/database/provider access và tracing
-  vẫn tắt. Các specialist còn lại, reviewer, composer và code orchestration vẫn
-  chưa có.
+  vẫn tắt. T044 đã bổ sung Local Culture Agent độc lập chỉ dùng claim culture
+  hoặc etiquette được cung cấp, bắt buộc exact claim/source closure và guidance
+  ID tuần tự, từ chối stereotype/khái quát tuyệt đối cùng legal/medical advice,
+  và fail closed thành `LIMITED` không nội dung. Agent không có
+  tool/handoff/session/retrieval và tracing vẫn tắt. Itinerary specialist,
+  reviewer, composer và code orchestration vẫn chưa có.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
