@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import math
+from datetime import date, time
 from enum import StrEnum
 from typing import Annotated, Literal, TypeAlias
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, StrictFloat, model_validator
 
@@ -13,14 +15,20 @@ from app.agents.contracts.common import (
     AgentKind,
     AgentWarning,
     ContractModel,
+    EvidenceBundle,
     LocaleCode,
     NormalizedQuery,
+    PoiIdentity,
     RequestId,
     SupportedCity,
     validate_issue_stage,
 )
 from app.agents.contracts.composer import ResponseComposerOutput
-from app.agents.contracts.discovery import DiscoveryOrigin, DiscoveryOutput
+from app.agents.contracts.discovery import (
+    DiscoveryCandidate,
+    DiscoveryOrigin,
+    DiscoveryOutput,
+)
 from app.agents.contracts.grounding import GroundingReviewOutput
 from app.agents.contracts.itinerary import ItineraryOutput
 from app.agents.contracts.local_culture import LocalCultureOutput
@@ -48,6 +56,90 @@ class RuntimeResultStatus(StrEnum):
     SUCCESS = "success"
     PARTIAL = "partial"
     FAILED = "failed"
+
+
+class RuntimeItineraryWindow(ContractModel):
+    """Explicit one-day local planning window with no wall-clock defaults."""
+
+    local_date: date
+    timezone: Annotated[
+        str,
+        Field(strict=True, min_length=1, max_length=64),
+    ]
+    start_local_time: time
+    end_local_time: time
+
+    @model_validator(mode="after")
+    def validate_window(self) -> RuntimeItineraryWindow:
+        """Require an IANA timezone and ordered naive local times."""
+        try:
+            ZoneInfo(self.timezone)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(
+                "Timezone identifier is not recognized."
+            ) from error
+        if (
+            self.start_local_time.tzinfo is not None
+            or self.end_local_time.tzinfo is not None
+        ):
+            raise ValueError(
+                "Local itinerary times must be naive."
+            )
+        if self.start_local_time >= self.end_local_time:
+            raise ValueError(
+                "Itinerary start must be before end."
+            )
+        return self
+
+
+class AgentRuntimeContext(ContractModel):
+    """Strict optional orchestration inputs unavailable in the user query."""
+
+    selected_poi: PoiIdentity | None = None
+    evidence: EvidenceBundle = EvidenceBundle()
+    candidates: Annotated[
+        tuple[DiscoveryCandidate, ...],
+        Field(max_length=20),
+    ] = ()
+    itinerary_window: RuntimeItineraryWindow | None = None
+
+    @model_validator(mode="after")
+    def validate_context(self) -> AgentRuntimeContext:
+        """Keep candidate identity, order, and city semantics unambiguous."""
+        candidate_ids = tuple(candidate.id for candidate in self.candidates)
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("Runtime candidate IDs must be unique.")
+        candidate_cities = {candidate.city for candidate in self.candidates}
+        if len(candidate_cities) > 1:
+            raise ValueError(
+                "Runtime candidates must belong to one city."
+            )
+        if self.selected_poi is not None:
+            matching = tuple(
+                candidate
+                for candidate in self.candidates
+                if candidate.id == self.selected_poi.poi_id
+            )
+            if matching:
+                candidate = matching[0]
+                expected = PoiIdentity(
+                    poi_id=candidate.id,
+                    canonical_name=candidate.canonical_name,
+                    city=candidate.city,
+                    category=candidate.category,
+                )
+                if self.selected_poi != expected:
+                    raise ValueError(
+                        "Selected POI identity conflicts with its candidate."
+                    )
+            if (
+                candidate_cities
+                and self.selected_poi.city not in candidate_cities
+            ):
+                raise ValueError(
+                    "Selected POI city conflicts with runtime candidates."
+                )
+        return self
 
 
 def _validate_stage_shape(
@@ -276,6 +368,28 @@ class AgentRuntimeRequest(ContractModel):
     city: SupportedCity | None = None
     preferences: PreferenceDocument | None = None
     discovery_origin: DiscoveryOrigin | None = None
+    context: AgentRuntimeContext = AgentRuntimeContext()
+
+    @model_validator(mode="after")
+    def validate_runtime_context(self) -> AgentRuntimeRequest:
+        """Reject request/context city conflicts without inferring a city."""
+        if self.city is None:
+            return self
+        if any(
+            candidate.city is not self.city
+            for candidate in self.context.candidates
+        ):
+            raise ValueError(
+                "Runtime candidate city conflicts with request city."
+            )
+        if (
+            self.context.selected_poi is not None
+            and self.context.selected_poi.city is not self.city
+        ):
+            raise ValueError(
+                "Selected POI city conflicts with request city."
+            )
+        return self
 
 
 class AgentRuntimeResult(ContractModel):

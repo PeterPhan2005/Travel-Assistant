@@ -118,7 +118,17 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   an toàn. Pure renderer trả Vietnamese plain text deterministic, giữ exact
   specialist/claim fragments, Discovery order, UI omission và exact
   claim/source union; optional model output chỉ được nhận khi bằng toàn bộ
-  baseline deterministic. Code orchestration vẫn chưa có.
+  baseline deterministic. T048 đã bổ sung application-code orchestrator strict
+  nhận `AgentRuntimeRequest` và trả `AgentRuntimeResult`: Router chạy trước,
+  Discovery prerequisite chạy khi được plan, ba specialist độc lập fan-out
+  song song, rồi Grounding Reviewer và Response Composer. Mỗi service call tách
+  biệt, không transcript/session dùng chung; policy immutable giới hạn timeout
+  từng stage, overall deadline và tối đa một retry cho timeout/lỗi typed
+  retryable. Runtime context optional chỉ bổ sung selected POI, approved
+  evidence, ordered candidates và explicit local itinerary window. Approved
+  grounding decisions được chuyển thành strict `EvidenceBundle` không sửa hay
+  phát minh fact; cancellation giữ nguyên và safe partial output được bảo toàn.
+  Trace/usage vẫn thuộc T049; chưa có assistant HTTP route hay Android transport.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

@@ -14,6 +14,7 @@ import app.agents.contracts as contracts
 from app.agents.contracts import (
     AgentFailure,
     AgentKind,
+    AgentRuntimeContext,
     AgentRuntimeRequest,
     AgentRuntimeResult,
     AgentWarning,
@@ -55,6 +56,7 @@ from app.agents.contracts import (
     RouterOutput,
     RouterRequest,
     RouterStageOutcome,
+    RuntimeItineraryWindow,
     RuntimeResultStatus,
     SourceRecord,
     SourceType,
@@ -675,7 +677,6 @@ def test_public_fields_have_no_escape_hatch_or_sensitive_identity() -> None:
         "payload",
         "metadata",
         "extra",
-        "context",
         "uid",
         "token",
         "email",
@@ -699,6 +700,110 @@ def _annotation_contains_any(annotation: object) -> bool:
     return any(_annotation_contains_any(item) for item in get_args(annotation)) if (
         origin is not None
     ) else False
+
+
+def test_runtime_context_is_narrow_strict_and_backward_compatible() -> None:
+    original_fields = {
+        "request_id",
+        "user_query",
+        "locale",
+        "city",
+        "preferences",
+        "discovery_origin",
+    }
+    assert set(AgentRuntimeRequest.model_fields) == original_fields | {
+        "context"
+    }
+    legacy = AgentRuntimeRequest(
+        request_id="request-legacy",
+        user_query="Tìm địa điểm gần đây",
+        locale="vi-VN",
+        city=SupportedCity.HCMC,
+    )
+    assert legacy.context == AgentRuntimeContext()
+    with pytest.raises(ValidationError):
+        AgentRuntimeContext.model_validate({"metadata": {}})
+
+
+def test_runtime_context_preserves_candidate_order_and_rejects_duplicates() -> None:
+    first = _candidate()
+    second = first.model_copy(
+        update={
+            "id": "curated:poi-b",
+            "provider_id": "poi-b",
+            "canonical_name": "Điểm tham quan B",
+            "distance_metres": 250.0,
+        }
+    )
+    context = AgentRuntimeContext(candidates=(second, first))
+    assert tuple(candidate.id for candidate in context.candidates) == (
+        "curated:poi-b",
+        "curated:poi-a",
+    )
+    with pytest.raises(ValidationError, match="unique"):
+        AgentRuntimeContext(candidates=(first, first))
+
+
+def test_runtime_context_rejects_city_and_selected_identity_conflicts() -> None:
+    candidate = _candidate()
+    with pytest.raises(ValidationError, match="Selected POI identity"):
+        AgentRuntimeContext(
+            selected_poi=PoiIdentity(
+                poi_id=candidate.id,
+                canonical_name="Tên không khớp",
+                city=candidate.city,
+                category=candidate.category,
+            ),
+            candidates=(candidate,),
+        )
+    bangkok = candidate.model_copy(
+        update={
+            "id": "curated:poi-bkk",
+            "provider_id": "poi-bkk",
+            "city": SupportedCity.BANGKOK,
+        }
+    )
+    with pytest.raises(ValidationError, match="one city"):
+        AgentRuntimeContext(candidates=(candidate, bangkok))
+    with pytest.raises(ValidationError, match="request city"):
+        AgentRuntimeRequest(
+            request_id="request-city-conflict",
+            user_query="Lập lịch trình",
+            locale="vi-VN",
+            city=SupportedCity.HCMC,
+            context=AgentRuntimeContext(candidates=(bangkok,)),
+        )
+
+
+def test_runtime_itinerary_window_requires_iana_zone_and_naive_ordered_times() -> None:
+    window = RuntimeItineraryWindow(
+        local_date=date(2026, 8, 1),
+        timezone="Asia/Ho_Chi_Minh",
+        start_local_time=time(9, 0),
+        end_local_time=time(17, 0),
+    )
+    assert window.local_date == date(2026, 8, 1)
+    with pytest.raises(ValidationError, match="Timezone"):
+        RuntimeItineraryWindow(
+            local_date=date(2026, 8, 1),
+            timezone="Mars/Olympus",
+            start_local_time=time(9, 0),
+            end_local_time=time(17, 0),
+        )
+    with pytest.raises(ValidationError, match="naive"):
+        RuntimeItineraryWindow(
+            local_date=date(2026, 8, 1),
+            timezone="Asia/Ho_Chi_Minh",
+            start_local_time=time(9, 0, tzinfo=timezone.utc),
+            end_local_time=time(17, 0),
+        )
+    with pytest.raises(ValidationError, match="before"):
+        RuntimeItineraryWindow(
+            local_date=date(2026, 8, 1),
+            timezone="Asia/Ho_Chi_Minh",
+            start_local_time=time(17, 0),
+            end_local_time=time(9, 0),
+        )
 
 
 @pytest.mark.parametrize(

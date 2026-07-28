@@ -72,6 +72,7 @@ from app.agents.contracts.narration import (
     NarrationWordRange,
 )
 from app.agents.contracts.orchestration import (
+    AgentRuntimeContext,
     AgentRuntimeRequest,
     AgentRuntimeResult,
     ComposerStageOutcome,
@@ -81,6 +82,7 @@ from app.agents.contracts.orchestration import (
     LocalCultureStageOutcome,
     NarrationStageOutcome,
     RouterStageOutcome,
+    RuntimeItineraryWindow,
     RuntimeResultStatus,
     StageOutcome,
     StageStatus,
@@ -95,6 +97,7 @@ from app.agents.contracts.router import (
 __all__ = [
     "AgentFailure",
     "AgentKind",
+    "AgentRuntimeContext",
     "AgentRuntimeRequest",
     "AgentRuntimeResult",
     "AgentWarning",
@@ -156,6 +159,7 @@ __all__ = [
     "RouterOutput",
     "RouterRequest",
     "RouterStageOutcome",
+    "RuntimeItineraryWindow",
     "RuntimeResultStatus",
     "SourceId",
     "SourceRecord",

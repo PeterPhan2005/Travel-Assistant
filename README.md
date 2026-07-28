@@ -91,8 +91,13 @@ toàn. T047 đã bổ sung Response Composer độc lập chỉ nhận strict ap
 `EvidenceBundle`, approved claim IDs, approved specialist outputs và warning an
 toàn. Renderer deterministic giữ nguyên factual fragments, thứ tự Discovery,
 missing POI fields, warning và exact claim/source union; model output chỉ được
-chấp nhận khi bằng chính xác baseline này. Application orchestration vẫn chưa
-được triển khai.
+chấp nhận khi bằng chính xác baseline này. T048 đã bổ sung strict
+application-code orchestrator với typed `AgentRuntimeRequest`/`AgentRuntimeResult`,
+Discovery prerequisite, specialist fan-out song song, Grounding/Composer tuần
+tự, per-stage/overall timeout, tối đa một retry đủ điều kiện và safe partial
+output. Runtime context chỉ nhận selected POI, approved evidence, ordered
+candidates và explicit itinerary window; không có supervisor agent, shared
+transcript/session, trace/usage, assistant route hay Android transport.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
