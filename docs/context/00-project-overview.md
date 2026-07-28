@@ -103,7 +103,17 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   toàn bộ phút trong exact local window, không chồng lấn và dùng hai assumption
   cố định; model output không đóng exact sẽ quay về cùng planner. Agent không có
   route/tool/handoff/session/database/provider access và không đọc hoặc sửa
-  itinerary đã lưu. Reviewer, composer và code orchestration vẫn chưa có.
+  itinerary đã lưu. T046 đã bổ sung Grounding Reviewer độc lập nhận đúng một
+  `GroundingReviewRequest` và chỉ trả `GroundingReviewOutput`. Pure reviewer
+  nhận bounded untrusted candidate evidence nên missing/unknown support,
+  incomplete price freshness và duplicate/conflicting identity đều đi qua
+  normal validation để được quyết định đầy đủ/disjoint trên canonical claim
+  universe. Approved `EvidenceBundle` của T040 vẫn source-closed và không đổi.
+  Reviewer kiểm tra supplied freshness và specialist claim/source/POI closure;
+  model tùy chọn không thể làm yếu deterministic rejection, tạo ID/fact/
+  timestamp hoặc viết lại specialist content. Agent không có
+  tool/handoff/session/retrieval, route/database/provider access và tracing vẫn
+  tắt. Composer và code orchestration vẫn chưa có.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

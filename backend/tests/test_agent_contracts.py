@@ -31,6 +31,9 @@ from app.agents.contracts import (
     FactualClaim,
     FailureCode,
     FreshnessRequirement,
+    GroundingCandidateClaim,
+    GroundingCandidateEvidence,
+    GroundingCandidatePrice,
     GroundingReviewOutput,
     GroundingReviewRequest,
     GroundingReviewStatus,
@@ -475,6 +478,17 @@ def test_evidence_bundle_rejects_duplicate_ids_missing_sources_and_bad_price() -
         )
     with pytest.raises(ValidationError):
         FactualClaim(
+            claim_id="claim-empty",
+            evidence_id="evidence-empty",
+            fact_kind=FactKind.HISTORY,
+            statement="Không có nguồn.",
+            supporting_source_ids=(),
+            poi_id=None,
+            freshness_at=None,
+            price=None,
+        )
+    with pytest.raises(ValidationError):
+        FactualClaim(
             claim_id="claim-price",
             evidence_id="evidence-price",
             fact_kind=FactKind.PRICE,
@@ -485,6 +499,12 @@ def test_evidence_bundle_rejects_duplicate_ids_missing_sources_and_bad_price() -
             price=None,
         )
     with pytest.raises(ValidationError):
+        PriceFact(
+            price_minor_units=125_000,
+            currency="VND",
+            source_updated_at=None,  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValidationError):
         PriceFact.model_validate(
             {
                 "price_minor_units": 12.5,
@@ -492,6 +512,141 @@ def test_evidence_bundle_rejects_duplicate_ids_missing_sources_and_bad_price() -
                 "source_updated_at": NOW,
             }
         )
+
+
+def test_grounding_candidates_represent_reviewable_failures_normally() -> None:
+    incomplete_price = GroundingCandidatePrice(
+        price_minor_units=125_000,
+        currency="VND",
+        source_updated_at=None,
+    )
+    empty_sources = GroundingCandidateClaim(
+        claim_id="claim-empty",
+        evidence_id="evidence-empty",
+        fact_kind=FactKind.HISTORY,
+        statement="Ứng viên không có nguồn.",
+        supporting_source_ids=(),
+        poi_id=None,
+        freshness_at=None,
+        price=None,
+    )
+    unknown_source = GroundingCandidateClaim(
+        claim_id="claim-unknown-source",
+        evidence_id="evidence-shared",
+        fact_kind=FactKind.HISTORY,
+        statement="Ứng viên trỏ đến nguồn chưa biết.",
+        supporting_source_ids=("source-unknown",),
+        poi_id=None,
+        freshness_at=NOW,
+        price=None,
+    )
+    incomplete_price_claim = GroundingCandidateClaim(
+        claim_id="claim-price",
+        evidence_id="evidence-shared",
+        fact_kind=FactKind.PRICE,
+        statement="Ứng viên giá chưa đủ thời điểm.",
+        supporting_source_ids=("source-a",),
+        poi_id=None,
+        freshness_at=None,
+        price=incomplete_price,
+    )
+    source = _source()
+    conflicting_source = SourceRecord(
+        source_id="source-a",
+        source_type=SourceType.OFFICIAL_INSTITUTION,
+        label="Nguồn xung đột nhưng hợp lệ",
+        publisher="Đơn vị quản lý",
+        url=HttpUrl("https://example.test/source"),
+        published_at=None,
+        retrieved_at=NOW,
+    )
+    conflicting_claim = GroundingCandidateClaim(
+        claim_id="claim-empty",
+        evidence_id="evidence-conflict",
+        fact_kind=FactKind.HISTORY,
+        statement="Ứng viên trùng ID nhưng khác nội dung.",
+        supporting_source_ids=("source-a",),
+        poi_id=None,
+        freshness_at=NOW,
+        price=None,
+    )
+
+    request = GroundingReviewRequest(
+        evidence=GroundingCandidateEvidence(
+            sources=(source, source, conflicting_source),
+            claims=(
+                empty_sources,
+                conflicting_claim,
+                unknown_source,
+                incomplete_price_claim,
+            ),
+        ),
+    )
+
+    assert request.evidence.claims[0].supporting_source_ids == ()
+    assert request.evidence.claims[2].supporting_source_ids == (
+        "source-unknown",
+    )
+    assert request.evidence.claims[3].price is not None
+    assert request.evidence.claims[3].price.source_updated_at is None
+
+
+def test_grounding_candidate_boundary_stays_strict_and_schema_capable() -> None:
+    with pytest.raises(ValidationError):
+        GroundingCandidatePrice(
+            price_minor_units=12.5,  # type: ignore[arg-type]
+            currency="VND",
+            source_updated_at=NOW,
+        )
+    with pytest.raises(ValidationError):
+        GroundingCandidatePrice(
+            price_minor_units=125_000,
+            currency="vnd",
+            source_updated_at=NOW,
+        )
+    with pytest.raises(ValidationError):
+        GroundingCandidatePrice(
+            price_minor_units=125_000,
+            currency="VND",
+            source_updated_at=datetime(2026, 7, 28, 2, 0),
+        )
+    with pytest.raises(ValidationError):
+        GroundingReviewRequest.model_validate(
+            {
+                "evidence": {"sources": (), "claims": ()},
+                "unexpected": True,
+            }
+        )
+    with pytest.raises(ValidationError):
+        GroundingCandidateClaim(
+            claim_id="../claim",
+            evidence_id="evidence-invalid",
+            fact_kind=FactKind.HISTORY,
+            statement="ID không hợp lệ.",
+            supporting_source_ids=(),
+        )
+
+    candidate_evidence = GroundingCandidateEvidence.from_approved(_evidence())
+    specialist = _specialist_output()
+    requirement = FreshnessRequirement(
+        fact_kind=FactKind.PRICE,
+        as_of=NOW,
+        maximum_age_seconds=86_400,
+    )
+    with pytest.raises(ValidationError):
+        GroundingReviewRequest(
+            evidence=candidate_evidence,
+            specialist_outputs=(specialist, specialist),
+        )
+    with pytest.raises(ValidationError):
+        GroundingReviewRequest(
+            evidence=candidate_evidence,
+            freshness_requirements=(requirement, requirement),
+        )
+
+    schema = GroundingReviewRequest.model_json_schema()
+    assert "GroundingCandidateEvidence" in schema["$defs"]
+    assert candidate_evidence.claims
 
 
 def test_unicode_json_round_trip_and_missing_optionals_are_preserved() -> None:
@@ -784,7 +939,7 @@ def test_itinerary_accepts_ordered_draft_and_rejects_overlap_or_unknown_poi() ->
 
 def test_grounding_review_is_disjoint_complete_and_closed_to_request() -> None:
     request = GroundingReviewRequest(
-        evidence=_evidence(),
+        evidence=GroundingCandidateEvidence.from_approved(_evidence()),
         specialist_outputs=(_specialist_output(),),
         freshness_requirements=(
             FreshnessRequirement(

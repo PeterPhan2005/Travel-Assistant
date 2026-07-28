@@ -81,8 +81,13 @@ evidence được cung cấp. Fallback không model giữ thứ tự candidate, 
 required/excluded/preferred/max-stop, chia toàn bộ phút trong khung giờ thành
 các mục không chồng lấn và luôn nêu hai giả định cố định; model output phải đóng
 exact trên request hoặc quay về cùng planner deterministic. Agent không đọc hay
-ghi itinerary đã lưu. Reviewer, composer và application orchestration vẫn chưa
-được triển khai.
+ghi itinerary đã lưu. T046 đã bổ sung Grounding Reviewer độc lập: request dùng
+bounded candidate evidence để các lỗi missing/unknown source, price thiếu
+timestamp, duplicate/conflicting identity và specialist reference sai đi qua
+normal validation rồi được deterministic reviewer quyết định. Approved
+`EvidenceBundle` toàn cục vẫn source-closed và không đổi; reviewer không tạo
+fact/timestamp/ID/text thay thế. Model tùy chọn không thể làm yếu quyết định an
+toàn. Response Composer và application orchestration vẫn chưa được triển khai.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và

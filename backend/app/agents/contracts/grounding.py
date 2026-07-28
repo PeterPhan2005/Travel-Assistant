@@ -5,18 +5,28 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Literal, Self, TypeAlias
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, StrictInt, model_validator
 
 from app.agents.contracts.common import (
+    MAX_CLAIMS,
+    MAX_REFERENCES,
+    MAX_SOURCES,
     AgentKind,
     AgentWarning,
     ClaimId,
     ContractModel,
+    CurrencyCode,
     EvidenceBundle,
+    EvidenceId,
     FactKind,
+    FactualClaim,
+    MediumText,
+    PoiId,
+    PriceFact,
+    SourceId,
+    SourceRecord,
     SpecialistOutputId,
     validate_issue_stage,
-    validate_references,
     validate_sorted_unique,
 )
 from app.agents.contracts.discovery import DiscoveryOutput
@@ -66,6 +76,103 @@ SpecialistOutput: TypeAlias = Annotated[
 ]
 
 
+class GroundingCandidatePrice(ContractModel):
+    """Untrusted price fields presented to the grounding reviewer."""
+
+    price_minor_units: Annotated[
+        StrictInt,
+        Field(ge=0, le=9_223_372_036_854_775_807),
+    ] | None = None
+    currency: CurrencyCode | None = None
+    source_updated_at: AwareDatetime | None = None
+
+    @classmethod
+    def from_approved(cls, price: PriceFact) -> Self:
+        """Copy complete approved price data into the candidate boundary."""
+        return cls(
+            price_minor_units=price.price_minor_units,
+            currency=price.currency,
+            source_updated_at=price.source_updated_at,
+        )
+
+
+class GroundingCandidateClaim(ContractModel):
+    """A structurally valid claim that may still fail grounding review."""
+
+    claim_id: ClaimId
+    evidence_id: EvidenceId
+    fact_kind: FactKind
+    statement: MediumText
+    supporting_source_ids: Annotated[
+        tuple[SourceId, ...],
+        Field(max_length=MAX_REFERENCES),
+    ] = ()
+    poi_id: PoiId | None = None
+    freshness_at: AwareDatetime | None = None
+    price: GroundingCandidatePrice | None = None
+
+    @model_validator(mode="after")
+    def validate_source_order(self) -> GroundingCandidateClaim:
+        """Keep individual source references deterministic when present."""
+        validate_sorted_unique(
+            self.supporting_source_ids,
+            label="Supporting source IDs",
+        )
+        return self
+
+    @classmethod
+    def from_approved(cls, claim: FactualClaim) -> Self:
+        """Copy one validated claim without weakening its source contract."""
+        return cls(
+            claim_id=claim.claim_id,
+            evidence_id=claim.evidence_id,
+            fact_kind=claim.fact_kind,
+            statement=claim.statement,
+            supporting_source_ids=claim.supporting_source_ids,
+            poi_id=claim.poi_id,
+            freshness_at=claim.freshness_at,
+            price=(
+                GroundingCandidatePrice.from_approved(claim.price)
+                if claim.price is not None
+                else None
+            ),
+        )
+
+
+class GroundingCandidateEvidence(ContractModel):
+    """Untrusted registry whose semantic defects are reviewer decisions."""
+
+    sources: Annotated[
+        tuple[SourceRecord, ...],
+        Field(max_length=MAX_SOURCES),
+    ] = ()
+    claims: Annotated[
+        tuple[GroundingCandidateClaim, ...],
+        Field(max_length=MAX_CLAIMS),
+    ] = ()
+
+    @property
+    def source_ids(self) -> frozenset[str]:
+        """Return candidate source identities without hiding duplicates."""
+        return frozenset(source.source_id for source in self.sources)
+
+    @property
+    def claim_ids(self) -> frozenset[str]:
+        """Return canonical candidate claim identities."""
+        return frozenset(claim.claim_id for claim in self.claims)
+
+    @classmethod
+    def from_approved(cls, evidence: EvidenceBundle) -> Self:
+        """Copy validated evidence into the reviewer candidate boundary."""
+        return cls(
+            sources=evidence.sources,
+            claims=tuple(
+                GroundingCandidateClaim.from_approved(claim)
+                for claim in evidence.claims
+            ),
+        )
+
+
 class FreshnessRequirement(ContractModel):
     """Maximum accepted source age for one freshness-sensitive fact kind."""
 
@@ -80,7 +187,7 @@ class FreshnessRequirement(ContractModel):
 class GroundingReviewRequest(ContractModel):
     """Candidate evidence and typed specialist outputs to review independently."""
 
-    evidence: EvidenceBundle
+    evidence: GroundingCandidateEvidence
     specialist_outputs: Annotated[
         tuple[SpecialistOutput, ...],
         Field(max_length=20),
@@ -92,7 +199,7 @@ class GroundingReviewRequest(ContractModel):
 
     @model_validator(mode="after")
     def validate_review_input(self) -> GroundingReviewRequest:
-        """Close every specialist reference over the candidate registry."""
+        """Validate request-level identities without pre-judging evidence."""
         output_ids = tuple(
             output.output_id for output in self.specialist_outputs
         )
@@ -106,49 +213,6 @@ class GroundingReviewRequest(ContractModel):
             label="Freshness fact kinds",
         )
 
-        source_by_id = {
-            source.source_id: source for source in self.evidence.sources
-        }
-        claim_by_id = {
-            claim.claim_id: claim for claim in self.evidence.claims
-        }
-        for specialist in self.specialist_outputs:
-            if isinstance(specialist, DiscoverySpecialistOutput):
-                for source in specialist.output.evidence.sources:
-                    if source_by_id.get(source.source_id) != source:
-                        raise ValueError(
-                            "Discovery source differs from review registry."
-                        )
-                for claim in specialist.output.evidence.claims:
-                    if claim_by_id.get(claim.claim_id) != claim:
-                        raise ValueError(
-                            "Discovery claim differs from review registry."
-                        )
-            elif isinstance(specialist, NarrationSpecialistOutput):
-                validate_references(
-                    used_claim_ids=specialist.output.used_claim_ids,
-                    used_source_ids=specialist.output.used_source_ids,
-                    evidence=self.evidence,
-                )
-            elif isinstance(specialist, LocalCultureSpecialistOutput):
-                for guidance_item in specialist.output.guidance:
-                    validate_references(
-                        used_claim_ids=guidance_item.claim_ids,
-                        used_source_ids=guidance_item.source_ids,
-                        evidence=self.evidence,
-                    )
-            else:
-                for itinerary_item in specialist.output.items:
-                    if itinerary_item.supporting_claim_ids:
-                        validate_references(
-                            used_claim_ids=(
-                                itinerary_item.supporting_claim_ids
-                            ),
-                            used_source_ids=(
-                                itinerary_item.supporting_source_ids
-                            ),
-                            evidence=self.evidence,
-                        )
         return self
 
 

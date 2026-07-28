@@ -1297,6 +1297,64 @@ validation là tùy chọn, không chạy trong CI; đọc key im lặng, đặt
 hai biến. Không dùng model identifier từ provider khác khi chưa có adapter được
 duyệt.
 
+### Grounding Reviewer độc lập
+
+T046 cung cấp Grounding Reviewer tại `backend/app/agents/grounding/`; chưa có
+assistant route, Response Composer hoặc orchestration. Public boundary nhận một
+`GroundingReviewRequest` đã validate và chỉ trả `GroundingReviewOutput`.
+`GroundingReviewRequest.evidence` dùng ba contract frozen/strict/extra-forbid:
+`GroundingCandidateEvidence`, `GroundingCandidateClaim` và
+`GroundingCandidatePrice`. Chúng giữ bounds, safe IDs/text, integer money,
+uppercase currency và aware timestamps, nhưng cho phép registry trùng/xung đột,
+source reference thiếu/unknown và price freshness chưa hoàn chỉnh để các trạng
+thái đó là dữ liệu cần review thay vì validation exception. T040
+`SourceRecord`, `PriceFact`, `FactualClaim` và `EvidenceBundle` vẫn không đổi;
+`GroundingCandidateEvidence.from_approved()` là đường chuyển deterministic từ
+approved evidence sang candidate input.
+
+Deterministic reviewer luôn được dựng trước và là đường chạy khi không có model:
+claim thiếu/unknown source bị từ chối, price thiếu aware source/freshness
+timestamp được gắn `missing_price_timestamp`, freshness chỉ so với
+`FreshnessRequirement.as_of` được truyền vào, và specialist output chỉ được
+approve khi claim/source/POI references đóng trên candidate đã approve. Chỉ
+application code ở task sau mới có thể chọn approved candidates để dựng lại
+strict source-closed `EvidenceBundle`; reviewer không trả bundle đã sửa. Reviewer
+không đọc clock hiện tại, sửa fact/price/timestamp, đổi currency, tạo ID, viết
+lại narration/guidance/itinerary hoặc thêm warning text.
+
+Model path chỉ bật khi cả hai biến sau nonblank:
+
+```text
+OPENAI_API_KEY
+OPENAI_GROUNDING_MODEL
+```
+
+Model ID phải được chọn rõ ràng. Agent dùng một run, không tool, handoff, MCP,
+session, retry hoặc shared state; tracing và sensitive trace data vẫn tắt đến
+T049. Model input loại source label/URL, coordinates/origin, user identity,
+credential, database/provider payload và transcript. Model decision không được
+làm yếu deterministic rejection; output/type/closure hoặc ordinary SDK failure
+đều quay về byte-deterministic review. Caller cancellation luôn propagate.
+
+Xác nhận không cần credential hoặc network từ `backend/`:
+
+```bash
+env -u OPENAI_API_KEY \
+  -u OPENAI_GROUNDING_MODEL \
+  -u DATABASE_URL \
+  -u FIREBASE_PROJECT_ID \
+  python -c \
+  'import app.agents.grounding; print("grounding import ok")'
+
+pytest -q tests/test_grounding_reviewer.py
+```
+
+Có thể sinh schema bằng `GroundingReviewRequest.model_json_schema()` và
+`GroundingReviewOutput.model_json_schema()` mà không cần external service.
+Live-model validation là tùy chọn, không chạy trong CI; đọc key im lặng, đặt
+explicit `OPENAI_GROUNDING_MODEL`, chỉ in normalized `GroundingReviewOutput`,
+rồi unset ngay cả hai biến.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó
