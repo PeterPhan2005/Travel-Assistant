@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.kltn.travelassistant.data.seed.SeedImportResult
 import com.kltn.travelassistant.data.seed.SeedStartupCoordinator
+import com.kltn.travelassistant.feature.preferences.domain.PreferenceRepository
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -22,6 +23,9 @@ class TravelAssistantApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var preferenceRepository: PreferenceRepository
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -36,6 +40,7 @@ class TravelAssistantApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        preferenceRepository.state
         applicationScope.launch {
             when (val result = seedStartupCoordinator.initialize()) {
                 is SeedImportResult.Imported -> Log.i(

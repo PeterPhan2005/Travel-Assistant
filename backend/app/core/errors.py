@@ -143,7 +143,10 @@ async def request_validation_exception_handler(
 
     issues = [
         ValidationIssue(
-            location=_validation_location(error.get("loc")),
+            location=_validation_location(
+                error.get("loc"),
+                redact_preference_path=request.url.path == "/preferences",
+            ),
             message="Invalid value.",
             type=_validation_type(error.get("type")),
         )
@@ -174,10 +177,23 @@ async def unexpected_exception_handler(
     )
 
 
-def _validation_location(value: object) -> list[ErrorLocationItem]:
+def _validation_location(
+    value: object,
+    *,
+    redact_preference_path: bool = False,
+) -> list[ErrorLocationItem]:
     if not isinstance(value, Sequence) or isinstance(value, str):
         return []
-    return [item for item in value if isinstance(item, (str, int))]
+    location = [
+        item for item in value if isinstance(item, (str, int))
+    ]
+    if redact_preference_path and location and location[0] == "body":
+        return (
+            ["body", "preferences"]
+            if "preferences" in location
+            else ["body"]
+        )
+    return location
 
 
 def _validation_type(value: object) -> str:

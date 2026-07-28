@@ -84,13 +84,18 @@ invocation into schema-version-1 public data plus a schema-version-1 manifest.
 The committed HCMC pair is byte-deterministic and independently verifiable by
 exact byte size and SHA-256. Android now downloads/resumes and validates that
 HCMC artifact through a user-triggered WorkManager flow, then atomically
-activates it in Room while retaining old offline data on every failure. Live
-Google Places, Android-to-backend networking and the AI runtime remain
-unimplemented.
+activates it in Room while retaining old offline data on every failure.
+Canonical private `GET /preferences` and `PUT /preferences` now persist one
+strict schema-version-1 generic document by authenticated Firebase UID. Android
+stores each account's complete document, local revision, pending flag and last
+server timestamp in app-private DataStore under a hashed account key; a unique
+connected WorkManager job gets the ID token only at request time and pushes the
+latest snapshot before any refresh. Live Google Places, preference taxonomy/UI
+and the AI runtime remain unimplemented.
 
 ## Current goal
 
-T035 Android package synchronization is complete. T025 is next by roadmap and
+T025 preference synchronization is complete. T040 is next by roadmap and
 dependency readiness, but must not begin until explicitly assigned.
 
 ## Completed
@@ -119,6 +124,7 @@ dependency readiness, but must not begin until explicitly assigned.
 - T022 Implement Google authentication.
 - T023 Create FastAPI service.
 - T024 Verify Firebase tokens in backend.
+- T025 Synchronize user preferences.
 - T030 Create server database schema.
 - T031 Build curated data pipeline.
 - T032 Define POI provider adapters.
@@ -132,7 +138,7 @@ dependency readiness, but must not begin until explicitly assigned.
 
 ## Next up
 
-- T025 Synchronize user preferences.
+- T040 Define agent contract models.
 
 ## Open questions
 
@@ -142,6 +148,7 @@ dependency readiness, but must not begin until explicitly assigned.
 - Exact list of source publishers accepted for narration.
 - Exact production retention duration for rounded or redacted operational
   location-request logs within the accepted 7–30 day range.
+- Final user-facing preference taxonomy and editing UI.
 
 ## Architecture decisions
 
@@ -218,6 +225,43 @@ dependency readiness, but must not begin until explicitly assigned.
   index; no user location history is modeled. Composite trip/owner references
   prevent cross-owner itineraries. Retained curated records restrict source
   deletion so provenance cannot disappear silently.
+- `/preferences` is the sole private preference resource. GET is read-only and
+  returns canonical `{schema_version: 1, preferences: {}, updated_at: null}`
+  when no owner row exists. PUT validates before mutation, resolves/creates the
+  user with PostgreSQL conflict handling, upserts exactly one preference row
+  and commits once. Neither route accepts or exposes UID, token, claim, email or
+  database UUID.
+- Preference schema version 1 deliberately has no product taxonomy. Its strict
+  envelope forbids unknown top-level fields; the generic object permits only
+  null, boolean, bounded integer, bounded Unicode string, array and nested
+  object. Limits are a 16 KiB serialized envelope, depth 6, key length 64,
+  string length 512, 50 entries per array/object, 500 total values and integer
+  magnitude at most 10^12. Decimal/non-finite numbers, binary, tuples and
+  arbitrary objects fail closed. Validation errors redact preference paths.
+- Preference conflicts use server-receipt-order last-write-wins: each committed
+  PUT replaces the complete JSONB document; the transaction that commits last
+  wins and PostgreSQL supplies `updated_at`. There is no client-clock choice,
+  field merge or cross-device silent merge.
+- Android preference storage is separate from Room and static packages.
+  App-private DataStore holds one strict record per SHA-256 Firebase account
+  key: schema/document, monotonic local revision, pending flag and last server
+  timestamp. A local edit commits before scheduling. Sign-out immediately hides
+  the old record; switching accounts selects a different record; returning to
+  the same account restores pending state. Preference DataStore is excluded
+  from backup/transfer.
+- Authenticated preference networking uses a dedicated typed backend origin
+  (`http://10.0.2.2:8000/` only for debug; release unset/cleartext-disabled),
+  bounded timeouts/body/media checks and disabled redirects. Firebase token is
+  fetched only immediately before request, attached only to that origin,
+  force-refreshed at most once after 401 and never persisted or logged. Static
+  package OkHttp remains a separate unauthenticated client.
+- One unique, non-periodic `preference-sync` WorkManager request requires
+  connected networking and bounded exponential backoff. Work Data contains no
+  account identity, token, email or document. At execution it reads the current
+  verified account and newest complete local snapshot. Pending data is PUT
+  before any GET; otherwise GET may refresh cache. A success clears pending only
+  when its captured revision still matches, so an edit made in flight remains
+  pending and triggers another WorkManager attempt.
 - Curated package schema version 1 uses YAML as the canonical authoring format
   and accepts strict JSON through the same typed boundary. Stable lowercase
   hyphenated identifiers are city-prefixed with `hcmc-` or `bkk-`; supported
@@ -307,8 +351,8 @@ dependency readiness, but must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T024 and T030–T035 are complete; T025 is next but unassigned. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. Production/release Firebase configuration remains absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport remains separate and unimplemented. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android-to-backend networking and agent runtime are not implemented. |
+| Task sequence | T000 through T004, T010 through T025 and T030–T035 are complete; T040 is next but unassigned. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. Live Google Places, Android nearby transport and agent runtime are not implemented. |
 
 ## Session notes
 
@@ -879,3 +923,53 @@ server outage returned WorkManager retry; restoring hosting caused the same
 work ID to retry after its 30-second backoff and succeed. Release hosting,
 Bangkok download UI and Android-to-backend networking remain unresolved and
 outside T035.
+
+T025 completed on 2026-07-28 with one private, authenticated preference
+document per verified Firebase UID. `GET /preferences` is read-only and returns
+a canonical empty schema-v1 document when absent. `PUT /preferences` validates
+and completely replaces the document in one PostgreSQL transaction; concurrent
+first writes converge on one user row and one preference row. The JSON contract
+accepts only null, booleans, bounded integers, strings, arrays and objects, with
+conservative depth, item, key, string and total-size limits. Unknown envelope
+fields, floats, non-finite numbers, binary values and oversized documents are
+rejected. Responses and sanitized errors never expose a UID, token, raw
+document, preference key/value or database detail. No migration or public
+contract outside preferences changed.
+
+Android now stores the latest complete schema-v1 preference document in
+account-scoped DataStore records keyed by a SHA-256 account identifier. Local
+writes are atomic and durable before unique connected WorkManager work is
+scheduled. Synchronization pushes pending edits before fetching, obtains a
+fresh Firebase ID token immediately before each request, retries one 401 after a
+forced token refresh, and never persists or logs the token. Exact local
+revisions prevent an in-flight request from clearing or overwriting a newer
+edit. The network client is preference-specific, redirect-free, bounded and
+limited to the validated fixed `/preferences` endpoint. Release builds have no
+development backend URL and reject cleartext; debug cleartext remains limited
+to emulator host `10.0.2.2`. Backup rules exclude preference DataStore data.
+No preference UI, periodic synchronization, ranking, AI prompt behavior or
+taxonomy was added.
+
+Final backend verification on Python 3.12 passed dependency installation,
+`pip check`, Ruff, strict mypy over app/tests, Alembic upgrade to head, curated
+schema/package drift checks, the exact 934-byte travel artifact check,
+compileall and all 242 pytest tests. The PostgreSQL integration tests apply the
+real migration chain, call the authenticated API, verify replacement semantics,
+unrelated-table preservation, two-user isolation and concurrent first writes.
+
+Final Android verification used Android Studio JDK 21.0.10. The combined
+`test lintDebug assembleDebug connectedDebugAndroidTest` invocation passed,
+including all 135 JVM tests and all 90 device tests on the ARM64 API 36 Google
+Play emulator. AndroidX DataStore 1.2.1 removed the platform 16 KiB compatibility
+dialog observed with 1.2.0; `zipalign -c -P 16 -v 4` also verified the debug APK.
+Tests cover contract parity, Unicode, bounds, GET/PUT transport, bearer handling,
+single 401 refresh, redirect/body/media failures, cancellation, pending-first
+ordering, in-flight edit races, durable recreation, account isolation, revision
+guards and safe WorkManager data.
+
+Live synchronization against a development Firebase project was not run because
+no production credential, real user token or preference-editing UI was added.
+The exact online/offline/account-switch behavior is exercised by deterministic
+API, network, sync-engine and instrumented DataStore tests. Preference taxonomy,
+product UI and release HTTPS hosting remain open for later explicitly assigned
+work; T040 and later tasks were not started.

@@ -57,8 +57,10 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   production và release configuration vẫn tách riêng và chưa có. Kiểm thử tự
   động và kiểm thử thủ công với Firebase development project đã xác nhận các
   luồng email/password và Google, hủy picker, khôi phục phiên sau cold launch,
-  đăng xuất và chọn lại tài khoản đều hoạt động. Backend token verification,
-  networking và các hành vi sản phẩm khác vẫn chưa hoàn thành. Không có
+  đăng xuất và chọn lại tài khoản đều hoạt động. Preference infrastructure dùng
+  DataStore theo account key băm, local revision/pending state và một unique
+  connected WorkManager job gọi private backend client; token chỉ được lấy ngay
+  trước request. Taxonomy/form chỉnh preference chưa được khóa. Không có
   background tracking hoặc lưu vị trí chính xác.
 - Local PostgreSQL/PostGIS Docker Compose infrastructure đã có. Backend hiện có
   FastAPI application factory, settings validation, liveness health check,
@@ -72,7 +74,11 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   lỗi và provenance được chuẩn hóa. `GET /pois/nearby` dùng optional Firebase
   Bearer authentication, app-scoped async engine và request-scoped read-only
   session để trả normalized curated POI với distance metre,
-  provenance/freshness và bounded `is_complete`. Android-to-backend transport,
+  provenance/freshness và bounded `is_complete`. Canonical private
+  `GET /preferences` và `PUT /preferences` đọc hoặc thay toàn bộ bounded generic
+  schema-version-1 document theo authenticated Firebase UID. GET missing-row
+  không ghi dữ liệu; PUT upsert user/preference trong một transaction với
+  server timestamp. Android-to-backend transport hiện chỉ có cho preferences;
   live Google Places và agent runtime chưa được triển khai. Backend có thêm
   deterministic offline builder cho static travel-package data/manifest schema
   version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

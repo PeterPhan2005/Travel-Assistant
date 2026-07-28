@@ -30,11 +30,17 @@ android {
         debug {
             buildConfigField(
                 "String",
+                "BACKEND_BASE_URL",
+                "\"http://10.0.2.2:8000/\"",
+            )
+            buildConfigField(
+                "String",
                 "HCMC_PACKAGE_MANIFEST_URL",
                 "\"http://10.0.2.2:8081/hcmc-starter-v1-1.0.0.manifest.json\"",
             )
         }
         release {
+            buildConfigField("String", "BACKEND_BASE_URL", "\"\"")
             buildConfigField("String", "HCMC_PACKAGE_MANIFEST_URL", "\"\"")
             optimization {
                 enable = false
@@ -60,6 +66,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

@@ -60,11 +60,23 @@ POI provider boundary nội bộ và curated PostGIS adapter đã có với cont
 timeout/lỗi và provenance chuẩn hóa. Canonical `GET /pois/nearby` API hiện dùng
 app-scoped async engine, request-scoped read-only session và optional Firebase
 Bearer authentication để trả normalized curated POI với distance metre,
-provenance/freshness và bounded `is_complete`. Chưa có live Google Places,
-Android networking hoặc AI runtime; Android app chưa gọi backend này. Backend
+provenance/freshness và bounded `is_complete`. Chưa có live Google Places hoặc
+AI runtime; Android app chưa gọi nearby API này. Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.
+
+T025 đã bổ sung private resource canonical `GET /preferences` và
+`PUT /preferences`. Backend chỉ dùng UID đã xác minh từ Firebase để đọc hoặc
+upsert một generic JSON document schema version 1 có giới hạn chặt; GET khi chưa
+có row trả document rỗng mà không ghi database, còn PUT thay toàn bộ document
+trong một transaction. Android có repository preference offline-first tách khỏi
+static package client: DataStore giữ document nhỏ, revision và pending state
+theo account key băm; Firebase ID token chỉ được lấy ngay trước private request;
+một unique WorkManager job có network constraint gửi snapshot mới nhất. Thành
+công của request cũ không thể xóa pending edit có revision mới hơn. Taxonomy và
+UI chỉnh sở thích vẫn chưa được khóa, và preferences chưa tham gia ranking hay
+AI.
 
 ## Android app identifiers
 

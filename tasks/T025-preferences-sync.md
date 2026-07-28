@@ -1,7 +1,7 @@
 ---
 id: T025
 title: Synchronize user preferences
-status: todo
+status: done
 depends_on: [T021, T024, T031]
 area: fullstack
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Preferences persist by UID.
-- [ ] Offline edits queue safely.
-- [ ] Conflicts use documented last-write policy.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Preferences persist by UID.
+- [x] Offline edits queue safely.
+- [x] Conflicts use documented last-write policy.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -764,9 +764,114 @@ Ngay trước khi server ghi access log, query string được bỏ khỏi ASGI 
 tọa độ origin, query text và category không xuất hiện trong access-log request
 line; route vẫn nhận đủ query parameters để validation và discovery.
 
-Android app chưa có transport tới backend và chưa lấy Firebase ID token để gọi
-`/auth/me` hoặc `/pois/nearby`; phần đó vẫn là task tích hợp sau. Không thêm
-networking Android để kiểm tra endpoint trong T033.
+Android app chưa gọi `/auth/me` hoặc `/pois/nearby`; transport private hiện chỉ
+phục vụ preference sync.
+
+### Đồng bộ preference riêng tư
+
+Hai endpoint canonical sau đều private và bắt buộc Firebase Bearer ID token:
+
+```text
+GET /preferences
+PUT /preferences
+```
+
+Không endpoint nào nhận UID từ path, query hoặc body. Backend chỉ dùng UID từ
+dependency Firebase đã verify. Ví dụ dưới đây chỉ dùng placeholder, không thay
+bằng token thật trong tài liệu hoặc lịch sử shell:
+
+```bash
+curl --include \
+  --header 'Authorization: Bearer <Firebase-ID-token>' \
+  http://127.0.0.1:8000/preferences
+
+curl --include \
+  --request PUT \
+  --header 'Authorization: Bearer <Firebase-ID-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"schema_version":1,"preferences":{"neutral_test_key":"Giữ Unicode"}}' \
+  http://127.0.0.1:8000/preferences
+```
+
+`neutral_test_key` chỉ minh họa contract, không phải taxonomy sản phẩm. Public
+envelope chỉ có `schema_version`, `preferences`; response thêm `updated_at`.
+Version được hỗ trợ là `1`. `preferences` phải là JSON object và chỉ chứa null,
+boolean, integer từ -1.000.000.000.000 đến 1.000.000.000.000, string tối đa 512
+ký tự, array tối đa 50 item và object tối đa 50 key. Key dài 1–64 ký tự, nesting
+tối đa 6 container level, tổng tối đa 500 value và serialized envelope tối đa
+16 KiB. Decimal, NaN/infinity, binary, tuple, unknown top-level field và object
+tùy ý bị từ chối. Unicode/Vietnamese được giữ nguyên.
+
+GET khi user/preference chưa tồn tại trả:
+
+```json
+{
+  "schema_version": 1,
+  "preferences": {},
+  "updated_at": null
+}
+```
+
+GET này read-only và không tạo row. PUT validate full document rồi transactionally
+upsert đúng một `users` row và một `user_preferences` row; nó thay toàn bộ
+document, không merge field. Conflict policy là **server-receipt-order last
+write wins**: mỗi PUT thành công replace complete document, transaction commit
+sau là winner, và `updated_at` do PostgreSQL/server sinh. Client clock không
+được dùng để chọn winner.
+
+Android debug dùng typed backend base URL:
+
+```text
+http://10.0.2.2:8000/
+```
+
+Release để base URL rỗng cho đến khi có HTTPS hosting và cấm cleartext. Client
+preference tách hẳn client static travel-package, không follow redirect và chỉ
+gắn `Authorization: Bearer <ID token>` vào origin backend đã validate. Token
+được lấy từ Firebase ngay trước mỗi request, không đi vào DataStore, Room,
+WorkManager Data, UI/ViewModel state hay log. Một 401 được force-refresh token
+và retry đúng một lần; 401 thứ hai là authentication failure.
+
+Local representation nằm trong app-private DataStore theo SHA-256 account key:
+schema version, complete document, monotonic local revision, pending flag và
+server timestamp gần nhất. Local edit được fsync bởi DataStore trước khi enqueue.
+WorkManager dùng một unique one-time work `preference-sync`, network constraint
+`CONNECTED`, exponential backoff 30 giây và không có periodic work. Work Data
+không chứa UID/account key, token, email hoặc document. Worker luôn đọc account
+đang verified và complete snapshot mới nhất lúc thực thi.
+
+Nếu local revision đổi khi PUT đang chạy, success của request cũ không clear
+pending; WorkManager retry sẽ gửi snapshot mới. Nhiều offline edit collapse vào
+complete snapshot mới nhất. Khi account verified active, pending local data được
+PUT trước; nếu không pending thì GET refresh cache. GET không bao giờ overwrite
+pending edit. Sign-out ngừng expose account cũ nhưng giữ pending record cho đúng
+account đó; account khác dùng key khác và không thể thấy/gửi record cũ.
+
+Không có preference form vì taxonomy chưa được khóa. Vì vậy manual runtime chỉ
+kiểm tra automatic GET/cache sau verified sign-in; local edit/offline/revision
+race được tái hiện qua deterministic test seam. Chạy:
+
+```bash
+cd backend
+ruff check .
+mypy --strict app tests
+pytest
+
+cd ../android
+./gradlew testDebugUnitTest
+./gradlew connectedDebugAndroidTest
+```
+
+Các test Android tương ứng là `PreferenceDocumentCodecTest`,
+`PreferenceNetworkTest`, `PreferenceSyncEngineTest`,
+`PreferenceDataStoreTest` và `PreferenceWorkRequestFactoryTest`. Với development
+project, start PostgreSQL, migrate, start Uvicorn, cài debug app, sign in bằng
+account verified rồi xác nhận WorkManager gọi GET và DataStore nhận document.
+Tắt backend/network rồi chạy `PreferenceDataStoreTest` để tái hiện durable
+pending/restart; chạy `PreferenceSyncEngineTest` để tái hiện edit mới trong khi
+request cũ in-flight; chạy lại với hai account để xác nhận isolation. Không log
+token, UID, full document hoặc database URL. Static package test hiện có tiếp
+tục xác nhận download không có Authorization.
 
 Dừng server bằng `Ctrl+C`. Có thể deactivate virtual environment bằng:
 
