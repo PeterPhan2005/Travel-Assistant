@@ -17,6 +17,10 @@ from agents.models.openai_provider import OpenAIProvider
 from pydantic import ValidationError
 
 from app.agents.contracts import RouterOutput, RouterRequest
+from app.agents.observability.sdk import (
+    capture_sdk_result_usage,
+    run_config_for_observation,
+)
 from app.agents.router.instructions import ROUTER_INSTRUCTIONS
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
@@ -68,6 +72,7 @@ class _AgentsSdkRunner:
             max_turns=max_turns,
             run_config=run_config,
         )
+        capture_sdk_result_usage(result)
         return cast(_RunResultLike, result)
 
 
@@ -126,7 +131,7 @@ class OpenAIRouterExecutor:
             self._agent,
             serialize_router_request(request),
             max_turns=ROUTER_MAX_TURNS,
-            run_config=self._run_config,
+            run_config=run_config_for_observation(self._run_config),
         )
         final_output = result.final_output
         if not isinstance(final_output, RouterOutput):

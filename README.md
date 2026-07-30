@@ -97,7 +97,13 @@ Discovery prerequisite, specialist fan-out song song, Grounding/Composer tuần
 tự, per-stage/overall timeout, tối đa một retry đủ điều kiện và safe partial
 output. Runtime context chỉ nhận selected POI, approved evidence, ordered
 candidates và explicit itinerary window; không có supervisor agent, shared
-transcript/session, trace/usage, assistant route hay Android transport.
+transcript/session, assistant route hay Android transport. T049 thêm package
+observability inject được với one trace ID theo Agents SDK format cho mỗi
+runtime request, exact request-ID correlation, canonical stage/attempt status,
+latency và aggregate token usage. Query typed đọc bounded process-local FIFO
+store; SDK export mặc định tắt, khi bật explicit vẫn luôn loại sensitive trace
+data. Không có transcript/query/coordinate/content retention, cost calculation,
+database observability hoặc HTTP observability route.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và

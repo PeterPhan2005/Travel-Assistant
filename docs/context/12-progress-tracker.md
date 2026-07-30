@@ -141,13 +141,18 @@ claim/source/freshness decisions, specialist-output approval, optional isolated
 model review and deterministic safety fallback. T047 implements the independent
 Response Composer with a pure deterministic safety baseline and optional
 exact-equality model execution.
-T048 implements the typed code runtime; the assistant HTTP route, Android
-transport, trace export and usage accounting remain unimplemented.
+T048 implements the typed code runtime. T049 implements injected local
+observability at `backend/app/agents/observability/`: one SDK-format trace ID per
+runtime request, exact request-ID correlation, canonical stage/attempt
+observations, safe aggregate SDK token usage, bounded FIFO process-local storage
+and typed trace/request/usage queries. SDK export is explicit and disabled by
+default; every model run keeps sensitive trace data disabled. The assistant HTTP
+route, observability route and Android transport remain unimplemented.
 
 ## Current goal
 
-T048 strict multi-agent orchestrator is complete. T049 agent observability is
-next but must not begin until explicitly assigned.
+T049 agent observability is complete. T050 agent evaluation runner is next but
+must not begin until explicitly assigned.
 
 ## Completed
 
@@ -191,6 +196,7 @@ next but must not begin until explicitly assigned.
 - T046 Implement Grounding Reviewer Agent.
 - T047 Implement Response Composer Agent.
 - T048 Implement strict multi-agent orchestrator.
+- T049 Add agent observability.
 
 ## In progress
 
@@ -198,7 +204,7 @@ next but must not begin until explicitly assigned.
 
 ## Next up
 
-- T049 Add agent observability.
+- T050 Create agent evaluation runner.
 
 ## Open questions
 
@@ -762,6 +768,47 @@ next but must not begin until explicitly assigned.
   calls no discovery/provider/Firebase/map/web service, and adds no route,
   setting, migration, dependency, Android behavior, T046 reviewer behavior,
   composer, orchestration, tracing export or usage accounting.
+- T049 owns `backend/app/agents/observability/`, separated into strict contracts,
+  request-local context, pinned-SDK adaptation, bounded store and injected
+  lifecycle/query service. Public queries are exact trace lookup, bounded
+  request trace lookup and bounded request usage summary with optional
+  `AgentKind` filtering. There is no arbitrary metadata/filter dictionary,
+  module-level mutable store, database, migration, HTTP route or Android
+  transport.
+- Each `AgentRuntimeRequest` receives one `trace_<32 lowercase hex>` identity.
+  The local record and exported workflow both use the exact validated runtime
+  request ID; exported `group_id` equals it, workflow name is the stable
+  `travel_assistant_runtime`, and metadata contains only request ID. Every
+  planned stage is recorded in canonical order with agent, final status, the
+  existing T048 bounded duration, zero/one/two attempts, numeric usage and only
+  an optional `FailureCode`. Zero attempt is reserved for a failed
+  mapping/deadline stage that made no service call.
+- All seven real T041–T047 SDK adapters copy only aggregate `Usage` values after
+  a completed `Runner.run`: request, input, output, total, cached-input and
+  reasoning token counts. Missing details map to zero; invalid, negative,
+  noninteger or inconsistent usage fails closed; request-usage entries, model
+  response/ID/header/provider data and price/cost are never retained. The trace
+  aggregate is the checked sum of stage usage, including completed calls across
+  the two allowed orchestration attempts without estimating deterministic
+  fallback usage.
+- Request and attempt correlation uses standard-library `contextvars`; child
+  tasks inherit the safe request/trace identity while concurrent runtime calls
+  receive separate accumulators. Every bind/reset is paired in `finally`, so
+  cancellation propagates without sibling or later-request leakage. SDK export
+  is explicit through frozen injected policy and defaults off. Outside an active
+  exported observation, tracing remains disabled; inside one, each executor gets
+  a fresh `RunConfig` and `trace_include_sensitive_data=false` remains
+  unconditional. Export/store failure logs only a fixed result code and does not
+  alter the runtime result.
+- The T049 in-memory store is capacity-bounded, lock-protected, idempotent for an
+  exact duplicate and rejects a conflicting trace ID. FIFO eviction and query
+  limits are deterministic. It is operational process-local data only and
+  resets on restart; the open production retention decision remains unresolved.
+  Stored records, summaries, trace metadata, custom spans and logs exclude raw
+  query/transcript, exact origin/coordinates, POI/claim/source IDs, prices,
+  specialist/final prose, itinerary notes, issue messages, model names, keys,
+  Firebase identity and provider/database payloads. T049 adds no T050 fixtures,
+  metrics or regression thresholds.
 
 ## T002 baseline consistency review
 
@@ -778,12 +825,13 @@ next but must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T048 are complete; T049 is next but unassigned. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T049 are complete; T050 is next but unassigned. |
 | Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. The independent Grounding Reviewer creates complete deterministic claim decisions, applies request-supplied source/freshness/price rules, approves only closed specialist outputs and prevents model output from weakening safety or authoring new facts/IDs. The independent Response Composer renders only approved evidence and content. The strict T048 application-code orchestrator now coordinates the typed runtime with scoped separate service calls, concurrent specialist fan-out, bounded timeouts/retry and safe partial output. Live Google Places and assistant HTTP/Android transport remain unimplemented. |
 
-T048 update to the implementation-state row: the independent Response Composer
-and strict application-code orchestration path are now implemented. Live Google
-Places, assistant HTTP/Android transport and T049 observability remain
+T049 update to the implementation-state row: the independent Response Composer,
+strict application-code orchestration path and injected privacy-safe local
+observability/query boundary are now implemented. Live Google Places,
+assistant HTTP/Android transport and T050 evaluation behavior remain
 unimplemented.
 
 ## Session notes
@@ -1917,3 +1965,86 @@ usable partial specialist-failure result, and enforced a tiny overall budget.
 No live model validation was required or run; deterministic/scripted service
 tests prove independent calls, request scope, fan-out overlap, retry counts,
 timeouts, cancellation and privacy without external requests.
+
+T049 completed on 2026-07-28 with the injected observability package at
+`backend/app/agents/observability/`. Frozen strict extra-forbidden contracts
+represent aggregate token usage, canonical stage observations, one trace record
+and typed exact-trace/request/usage queries. Trace IDs use the installed Agents
+SDK format and retain the exact `AgentRuntimeRequest.request_id`; trace IDs are
+available only through the query boundary and do not change
+`AgentRuntimeResult`.
+
+The in-memory store is explicitly capacity-bounded, process-local,
+lock-protected and FIFO. Exact duplicates are idempotent, conflicting trace IDs
+are rejected, result limits are bounded and all returned records are revalidated
+immutable copies. Usage summaries are checked sums over stored record values,
+support optional canonical agent filtering and contain no cost. This is not a
+production persistent-retention solution; the existing retention-duration open
+question remains.
+
+Standard-library `contextvars` carry only request ID, trace ID, current agent,
+attempt and a private numeric accumulator. Fan-out child tasks inherit the
+correct correlation, concurrent requests stay isolated and every scope resets
+on success, failure or cancellation. T048 `execute_stage()` now exposes its
+one/two attempt count internally and enters one safe observation/custom-span
+scope around each invocation without changing its existing timeout, retry,
+deadline, duration or cancellation behavior. Mapping/deadline stages that never
+invoke a service use the strict failed/zero-attempt/zero-usage representation.
+
+All seven T041–T047 real `_AgentsSdkRunner` adapters capture only the supported
+aggregate fields from `result.context_wrapper.usage` immediately after a
+successful SDK result. Each executor derives a fresh `RunConfig` for every call:
+tracing stays disabled without an active exported observation, explicit export
+joins the outer workflow trace and `trace_include_sensitive_data=false` is
+unconditional. The outer workflow name is `travel_assistant_runtime`,
+`group_id` equals request ID and metadata contains only request ID. SDK export
+defaults off and requires an explicit injected frozen policy/key; local
+observation works with all OpenAI/database/Firebase configuration absent.
+Store/export failures are sanitized and cannot replace a runtime result.
+
+Contract, store, context, usage-adapter, RunConfig, fake workflow/span,
+orchestration, request-correlation, retry, fan-out, cancellation and privacy
+tests make no OpenAI or telemetry request. Stored records, summaries, exported
+fake metadata/spans and logs contain no raw query/transcript, origin/coordinate,
+POI/claim/source identity, price, specialist/final prose, itinerary note, issue
+message, key/model, Firebase identity or provider/database payload. T049 added
+no dependency, route, global FastAPI setting, database/migration, Android file,
+OpenTelemetry/Prometheus/vendor SDK, cost logic or T050 evaluation fixture.
+Optional live OpenAI trace validation was not run because it is nonblocking and
+no API credential/model was required for completion.
+
+Final T049 verification on Python 3.12.13 passed development dependency
+installation, `pip check`, Ruff, strict mypy over all 152 app/test files,
+curated JSON Schema drift, both curated package validations, exact
+travel-package drift, compileall, 94 focused T040/T048/T049 tests and all 681
+pytest tests with healthy local PostGIS and disposable integration databases.
+The credential-free manual run unset every OpenAI model/key plus
+database/Firebase configuration, blocked IPv4/IPv6 socket creation, imported
+observability/orchestration, generated public JSON Schemas and confirmed the
+unchanged four product routes. Two complete requests had distinct trace IDs,
+exact request correlation, canonical seven-stage records and zero usage; the
+partial run stored aggregate issue counts only; the retry made exactly two
+attempts; cancellation propagated with no record/task/context leak; and typed
+trace/usage queries returned the expected zero-token aggregate.
+
+T049 verification repair on 2026-07-30 closed two privacy/acceptance gaps
+without changing runtime behavior. Public observability queries now construct a
+fixed `AgentObservabilityQueryError` inside the handler and raise it only after
+the raw exception scope has ended; store record-copy, aggregate-overflow and
+summary-validation conversions use the same no-chain boundary. Adversarial
+tests confirm the public exception has neither cause nor context and that raw
+query, coordinate and stored-record sentinels are absent from messages,
+representations, formatted tracebacks and logs; query cancellation still
+propagates.
+
+The seven-adapter acceptance proof now behaviorally invokes each real T041–T047
+`_AgentsSdkRunner` while monkeypatching only its SDK `Runner.run`. Every adapter
+passes a fresh per-context `RunConfig`, keeps sensitive tracing false, disables
+tracing outside export, enables exact trace/request correlation inside export
+and attaches one successful SDK usage event to the exact active agent/attempt.
+Concurrent exported and local calls retain isolated configurations and leave
+the shared base unchanged. Repair verification passed `pip check`, Ruff, strict
+mypy over 152 app/test files, schema drift, both curated package validations,
+travel-package drift, compileall, 106 focused T040/T048/T049 tests and all 693
+pytest tests with local PostGIS. No dependency, route, migration, Android or
+T050 change was made.

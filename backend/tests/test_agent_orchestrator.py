@@ -9,9 +9,11 @@ from datetime import date, datetime, time, timezone
 from decimal import Decimal
 from functools import wraps
 from pathlib import Path
+from typing import cast
 
 import pytest
-from pydantic import HttpUrl, ValidationError
+from pydantic import HttpUrl, SecretStr, ValidationError
+from starlette.types import Message, Receive, Scope, Send
 
 from app.agents.composer.renderer import build_deterministic_response
 from app.agents.contracts import (
@@ -60,6 +62,18 @@ from app.agents.orchestration import (
     AgentOrchestratorService,
     OrchestrationPolicy,
 )
+from app.agents.observability import (
+    AgentObservabilityPolicy,
+    AgentObservabilityService,
+    AgentRequestTraceQuery,
+    AgentTraceQuery,
+    AgentTraceRecord,
+    AgentUsageQuery,
+    AgentUsageSummary,
+    InMemoryAgentObservabilityStore,
+)
+from app.agents.observability.context import current_observation_identity
+from app.agents.observability.store import AgentObservabilityStore
 from app.agents.orchestration.evidence import build_approved_evidence
 from app.agents.orchestration.service import (
     ComposerBoundary,
@@ -82,6 +96,7 @@ from app.providers.poi.models import (
     PoiProviderKind,
     SourceReference,
 )
+from app.middleware.request_id import RequestIdMiddleware, normalize_request_id
 
 BACKEND = Path(__file__).resolve().parents[1]
 NOW = datetime(2026, 7, 28, 4, 0, tzinfo=timezone.utc)
@@ -561,6 +576,7 @@ def _orchestrator(
     itinerary: ItineraryBoundary | None = None,
     grounding: GroundingBoundary | None = None,
     composer: ComposerBoundary | None = None,
+    observability: AgentObservabilityService | None = None,
     policy: OrchestrationPolicy | None = None,
     clock: Callable[[], float] | None = None,
 ) -> AgentOrchestratorService:
@@ -572,6 +588,7 @@ def _orchestrator(
         itinerary=itinerary or _ItineraryService(_itinerary_output()),
         grounding=grounding or _GroundingService(),
         composer=composer or _ComposerService(),
+        observability=observability,
         policy=policy,
         **({"monotonic_clock": clock} if clock is not None else {}),
     )
@@ -1411,6 +1428,543 @@ def test_approved_evidence_conversion_rejects_claim_and_source_conflicts() -> No
         )
 
 
+@_run_async_test
+async def test_complete_runtime_creates_queryable_zero_usage_trace() -> None:
+    store = InMemoryAgentObservabilityStore(capacity=10)
+    observability = AgentObservabilityService(store=store)
+    supplied_request_id = normalize_request_id(
+        "mobile.session_123:attempt-4"
+    )
+    request = AgentRuntimeRequest.model_validate(
+        {
+            **_runtime_request().model_dump(mode="python"),
+            "request_id": supplied_request_id,
+        }
+    )
+    result = await _orchestrator(
+        router=_RouterService(_all_router_output()),
+        observability=observability,
+    ).run(request)
+
+    assert result.request_id == supplied_request_id
+    traces = await observability.list_for_request(
+        AgentRequestTraceQuery(request_id=supplied_request_id)
+    )
+    assert len(traces) == 1
+    record = traces[0]
+    assert record.request_id == result.request_id
+    assert record.runtime_status is result.status
+    assert tuple(stage.agent for stage in record.stages) == tuple(
+        stage.agent for stage in result.stages
+    )
+    assert all(stage.attempt_count == 1 for stage in record.stages)
+    assert record.usage.total_tokens == 0
+    assert record.usage.requests == 0
+    assert (
+        await observability.get_trace(
+            AgentTraceQuery(trace_id=record.trace_id)
+        )
+        == record
+    )
+    summary = await observability.summarize(
+        AgentUsageQuery(request_id=supplied_request_id)
+    )
+    assert summary.trace_count == 1
+    assert summary.stage_count == 7
+    assert summary.total_tokens == 0
+
+    serialized = record.model_dump_json()
+    forbidden = (
+        request.user_query,
+        "10.76",
+        "106.68",
+        "Bảo tàng A",
+        "curated:poi-a",
+        "claim-history",
+        "source-a",
+        NARRATION_TEXT,
+        result.final_output.final_text
+        if result.final_output is not None
+        else "missing-final",
+    )
+    assert not any(value in serialized for value in forbidden)
+
+
+def test_safe_request_header_is_exact_runtime_and_trace_group_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.agents.observability.sdk as sdk_module
+
+    supplied_request_id = "mobile.session_123:attempt-4"
+    trace_arguments: dict[str, object] = {}
+    response_messages: list[Message] = []
+    recorded_request_ids: list[str] = []
+
+    class _Workflow:
+        def start(self, *, mark_as_current: bool) -> None:
+            assert mark_as_current is True
+
+        def finish(self, *, reset_current: bool) -> None:
+            assert reset_current is True
+
+    class _Span:
+        def start(self, *, mark_as_current: bool) -> None:
+            assert mark_as_current is True
+
+        def finish(self, *, reset_current: bool) -> None:
+            assert reset_current is True
+
+    def fake_trace(**kwargs: object) -> _Workflow:
+        trace_arguments.update(kwargs)
+        return _Workflow()
+
+    def fake_span(name: str, data: dict[str, object]) -> _Span:
+        assert name == sdk_module.ATTEMPT_SPAN_NAME
+        assert set(data) == {"agent", "attempt"}
+        return _Span()
+
+    monkeypatch.setattr(sdk_module, "trace", fake_trace)
+    monkeypatch.setattr(sdk_module, "custom_span", fake_span)
+
+    async def downstream(
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+    ) -> None:
+        del receive
+        state = cast(dict[str, object], scope["state"])
+        request_id = cast(str, state["request_id"])
+        store = InMemoryAgentObservabilityStore(capacity=2)
+        observability = AgentObservabilityService(
+            store=store,
+            policy=AgentObservabilityPolicy(
+                sdk_trace_export_enabled=True,
+                tracing_api_key=SecretStr("test-trace-secret"),
+            ),
+        )
+        request = AgentRuntimeRequest.model_validate(
+            {
+                **_runtime_request().model_dump(mode="python"),
+                "request_id": request_id,
+            }
+        )
+        result = await _orchestrator(
+            router=_RouterService(_all_router_output()),
+            observability=observability,
+        ).run(request)
+        record = (
+            await observability.list_for_request(
+                AgentRequestTraceQuery(request_id=request_id)
+            )
+        )[0]
+        recorded_request_ids.extend(
+            (request_id, result.request_id, record.request_id)
+        )
+        assert record.trace_id == trace_arguments["trace_id"]
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 204,
+                "headers": [],
+            }
+        )
+        await send({"type": "http.response.body", "body": b""})
+
+    async def receive() -> Message:
+        return {
+            "type": "http.request",
+            "body": b"",
+            "more_body": False,
+        }
+
+    async def send(message: Message) -> None:
+        response_messages.append(message)
+
+    scope: Scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "POST",
+        "scheme": "https",
+        "path": "/test-only",
+        "raw_path": b"/test-only",
+        "query_string": b"",
+        "root_path": "",
+        "headers": [
+            (b"x-request-id", supplied_request_id.encode("ascii"))
+        ],
+        "client": ("test-client", 1234),
+        "server": ("test-server", 443),
+        "state": {},
+    }
+    asyncio.run(RequestIdMiddleware(downstream)(scope, receive, send))
+
+    assert recorded_request_ids == [supplied_request_id] * 3
+    assert trace_arguments["group_id"] == supplied_request_id
+    assert trace_arguments["metadata"] == {
+        "request_id": supplied_request_id
+    }
+    response_start = response_messages[0]
+    assert response_start["type"] == "http.response.start"
+    headers = dict(response_start["headers"])
+    assert headers[b"x-request-id"] == supplied_request_id.encode("ascii")
+    assert normalize_request_id("invalid request id") != "invalid request id"
+
+
+@_run_async_test
+async def test_partial_mapping_and_retry_attempts_are_recorded_canonically() -> None:
+    mapping_store = InMemoryAgentObservabilityStore(capacity=10)
+    mapping_observability = AgentObservabilityService(store=mapping_store)
+    candidate = _candidate()
+    request = _runtime_request(
+        context=AgentRuntimeContext(
+            selected_poi=PoiIdentity(
+                poi_id=candidate.id,
+                canonical_name=candidate.canonical_name,
+                city=candidate.city,
+                category=candidate.category,
+            ),
+            candidates=(candidate,),
+        )
+    )
+    partial = await _orchestrator(
+        router=_RouterService(_all_router_output()),
+        observability=mapping_observability,
+    ).run(request)
+    mapping_record = (
+        await mapping_observability.list_for_request(
+            AgentRequestTraceQuery(request_id=request.request_id)
+        )
+    )[0]
+    itinerary = next(
+        stage
+        for stage in mapping_record.stages
+        if stage.agent is AgentKind.ITINERARY
+    )
+    assert partial.status is RuntimeResultStatus.PARTIAL
+    assert mapping_record.runtime_status is RuntimeResultStatus.PARTIAL
+    assert itinerary.status is StageStatus.FAILED
+    assert itinerary.attempt_count == 0
+    assert itinerary.failure_code is FailureCode.INVALID_INPUT
+    assert itinerary.usage == itinerary.usage.__class__()
+
+    retry_store = InMemoryAgentObservabilityStore(capacity=10)
+    retry_observability = AgentObservabilityService(store=retry_store)
+    router = _TimeoutThenRouter(
+        _router_output(
+            intent=IntentKind.GENERAL_TRAVEL_HELP,
+            plan=(),
+        )
+    )
+    policy = OrchestrationPolicy(
+        overall_timeout_seconds=1.0,
+        router_timeout_seconds=0.01,
+        discovery_timeout_seconds=0.1,
+        specialist_timeout_seconds=0.1,
+        grounding_timeout_seconds=0.1,
+        composer_timeout_seconds=0.1,
+        maximum_attempts=2,
+    )
+    retried = await _orchestrator(
+        router=router,
+        observability=retry_observability,
+        policy=policy,
+    ).run(_runtime_request())
+    retry_record = (
+        await retry_observability.list_for_request(
+            AgentRequestTraceQuery(request_id=retried.request_id)
+        )
+    )[0]
+    assert retry_record.stages[0].attempt_count == 2
+    assert router.calls == 2
+
+
+@_run_async_test
+async def test_concurrent_runtime_trace_contexts_are_isolated() -> None:
+    store = InMemoryAgentObservabilityStore(capacity=10)
+    observability = AgentObservabilityService(store=store)
+    orchestrator = _orchestrator(
+        router=_RouterService(
+            _router_output(
+                intent=IntentKind.GENERAL_TRAVEL_HELP,
+                plan=(),
+            )
+        ),
+        observability=observability,
+    )
+
+    def request(request_id: str) -> AgentRuntimeRequest:
+        return AgentRuntimeRequest.model_validate(
+            {
+                **_runtime_request(
+                    context=AgentRuntimeContext()
+                ).model_dump(mode="python"),
+                "request_id": request_id,
+            }
+        )
+
+    first, second = await asyncio.gather(
+        orchestrator.run(request("request-concurrent-one")),
+        orchestrator.run(request("request-concurrent-two")),
+    )
+    first_trace = (
+        await observability.list_for_request(
+            AgentRequestTraceQuery(request_id=first.request_id)
+        )
+    )[0]
+    second_trace = (
+        await observability.list_for_request(
+            AgentRequestTraceQuery(request_id=second.request_id)
+        )
+    )[0]
+    assert first_trace.trace_id != second_trace.trace_id
+    assert first_trace.request_id == "request-concurrent-one"
+    assert second_trace.request_id == "request-concurrent-two"
+    assert current_observation_identity() is None
+
+
+class _FailingObservabilityStore(AgentObservabilityStore):
+    async def record(self, record: AgentTraceRecord) -> None:
+        del record
+        raise RuntimeError("private stored data")
+
+    async def get_trace(self, trace_id: str) -> AgentTraceRecord | None:
+        del trace_id
+        return None
+
+    async def list_for_request(
+        self,
+        request_id: str,
+        *,
+        limit: int,
+    ) -> tuple[AgentTraceRecord, ...]:
+        del request_id, limit
+        return ()
+
+    async def summarize(
+        self,
+        query: AgentUsageQuery,
+    ) -> AgentUsageSummary:
+        raise AssertionError(query)
+
+
+def test_observability_store_failure_does_not_change_runtime_result(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    async def scenario() -> None:
+        observability = AgentObservabilityService(
+            store=_FailingObservabilityStore()
+        )
+        result = await _orchestrator(
+            router=_RouterService(
+                _router_output(
+                    intent=IntentKind.GENERAL_TRAVEL_HELP,
+                    plan=(),
+                )
+            ),
+            observability=observability,
+        ).run(_runtime_request(context=AgentRuntimeContext()))
+
+        assert result.status is RuntimeResultStatus.SUCCESS
+        assert result.final_output is not None
+
+    asyncio.run(scenario())
+    assert "result=record_failed" in caplog.text
+    assert "private stored data" not in caplog.text
+
+
+@_run_async_test
+async def test_cancellation_with_observer_leaves_no_record_or_context() -> None:
+    store = InMemoryAgentObservabilityStore(capacity=10)
+    observability = AgentObservabilityService(store=store)
+    narration_started = asyncio.Event()
+    culture_started = asyncio.Event()
+    itinerary_started = asyncio.Event()
+    task = asyncio.create_task(
+        _orchestrator(
+            router=_RouterService(_all_router_output()),
+            narration=_BlockingNarration(narration_started),
+            culture=_BlockingCulture(culture_started),
+            itinerary=_BlockingItinerary(itinerary_started),
+            observability=observability,
+        ).run(_runtime_request())
+    )
+    await asyncio.gather(
+        narration_started.wait(),
+        culture_started.wait(),
+        itinerary_started.wait(),
+    )
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert (
+        await observability.list_for_request(
+            AgentRequestTraceQuery(request_id=_runtime_request().request_id)
+        )
+        == ()
+    )
+    assert current_observation_identity() is None
+
+
+def test_exported_attempt_spans_cover_stages_and_retry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.agents.observability.sdk as sdk_module
+    import app.agents.observability.service as observation_service_module
+
+    spans: list[tuple[str, AgentKind, int]] = []
+    finished_workflows: list[str] = []
+
+    class _Workflow:
+        def __init__(self, trace_id: str) -> None:
+            self.trace_id = trace_id
+
+        def finish(self, *, reset_current: bool) -> None:
+            assert reset_current is True
+            finished_workflows.append(self.trace_id)
+
+    class _Span:
+        def start(self, *, mark_as_current: bool) -> None:
+            assert mark_as_current is True
+
+        def finish(self, *, reset_current: bool) -> None:
+            assert reset_current is True
+
+    def start_workflow(
+        *,
+        trace_id: str,
+        request_id: str,
+        tracing_api_key: str | None,
+    ) -> _Workflow:
+        assert request_id
+        assert tracing_api_key == "test-trace-secret"
+        return _Workflow(trace_id)
+
+    def custom_span(name: str, data: dict[str, object]) -> _Span:
+        identity = current_observation_identity()
+        assert identity is not None
+        assert name == sdk_module.ATTEMPT_SPAN_NAME
+        assert set(data) == {"agent", "attempt"}
+        spans.append(
+            (
+                identity.trace_id,
+                AgentKind(cast(str, data["agent"])),
+                cast(int, data["attempt"]),
+            )
+        )
+        return _Span()
+
+    monkeypatch.setattr(
+        observation_service_module,
+        "start_workflow_trace",
+        start_workflow,
+    )
+    monkeypatch.setattr(sdk_module, "custom_span", custom_span)
+
+    async def scenario() -> None:
+        store = InMemoryAgentObservabilityStore(capacity=10)
+        observability = AgentObservabilityService(
+            store=store,
+            policy=AgentObservabilityPolicy(
+                sdk_trace_export_enabled=True,
+                tracing_api_key=SecretStr("test-trace-secret"),
+            ),
+        )
+        complete = await _orchestrator(
+            router=_RouterService(_all_router_output()),
+            observability=observability,
+        ).run(_runtime_request())
+        complete_spans = tuple(
+            item for item in spans if item[0] == finished_workflows[0]
+        )
+        assert tuple(item[1] for item in complete_spans) == tuple(
+            stage.agent for stage in complete.stages
+        )
+        assert all(item[2] == 1 for item in complete_spans)
+
+        retry_request = AgentRuntimeRequest.model_validate(
+            {
+                **_runtime_request().model_dump(mode="python"),
+                "request_id": "request-exported-retry",
+            }
+        )
+        retry_router = _TimeoutThenRouter(
+            _router_output(
+                intent=IntentKind.GENERAL_TRAVEL_HELP,
+                plan=(),
+            )
+        )
+        await _orchestrator(
+            router=retry_router,
+            observability=observability,
+            policy=OrchestrationPolicy(
+                overall_timeout_seconds=1.0,
+                router_timeout_seconds=0.01,
+                discovery_timeout_seconds=0.1,
+                specialist_timeout_seconds=0.1,
+                grounding_timeout_seconds=0.1,
+                composer_timeout_seconds=0.1,
+                maximum_attempts=2,
+            ),
+        ).run(retry_request)
+        retry_trace_id = finished_workflows[1]
+        retry_router_attempts = tuple(
+            attempt
+            for trace_id, agent, attempt in spans
+            if trace_id == retry_trace_id and agent is AgentKind.ROUTER
+        )
+        assert retry_router_attempts == (1, 2)
+
+    asyncio.run(scenario())
+    assert len(finished_workflows) == 2
+
+
+def test_trace_start_failure_keeps_local_result_and_safe_log(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import app.agents.observability.service as observation_service_module
+
+    def fail_trace(**kwargs: object) -> object:
+        del kwargs
+        raise RuntimeError("private exporter detail")
+
+    monkeypatch.setattr(
+        observation_service_module,
+        "start_workflow_trace",
+        fail_trace,
+    )
+
+    async def scenario() -> None:
+        store = InMemoryAgentObservabilityStore(capacity=10)
+        observability = AgentObservabilityService(
+            store=store,
+            policy=AgentObservabilityPolicy(
+                sdk_trace_export_enabled=True,
+                tracing_api_key=SecretStr("test-trace-secret"),
+            ),
+        )
+        result = await _orchestrator(
+            router=_RouterService(
+                _router_output(
+                    intent=IntentKind.GENERAL_TRAVEL_HELP,
+                    plan=(),
+                )
+            ),
+            observability=observability,
+        ).run(_runtime_request(context=AgentRuntimeContext()))
+        assert result.status is RuntimeResultStatus.SUCCESS
+        traces = await observability.list_for_request(
+            AgentRequestTraceQuery(request_id=result.request_id)
+        )
+        assert len(traces) == 1
+
+    asyncio.run(scenario())
+    assert "result=trace_start_failed" in caplog.text
+    assert "private exporter detail" not in caplog.text
+
+
 def test_policy_is_strict_bounded_and_has_no_current_time_default() -> None:
     policy = OrchestrationPolicy()
     assert policy.maximum_attempts == 2
@@ -1450,8 +2004,6 @@ def test_orchestration_package_has_no_direct_sdk_or_transport_dependency() -> No
         "app.providers",
         "sqlalchemy",
         "firebase",
-        "trace_id",
-        "token_usage",
         "datetime.now",
         "asyncio.sleep",
     )

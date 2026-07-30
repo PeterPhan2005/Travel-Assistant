@@ -1406,6 +1406,90 @@ Live-model validation là tùy chọn, không chạy trong CI; đọc key im l�
 explicit `OPENAI_COMPOSER_MODEL`, chỉ in normalized `ResponseComposerOutput`,
 rồi unset ngay cả hai biến.
 
+### Agent observability và aggregate token usage
+
+T049 cung cấp package inject được tại
+`backend/app/agents/observability/`. `AgentOrchestratorService` vẫn nhận đúng
+`AgentRuntimeRequest` và trả đúng `AgentRuntimeResult`; trace không được thêm vào
+runtime output hoặc FastAPI route. Mỗi request có một trace ID theo format public
+của Agents SDK (`trace_` + 32 lowercase hex), và record giữ exact
+`AgentRuntimeRequest.request_id`. Khi SDK export bật, workflow name cố định là
+`travel_assistant_runtime`, `group_id` bằng exact request ID và metadata chỉ có
+request ID.
+
+Local observation không cần API key, model, database hoặc Firebase. Store mặc
+định phải được caller tạo và inject; không có module-level singleton:
+
+```python
+from app.agents.observability import (
+    AgentObservabilityService,
+    AgentRequestTraceQuery,
+    AgentUsageQuery,
+    InMemoryAgentObservabilityStore,
+)
+
+store = InMemoryAgentObservabilityStore(capacity=1000)
+observability = AgentObservabilityService(store=store)
+
+# Inject observability=observability khi dựng AgentOrchestratorService.
+# Sau một run:
+traces = await observability.list_for_request(
+    AgentRequestTraceQuery(request_id="safe-request-id")
+)
+summary = await observability.summarize(
+    AgentUsageQuery(request_id="safe-request-id")
+)
+```
+
+Store là bounded FIFO trong memory của đúng process và reset khi process restart.
+Đây chỉ là operational data local; T049 không giải quyết persistent production
+retention, không có scheduler/export worker, database table hoặc migration.
+Query typed hỗ trợ exact trace lookup, request lookup, bounded limit, aggregate
+request usage và optional canonical `AgentKind` filter. Summary gồm request
+count, input/output/total token, cached-input token và reasoning token khi SDK
+cung cấp; missing detail bằng zero. Không estimate token từ text, không lưu
+request-usage entries và không tính cost hay dùng pricing table.
+
+Mỗi planned runtime stage có một canonical observation: agent, final status,
+bounded T048 duration, attempt count zero/one/two, aggregate usage và optional
+safe failure code. Zero attempt chỉ biểu diễn failed mapping/deadline stage chưa
+gọi service. Một retry tạo attempt thứ hai; không có attempt thứ ba. Usage chỉ
+được copy ngay sau một real successful `Runner.run` result và gắn vào active
+agent/attempt qua request-local `contextvars`; deterministic fallback/no-model
+execution có zero usage.
+
+SDK trace export mặc định tắt. Mọi model executor tiếp tục dùng fresh per-run
+`RunConfig`, tracing disabled ngoài active exported observation, và luôn:
+
+```text
+trace_include_sensitive_data=false
+```
+
+Để bật export trong một manual validation có kiểm soát, đọc key im lặng, không
+đặt key trong command history, rồi inject explicit policy:
+
+```python
+from pydantic import SecretStr
+from app.agents.observability import AgentObservabilityPolicy
+
+policy = AgentObservabilityPolicy(
+    sdk_trace_export_enabled=True,
+    tracing_api_key=SecretStr(openai_key),
+)
+observability = AgentObservabilityService(store=store, policy=policy)
+```
+
+Không print `openai_key`, raw trace object, model input/output hoặc provider
+usage. Sau manual check phải xóa biến/key khỏi process. Exported workflow và
+custom attempt span chỉ chứa request ID, canonical agent và attempt number;
+detailed status/duration/token aggregate ở local strict record. Query,
+transcript, exact coordinate/origin, POI/claim/source identity, price,
+specialist/final prose, itinerary note, warning/failure message, model name,
+credential, Firebase identity và provider/database payload không được đưa vào
+record, summary, metadata, span hoặc log. Export/store failure chỉ ghi fixed safe
+result code và không thay đổi runtime result; cancellation vẫn propagate và mọi
+context được reset.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

@@ -26,6 +26,10 @@ from app.agents.discovery.evidence import (
 from app.agents.discovery.instructions import DISCOVERY_INSTRUCTIONS
 from app.agents.discovery.menu import PoiMenuReader
 from app.agents.discovery.tools import DiscoveryRunRegistry
+from app.agents.observability.sdk import (
+    capture_sdk_result_usage,
+    run_config_for_observation,
+)
 from app.providers.poi.contracts import PoiProvider
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
@@ -83,6 +87,7 @@ class _AgentsSdkRunner:
             max_turns=max_turns,
             run_config=run_config,
         )
+        capture_sdk_result_usage(result)
         return cast(_RunResultLike, result)
 
 
@@ -219,7 +224,7 @@ class OpenAIDiscoveryExecutor:
                 serialize_discovery_request(request),
                 context=registry,
                 max_turns=DISCOVERY_MAX_TURNS,
-                run_config=self._run_config,
+                run_config=run_config_for_observation(self._run_config),
             )
             final_output = result.final_output
         except asyncio.CancelledError:

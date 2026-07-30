@@ -27,6 +27,10 @@ from app.agents.local_culture.validation import (
     usable_claims,
     validate_local_culture_output,
 )
+from app.agents.observability.sdk import (
+    capture_sdk_result_usage,
+    run_config_for_observation,
+)
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_LOCAL_CULTURE_MODEL_ENV = "OPENAI_LOCAL_CULTURE_MODEL"
@@ -80,6 +84,7 @@ class _AgentsSdkRunner:
             max_turns=max_turns,
             run_config=run_config,
         )
+        capture_sdk_result_usage(result)
         return cast(_RunResultLike, result)
 
 
@@ -143,7 +148,7 @@ class OpenAILocalCultureExecutor:
                 self._agent,
                 serialize_local_culture_request(request),
                 max_turns=LOCAL_CULTURE_MAX_TURNS,
-                run_config=self._run_config,
+                run_config=run_config_for_observation(self._run_config),
             )
         except asyncio.CancelledError:
             raise

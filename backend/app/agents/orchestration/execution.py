@@ -16,6 +16,8 @@ from app.agents.contracts import (
 )
 from app.agents.discovery.errors import DiscoveryExecutionError
 from app.agents.itinerary.errors import ItineraryExecutionError
+from app.agents.observability.context import observation_attempt
+from app.agents.observability.sdk import sdk_attempt_span
 
 MAX_DURATION_MS = 3_600_000.0
 
@@ -35,6 +37,7 @@ class StageExecution(Generic[OutputT]):
     output: OutputT | None
     failure: AgentFailure | None
     duration_ms: float
+    attempt_count: int
 
 
 async def execute_stage(
@@ -61,8 +64,10 @@ async def execute_stage(
         deadline_limited = remaining <= timeout_seconds
         attempt_timeout = min(timeout_seconds, remaining)
         try:
-            async with asyncio.timeout(attempt_timeout):
-                candidate = await invoke()
+            with observation_attempt(agent, attempt):
+                with sdk_attempt_span(agent, attempt):
+                    async with asyncio.timeout(attempt_timeout):
+                        candidate = await invoke()
             if _read_clock(clock) > deadline:
                 final_failure = latency_budget_failure(agent)
                 break
@@ -103,6 +108,7 @@ async def execute_stage(
                 output=output,
                 failure=None,
                 duration_ms=_duration_ms(started, clock),
+                attempt_count=attempt,
             )
 
         if (
@@ -117,6 +123,7 @@ async def execute_stage(
         output=None,
         failure=final_failure or latency_budget_failure(agent),
         duration_ms=_duration_ms(started, clock),
+        attempt_count=attempt,
     )
 
 

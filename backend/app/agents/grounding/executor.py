@@ -32,6 +32,10 @@ from app.agents.grounding.reviewer import build_deterministic_review
 from app.agents.grounding.validation import (
     validate_grounding_review_output,
 )
+from app.agents.observability.sdk import (
+    capture_sdk_result_usage,
+    run_config_for_observation,
+)
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_GROUNDING_MODEL_ENV = "OPENAI_GROUNDING_MODEL"
@@ -85,6 +89,7 @@ class _AgentsSdkRunner:
             max_turns=max_turns,
             run_config=run_config,
         )
+        capture_sdk_result_usage(result)
         return cast(_RunResultLike, result)
 
 
@@ -145,7 +150,7 @@ class OpenAIGroundingReviewerExecutor:
                 self._agent,
                 serialize_grounding_review_request(request),
                 max_turns=GROUNDING_MAX_TURNS,
-                run_config=self._run_config,
+                run_config=run_config_for_observation(self._run_config),
             )
         except asyncio.CancelledError:
             raise

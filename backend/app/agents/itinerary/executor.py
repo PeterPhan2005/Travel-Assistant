@@ -23,6 +23,10 @@ from app.agents.itinerary.instructions import (
 )
 from app.agents.itinerary.planner import plan_itinerary
 from app.agents.itinerary.validation import validate_itinerary_output
+from app.agents.observability.sdk import (
+    capture_sdk_result_usage,
+    run_config_for_observation,
+)
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_ITINERARY_MODEL_ENV = "OPENAI_ITINERARY_MODEL"
@@ -76,6 +80,7 @@ class _AgentsSdkRunner:
             max_turns=max_turns,
             run_config=run_config,
         )
+        capture_sdk_result_usage(result)
         return cast(_RunResultLike, result)
 
 
@@ -135,7 +140,7 @@ class OpenAIItineraryExecutor:
                 self._agent,
                 serialize_itinerary_request(request),
                 max_turns=ITINERARY_MAX_TURNS,
-                run_config=self._run_config,
+                run_config=run_config_for_observation(self._run_config),
             )
         except asyncio.CancelledError:
             raise

@@ -69,6 +69,7 @@ from app.agents.orchestration.requests import (
     build_narration_request,
     build_router_request,
 )
+from app.agents.observability.service import AgentObservabilityService
 
 logger = logging.getLogger("travel_assistant.agents.orchestration")
 
@@ -185,6 +186,7 @@ class AgentOrchestratorService:
         itinerary: ItineraryBoundary,
         grounding: GroundingBoundary,
         composer: ComposerBoundary,
+        observability: AgentObservabilityService | None = None,
         policy: OrchestrationPolicy | None = None,
         monotonic_clock: MonotonicClock = time.monotonic,
     ) -> None:
@@ -195,10 +197,29 @@ class AgentOrchestratorService:
         self._itinerary = itinerary
         self._grounding = grounding
         self._composer = composer
+        self._observability = observability
         self._policy = policy or OrchestrationPolicy()
         self._clock = monotonic_clock
 
     async def run(
+        self,
+        request: AgentRuntimeRequest,
+    ) -> AgentRuntimeResult:
+        """Run with optional injected observation and unchanged public output."""
+        if self._observability is None:
+            result = await self._run_graph(request)
+            _log_result(result, trace_id=None)
+            return result
+        async with self._observability.observe(
+            request.request_id
+        ) as observation:
+            result = await self._run_graph(request)
+            await observation.record_result(result)
+            trace_id = observation.trace_id
+        _log_result(result, trace_id=trace_id)
+        return result
+
+    async def _run_graph(
         self,
         request: AgentRuntimeRequest,
     ) -> AgentRuntimeResult:
@@ -301,15 +322,6 @@ class AgentOrchestratorService:
         )
         validated = AgentRuntimeResult.model_validate(
             result.model_dump(mode="python")
-        )
-        logger.info(
-            "operation=orchestrate request_id=%s status=%s "
-            "stages=%d warnings=%d failures=%d",
-            request.request_id,
-            validated.status.value,
-            len(validated.stages),
-            len(validated.warnings),
-            len(validated.failures),
         )
         return validated
 
@@ -1001,3 +1013,31 @@ def _runtime_status(
     ):
         return RuntimeResultStatus.PARTIAL
     return RuntimeResultStatus.SUCCESS
+
+
+def _log_result(
+    result: AgentRuntimeResult,
+    *,
+    trace_id: str | None,
+) -> None:
+    if trace_id is None:
+        logger.info(
+            "operation=orchestrate request_id=%s status=%s "
+            "stages=%d warnings=%d failures=%d",
+            result.request_id,
+            result.status.value,
+            len(result.stages),
+            len(result.warnings),
+            len(result.failures),
+        )
+        return
+    logger.info(
+        "operation=orchestrate request_id=%s trace_id=%s status=%s "
+        "stages=%d warnings=%d failures=%d",
+        result.request_id,
+        trace_id,
+        result.status.value,
+        len(result.stages),
+        len(result.warnings),
+        len(result.failures),
+    )

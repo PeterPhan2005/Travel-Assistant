@@ -1,7 +1,7 @@
 ---
 id: T049
 title: Add agent observability
-status: todo
+status: done
 depends_on: [T048]
 area: ai
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Request ID links API and agent traces.
-- [ ] Exact coordinates/raw transcripts are not logged.
-- [ ] Usage summary is queryable.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Request ID links API and agent traces.
+- [x] Exact coordinates/raw transcripts are not logged.
+- [x] Usage summary is queryable.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

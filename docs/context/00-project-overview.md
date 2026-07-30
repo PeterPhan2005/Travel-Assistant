@@ -128,7 +128,14 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   evidence, ordered candidates và explicit local itinerary window. Approved
   grounding decisions được chuyển thành strict `EvidenceBundle` không sửa hay
   phát minh fact; cancellation giữ nguyên và safe partial output được bảo toàn.
-  Trace/usage vẫn thuộc T049; chưa có assistant HTTP route hay Android transport.
+  T049 đã bổ sung observability inject được: mỗi runtime request có một Agents
+  SDK-format trace ID tương quan exact với request ID, stage/attempt observation
+  canonical, aggregate token usage và query boundary trên bounded process-local
+  FIFO store. Local observation hoạt động khi thiếu OpenAI configuration; SDK
+  export chỉ bật explicit theo request, luôn
+  `trace_include_sensitive_data=false`, và không lưu query, transcript,
+  coordinate hay agent content. Chưa có assistant HTTP route, observability
+  route hay Android transport.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
