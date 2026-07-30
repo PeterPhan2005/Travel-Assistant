@@ -1490,6 +1490,51 @@ record, summary, metadata, span hoặc log. Export/store failure chỉ ghi fixed
 result code và không thay đổi runtime result; cancellation vẫn propagate và mọi
 context được reset.
 
+### Offline agent evaluation baseline
+
+T050 cung cấp package `backend/app/agent_evals/` và fixture strict schema version
+1 tại `backend/evals/fixtures/agent-evals-v1.json`. Baseline hiện có 43 case
+synthetic: Router 6, Discovery 5, Narration 5, Local Culture 5, Itinerary 5,
+Grounding Reviewer 5, Response Composer 5 và runtime 7. Các case gọi real
+T041–T049 service, pure reviewer/planner/renderer hoặc orchestrator boundary;
+POI provider, menu reader, model executor và clock được thay bằng adapter
+in-memory hẹp. Không có real OpenAI request, network, database hoặc Firebase.
+
+Từ `backend/`, chạy:
+
+```bash
+python -m app.agent_evals check
+python -m app.agent_evals write
+```
+
+`check` validate fixture/threshold, chạy toàn bộ case (case tag
+`deterministic` chạy hai lần), tạo report trong memory và so byte-for-byte với:
+
+```text
+backend/evals/reports/agent-evals-v1.json
+backend/evals/reports/agent-evals-v1.md
+```
+
+Lệnh không sửa file và trả nonzero khi case fail, threshold fail, report thiếu
+hoặc report drift. CI chạy chính lệnh này sau các check deterministic backend
+hiện có và trước pytest. Không đặt `OPENAI_API_KEY`, agent model variable,
+`DATABASE_URL` hay `FIREBASE_PROJECT_ID`; eval không đọc các biến đó và không
+prompt credential.
+
+`write` chạy cùng validation/evaluation rồi atomically thay hai report committed.
+Chỉ dùng khi chủ động review thay đổi fixture/behavior. Threshold strict nằm tại
+`backend/evals/thresholds/agent-evals-v1.json`: tối thiểu 41 case, Router tối
+thiểu 6, mỗi target còn lại tối thiểu 5, overall và từng target đều 10.000 basis
+point, không case fail và đủ target/safety/closure coverage. `write` không sửa
+threshold. Mọi thay đổi hạ threshold phải là diff riêng được review; không hạ
+threshold chỉ để làm CI xanh.
+
+Report không có timestamp, model name, trace ID, machine path, raw input/output,
+query, coordinate, POI/evidence fact, final response hoặc exception text. JSON
+chỉ chứa aggregate metric, case ID, target và stable check code; Markdown trình
+bày cùng metadata an toàn. Sau khi cố ý cập nhật baseline, chạy `write` hai lần,
+xác nhận lần hai không tạo diff, rồi chạy `check`.
+
 Firebase Admin dùng Google Application Default Credentials (ADC). Trên môi
 trường Google được quản lý, cấp danh tính workload phù hợp và để ADC tự tìm
 credential. Khi phát triển local, service-account JSON là server secret: lưu nó

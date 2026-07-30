@@ -104,6 +104,14 @@ latency và aggregate token usage. Query typed đọc bounded process-local FIFO
 store; SDK export mặc định tắt, khi bật explicit vẫn luôn loại sensitive trace
 data. Không có transcript/query/coordinate/content retention, cost calculation,
 database observability hoặc HTTP observability route.
+T050 bổ sung eval runner offline tại `backend/app/agent_evals/` với 43 fixture
+synthetic có nhãn, strict schema version 1, metric basis-point theo target/check,
+threshold regression đã commit và report JSON/Markdown byte-deterministic.
+Lệnh `python -m app.agent_evals check` chạy real T041–T049 application
+boundaries qua dependency in-memory được inject, không cần key/model, network,
+database hoặc Firebase, và CI fail nếu case, threshold hay report baseline bị
+drift. Report chỉ giữ case ID, target, check code và aggregate count; không giữ
+query, coordinate, POI/evidence content hay final response.
 Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và

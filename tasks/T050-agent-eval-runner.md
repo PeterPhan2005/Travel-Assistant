@@ -1,7 +1,7 @@
 ---
 id: T050
 title: Create agent evaluation runner
-status: todo
+status: done
 depends_on: [T048, T049]
 area: quality
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] At least 30 initial cases.
-- [ ] Metrics are saved as JSON/Markdown.
-- [ ] Regression threshold can fail CI.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] At least 30 initial cases.
+- [x] Metrics are saved as JSON/Markdown.
+- [x] Regression threshold can fail CI.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

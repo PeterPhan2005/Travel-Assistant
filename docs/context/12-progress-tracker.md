@@ -147,12 +147,20 @@ runtime request, exact request-ID correlation, canonical stage/attempt
 observations, safe aggregate SDK token usage, bounded FIFO process-local storage
 and typed trace/request/usage queries. SDK export is explicit and disabled by
 default; every model run keeps sensitive trace data disabled. The assistant HTTP
-route, observability route and Android transport remain unimplemented.
+route, observability route and Android transport remain unimplemented. T050
+implements the strict offline evaluation package at `backend/app/agent_evals/`.
+Its schema-version-1 fixture set has 43 synthetic cases (Router 6; Discovery,
+Narration, Local Culture, Itinerary, Grounding Reviewer and Response Composer 5
+each; runtime 7). Real T041–T049 boundaries run with deterministic injected
+provider/menu/executor/service/clock dependencies. Integer basis-point metrics,
+strict committed thresholds and byte-deterministic JSON/Markdown reports run
+without model/key/network/database/Firebase configuration and retain only safe
+case/aggregate metadata.
 
 ## Current goal
 
-T049 agent observability is complete. T050 agent evaluation runner is next but
-must not begin until explicitly assigned.
+T050 agent evaluation runner is complete. T060 Android speech-to-text input is
+next but has not been started.
 
 ## Completed
 
@@ -197,6 +205,7 @@ must not begin until explicitly assigned.
 - T047 Implement Response Composer Agent.
 - T048 Implement strict multi-agent orchestrator.
 - T049 Add agent observability.
+- T050 Create agent evaluation runner.
 
 ## In progress
 
@@ -204,7 +213,7 @@ must not begin until explicitly assigned.
 
 ## Next up
 
-- T050 Create agent evaluation runner.
+- T060 Implement Android speech-to-text input.
 
 ## Open questions
 
@@ -809,6 +818,29 @@ must not begin until explicitly assigned.
   specialist/final prose, itinerary notes, issue messages, model names, keys,
   Firebase identity and provider/database payloads. T049 adds no T050 fixtures,
   metrics or regression thresholds.
+- T050 owns only `backend/app/agent_evals/`, repository eval data under
+  `backend/evals/`, the backend CI check and focused tests/documentation. Fixture,
+  threshold, result and report contracts are frozen, strict and extra-forbidden.
+  Fixture case IDs/tags and report targets/checks are canonical; assertion codes
+  form a closed taxonomy rather than an expression language.
+- The committed fixture schema version is 1 with 43 cases: Router 6, Discovery 5,
+  Narration 5, Local Culture 5, Itinerary 5, Grounding Reviewer 5, Response
+  Composer 5 and runtime 7. All deterministic-tagged cases execute twice and
+  compare full canonical typed output or normalized failure values; report bytes
+  exclude timings, trace IDs and generation timestamps.
+- T050 metrics use integer basis points only. The committed strict threshold
+  requires at least 41 total cases, at least 6 Router cases, at least 5 for every
+  other target, every required target/tag/check, 10,000 overall and per-target
+  basis points and zero failed cases. `write` never changes thresholds.
+- `python -m app.agent_evals write` atomically recreates the canonical JSON and
+  Markdown reports. `check` writes nothing and fails on a case, threshold,
+  missing report or byte drift. Backend CI runs `check` without OpenAI
+  credentials. Reports contain only case IDs, targets, pass state, stable check
+  codes and aggregate counts; they exclude raw query/input/output, coordinates,
+  POI/source/claim content, final prose, exceptions, model names and trace IDs.
+- T050 adds no dependency, route, migration, Android file or T060 behavior. Its
+  default runner explicitly injects every optional model/provider/service
+  boundary and does not read model/key, database or Firebase configuration.
 
 ## T002 baseline consistency review
 
@@ -825,14 +857,14 @@ must not begin until explicitly assigned.
 | Agent runtime | Router → Discovery → deterministic ranking → Grounding Reviewer → Response Composer; Narration, Local Culture and Itinerary are optional specialist agents. |
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
-| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T049 are complete; T050 is next but unassigned. |
+| Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T050 are complete; T060 is next but unassigned. |
 | Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. The independent Grounding Reviewer creates complete deterministic claim decisions, applies request-supplied source/freshness/price rules, approves only closed specialist outputs and prevents model output from weakening safety or authoring new facts/IDs. The independent Response Composer renders only approved evidence and content. The strict T048 application-code orchestrator now coordinates the typed runtime with scoped separate service calls, concurrent specialist fan-out, bounded timeouts/retry and safe partial output. Live Google Places and assistant HTTP/Android transport remain unimplemented. |
 
 T049 update to the implementation-state row: the independent Response Composer,
 strict application-code orchestration path and injected privacy-safe local
 observability/query boundary are now implemented. Live Google Places,
-assistant HTTP/Android transport and T050 evaluation behavior remain
-unimplemented.
+assistant HTTP/Android transport remain unimplemented. T050 subsequently added
+the offline evaluation behavior described above.
 
 ## Session notes
 
@@ -2048,3 +2080,40 @@ mypy over 152 app/test files, schema drift, both curated package validations,
 travel-package drift, compileall, 106 focused T040/T048/T049 tests and all 693
 pytest tests with local PostGIS. No dependency, route, migration, Android or
 T050 change was made.
+
+T050 completed on 2026-07-30 with the strict offline package at
+`backend/app/agent_evals/`, fixture/threshold/report data under
+`backend/evals/`, and the backend-only CI baseline check. The fixture schema
+version is 1 and contains 43 synthetic labeled cases: Router 6, Discovery 5,
+Narration 5, Local Culture 5, Itinerary 5, Grounding Reviewer 5, Response
+Composer 5 and runtime 7. Every case executes a real T041–T049 application
+boundary; deterministic-tagged cases execute twice against full canonical typed
+outputs or normalized failures.
+
+The canonical JSON and Markdown reports both record 43/43 passing, zero failed,
+10,000 overall basis points and 10,000 for every target/check. The strict
+committed threshold requires at least 41 total cases, the required 6/5 target
+distribution, every target/safety/closure tag/check, 10,000 overall/per-target
+basis points and no failed case. Report SHA-256 values after two consecutive
+`write` runs were
+`a21f846e5c670d4ef354ab410741e7df0d30f16a6877b7376dd9526dfd8a55db`
+for JSON and
+`f3d20bb2d9a606a8943b01d35a7b32310092c0f3423d12d2b471d7825916d166`
+for Markdown.
+
+Final T050 verification on Python 3.12.13 passed development dependency
+installation, `pip check`, Ruff, strict mypy over 162 app/test files, curated
+schema drift, both curated package validations, travel-package drift,
+compileall, 18 focused T050 tests, the committed eval check and all 711 pytest
+tests with healthy local PostGIS. With every OpenAI key/model variable plus
+database/Firebase configuration unset and socket construction blocked after an
+event loop was created, `check` still returned 43/43, threshold pass and no
+report changes. Raising the copied minimum-total threshold to 44 returned exit
+1 with stable `threshold_regression`; committed report hashes stayed unchanged.
+Two consecutive `write` runs reproduced identical bytes.
+
+The final privacy/dependency review found no raw query/output/coordinate,
+POI/source/claim content, final response, exception, model name, trace ID,
+credential or machine path in reports. T050 changed no requirement pin,
+production agent behavior, FastAPI route, database model/migration, Android
+file or T060 behavior. T060 remains unstarted.

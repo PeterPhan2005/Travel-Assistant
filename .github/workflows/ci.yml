@@ -119,6 +119,10 @@ jobs:
         working-directory: backend
         run: python -m app.travel_packages check
 
+      - name: Check offline agent evaluation baseline
+        working-directory: backend
+        run: python -m app.agent_evals check
+
       - name: Run pytest
         working-directory: backend
         run: pytest tests

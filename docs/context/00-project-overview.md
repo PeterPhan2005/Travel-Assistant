@@ -134,8 +134,14 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   FIFO store. Local observation hoạt động khi thiếu OpenAI configuration; SDK
   export chỉ bật explicit theo request, luôn
   `trace_include_sensitive_data=false`, và không lưu query, transcript,
-  coordinate hay agent content. Chưa có assistant HTTP route, observability
-  route hay Android transport.
+  coordinate hay agent content. T050 đã bổ sung eval runner offline strict với
+  43 fixture synthetic (Router 6; sáu agent target tiếp theo mỗi target 5;
+  runtime 7), metric basis-point, committed threshold 100% và canonical
+  JSON/Markdown reports. Runner gọi real T041–T049 boundaries bằng dependency
+  deterministic được inject, chạy không key/model/network/database/Firebase và
+  CI fail khi case, threshold hoặc committed report regress. Report không giữ
+  raw query/output, coordinate, POI/evidence content hay final prose. Chưa có
+  assistant HTTP route, observability route hay Android transport.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

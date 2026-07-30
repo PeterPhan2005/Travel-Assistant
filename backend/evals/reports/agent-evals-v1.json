@@ -1,0 +1,940 @@
+{
+  "case_results": [
+    {
+      "case_id": "composer-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "expected_warning",
+        "no_new_fact",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact",
+        "warning_preserved"
+      ],
+      "target": "response_composer"
+    },
+    {
+      "case_id": "composer-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "expected_warning",
+        "no_new_fact",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact",
+        "warning_preserved"
+      ],
+      "target": "response_composer"
+    },
+    {
+      "case_id": "composer-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "expected_warning",
+        "no_new_fact",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact",
+        "warning_preserved"
+      ],
+      "target": "response_composer"
+    },
+    {
+      "case_id": "composer-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "expected_warning",
+        "no_new_fact",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact",
+        "warning_preserved"
+      ],
+      "target": "response_composer"
+    },
+    {
+      "case_id": "composer-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "expected_warning",
+        "no_new_fact",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact",
+        "warning_preserved"
+      ],
+      "target": "response_composer"
+    },
+    {
+      "case_id": "discovery-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "discovery"
+    },
+    {
+      "case_id": "discovery-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "discovery"
+    },
+    {
+      "case_id": "discovery-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "discovery"
+    },
+    {
+      "case_id": "discovery-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_failure",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "discovery"
+    },
+    {
+      "case_id": "discovery-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "expected_status",
+        "no_unexpected_call",
+        "optional_fields_omitted",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "discovery"
+    },
+    {
+      "case_id": "grounding-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "grounding_reviewer"
+    },
+    {
+      "case_id": "grounding-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "grounding_reviewer"
+    },
+    {
+      "case_id": "grounding-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "grounding_reviewer"
+    },
+    {
+      "case_id": "grounding-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "grounding_reviewer"
+    },
+    {
+      "case_id": "grounding-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "grounding_reviewer"
+    },
+    {
+      "case_id": "itinerary-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "no_new_fact",
+        "no_overlap",
+        "no_unexpected_call",
+        "privacy_safe",
+        "time_window_exact"
+      ],
+      "target": "itinerary"
+    },
+    {
+      "case_id": "itinerary-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "no_new_fact",
+        "no_overlap",
+        "no_unexpected_call",
+        "privacy_safe",
+        "time_window_exact"
+      ],
+      "target": "itinerary"
+    },
+    {
+      "case_id": "itinerary-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "no_new_fact",
+        "no_overlap",
+        "no_unexpected_call",
+        "privacy_safe",
+        "time_window_exact"
+      ],
+      "target": "itinerary"
+    },
+    {
+      "case_id": "itinerary-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_failure",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "itinerary"
+    },
+    {
+      "case_id": "itinerary-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_order",
+        "no_new_fact",
+        "no_overlap",
+        "no_unexpected_call",
+        "privacy_safe",
+        "time_window_exact"
+      ],
+      "target": "itinerary"
+    },
+    {
+      "case_id": "local-culture-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "local_culture"
+    },
+    {
+      "case_id": "local-culture-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "local_culture"
+    },
+    {
+      "case_id": "local-culture-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "local_culture"
+    },
+    {
+      "case_id": "local-culture-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "local_culture"
+    },
+    {
+      "case_id": "local-culture-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "local_culture"
+    },
+    {
+      "case_id": "narration-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "narration"
+    },
+    {
+      "case_id": "narration-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "narration"
+    },
+    {
+      "case_id": "narration-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "narration"
+    },
+    {
+      "case_id": "narration-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "narration"
+    },
+    {
+      "case_id": "narration-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_items",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "source_union_exact"
+      ],
+      "target": "narration"
+    },
+    {
+      "case_id": "router-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "router-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "router-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "router-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "router-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "router-006",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "expected_intent",
+        "expected_items",
+        "expected_plan",
+        "no_unexpected_call",
+        "privacy_safe"
+      ],
+      "target": "router"
+    },
+    {
+      "case_id": "runtime-001",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-002",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-003",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-004",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-005",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-006",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    },
+    {
+      "case_id": "runtime-007",
+      "failed_check_codes": [],
+      "passed": true,
+      "passed_check_codes": [
+        "contract_valid",
+        "deterministic_repeat",
+        "evidence_closed",
+        "expected_failure",
+        "expected_status",
+        "no_new_fact",
+        "no_unexpected_call",
+        "privacy_safe",
+        "warning_preserved"
+      ],
+      "target": "runtime"
+    }
+  ],
+  "check_metrics": [
+    {
+      "check_code": "contract_valid",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "check_code": "deterministic_repeat",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "check_code": "evidence_closed",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 35,
+      "total": 35
+    },
+    {
+      "check_code": "expected_failure",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 14,
+      "total": 14
+    },
+    {
+      "check_code": "expected_intent",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "check_code": "expected_items",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 34,
+      "total": 34
+    },
+    {
+      "check_code": "expected_order",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 13,
+      "total": 13
+    },
+    {
+      "check_code": "expected_plan",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "check_code": "expected_status",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 31,
+      "total": 31
+    },
+    {
+      "check_code": "expected_warning",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "total": 5
+    },
+    {
+      "check_code": "no_new_fact",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 31,
+      "total": 31
+    },
+    {
+      "check_code": "no_overlap",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "check_code": "no_unexpected_call",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "check_code": "optional_fields_omitted",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 9,
+      "total": 9
+    },
+    {
+      "check_code": "privacy_safe",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "check_code": "source_union_exact",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 19,
+      "total": 19
+    },
+    {
+      "check_code": "time_window_exact",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "check_code": "warning_preserved",
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 12,
+      "total": 12
+    }
+  ],
+  "failed_case_details": [],
+  "failed_cases": 0,
+  "fixture_schema_version": 1,
+  "overall_pass_rate_basis_points": 10000,
+  "passed_cases": 43,
+  "report_schema_version": 1,
+  "target_metrics": [
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 6,
+      "target": "router",
+      "total": 6
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "discovery",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "narration",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "local_culture",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "itinerary",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "grounding_reviewer",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 5,
+      "target": "response_composer",
+      "total": 5
+    },
+    {
+      "failed": 0,
+      "pass_rate_basis_points": 10000,
+      "passed": 7,
+      "target": "runtime",
+      "total": 7
+    }
+  ],
+  "threshold_result": {
+    "failed_codes": [],
+    "status": "pass"
+  },
+  "total_cases": 43
+}

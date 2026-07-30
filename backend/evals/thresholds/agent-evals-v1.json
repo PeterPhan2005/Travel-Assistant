@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "minimum_total_cases": 41,
+  "minimum_cases_by_target": [
+    ["router", 6],
+    ["discovery", 5],
+    ["narration", 5],
+    ["local_culture", 5],
+    ["itinerary", 5],
+    ["grounding_reviewer", 5],
+    ["response_composer", 5],
+    ["runtime", 5]
+  ],
+  "minimum_overall_pass_rate_basis_points": 10000,
+  "minimum_target_pass_rate_basis_points": [
+    ["router", 10000],
+    ["discovery", 10000],
+    ["narration", 10000],
+    ["local_culture", 10000],
+    ["itinerary", 10000],
+    ["grounding_reviewer", 10000],
+    ["response_composer", 10000],
+    ["runtime", 10000]
+  ],
+  "require_no_failed_cases": true,
+  "required_targets": [
+    "router",
+    "discovery",
+    "narration",
+    "local_culture",
+    "itinerary",
+    "grounding_reviewer",
+    "response_composer",
+    "runtime"
+  ],
+  "required_tags": [
+    "closure",
+    "deterministic",
+    "privacy",
+    "safety"
+  ],
+  "required_check_codes": [
+    "contract_valid",
+    "evidence_closed",
+    "no_new_fact",
+    "no_unexpected_call",
+    "privacy_safe",
+    "source_union_exact"
+  ]
+}

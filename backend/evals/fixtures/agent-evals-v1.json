@@ -1,0 +1,538 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "case_id": "composer-001",
+      "target": "response_composer",
+      "scenario": "safe_fallback",
+      "label": "Evidence-free safe fallback",
+      "tags": ["deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "expected_warning", "no_new_fact", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact", "warning_preserved"]
+      },
+      "expected_poi_ids": [],
+      "expected_warning_count": 0
+    },
+    {
+      "case_id": "composer-002",
+      "target": "response_composer",
+      "scenario": "narration_exact",
+      "label": "Exact approved narration content",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "expected_warning", "no_new_fact", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact", "warning_preserved"]
+      },
+      "expected_poi_ids": [],
+      "expected_warning_count": 0
+    },
+    {
+      "case_id": "composer-003",
+      "target": "response_composer",
+      "scenario": "culture_itinerary",
+      "label": "Culture guidance and itinerary formatting",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "expected_warning", "no_new_fact", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact", "warning_preserved"]
+      },
+      "expected_poi_ids": [],
+      "expected_warning_count": 0
+    },
+    {
+      "case_id": "composer-004",
+      "target": "response_composer",
+      "scenario": "discovery_order_omission",
+      "label": "Discovery order and optional-field omission",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "expected_warning", "no_new_fact", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact", "warning_preserved"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-z", "curated:eval-poi-a"],
+      "expected_warning_count": 0
+    },
+    {
+      "case_id": "composer-005",
+      "target": "response_composer",
+      "scenario": "price_and_warning",
+      "label": "Unambiguous price, ambiguous omission, and warning preservation",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "expected_warning", "no_new_fact", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact", "warning_preserved"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-a", "curated:eval-poi-b"],
+      "expected_warning_count": 1
+    },
+    {
+      "case_id": "discovery-001",
+      "target": "discovery",
+      "scenario": "complete_ordered",
+      "label": "Complete distance-first normalized result",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact"]
+      },
+      "expected_completeness": "complete",
+      "expected_candidate_ids": ["curated:eval-poi-z", "curated:eval-poi-a"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "discovery-002",
+      "target": "discovery",
+      "scenario": "empty_complete",
+      "label": "Empty complete provider result",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact"]
+      },
+      "expected_completeness": "complete",
+      "expected_candidate_ids": [],
+      "expected_failure": null
+    },
+    {
+      "case_id": "discovery-003",
+      "target": "discovery",
+      "scenario": "partial_menu",
+      "label": "Usable partial result after menu failure",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact"]
+      },
+      "expected_completeness": "partial",
+      "expected_candidate_ids": ["curated:eval-poi-a"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "discovery-004",
+      "target": "discovery",
+      "scenario": "total_provider_failure",
+      "label": "Total normalized provider failure",
+      "tags": ["deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_failure", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "provider_unavailable"
+      },
+      "expected_completeness": null,
+      "expected_candidate_ids": [],
+      "expected_failure": "provider_unavailable"
+    },
+    {
+      "case_id": "discovery-005",
+      "target": "discovery",
+      "scenario": "closed_optionals",
+      "label": "Exact evidence closure with absent optional facts",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "expected_status", "no_unexpected_call", "optional_fields_omitted", "privacy_safe", "source_union_exact"]
+      },
+      "expected_completeness": "complete",
+      "expected_candidate_ids": ["curated:eval-poi-a"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "grounding-001",
+      "target": "grounding_reviewer",
+      "scenario": "valid_approval",
+      "label": "Valid sourced claim approval",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_status": "approved",
+      "expected_approved_claim_ids": ["eval-claim-a"]
+    },
+    {
+      "case_id": "grounding-002",
+      "target": "grounding_reviewer",
+      "scenario": "missing_source",
+      "label": "Missing source rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "missing_source"
+      },
+      "expected_status": "rejected",
+      "expected_approved_claim_ids": []
+    },
+    {
+      "case_id": "grounding-003",
+      "target": "grounding_reviewer",
+      "scenario": "missing_price_timestamp",
+      "label": "Incomplete price timestamp rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "missing_price_timestamp"
+      },
+      "expected_status": "rejected",
+      "expected_approved_claim_ids": []
+    },
+    {
+      "case_id": "grounding-004",
+      "target": "grounding_reviewer",
+      "scenario": "stale_evidence",
+      "label": "Stale evidence rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "stale_evidence"
+      },
+      "expected_status": "rejected",
+      "expected_approved_claim_ids": []
+    },
+    {
+      "case_id": "grounding-005",
+      "target": "grounding_reviewer",
+      "scenario": "conflict_withheld",
+      "label": "Conflicting identity withholds specialist output",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "inconsistent_evidence"
+      },
+      "expected_status": "rejected",
+      "expected_approved_claim_ids": []
+    },
+    {
+      "case_id": "itinerary-001",
+      "target": "itinerary",
+      "scenario": "input_order_selection",
+      "label": "Distance-ranked input order selection",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "no_new_fact", "no_overlap", "no_unexpected_call", "privacy_safe", "time_window_exact"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-z", "curated:eval-poi-a", "curated:eval-poi-m"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "itinerary-002",
+      "target": "itinerary",
+      "scenario": "constraint_selection",
+      "label": "Required, excluded, preferred, and maximum constraints",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "no_new_fact", "no_overlap", "no_unexpected_call", "privacy_safe", "time_window_exact"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-z", "curated:eval-poi-a"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "itinerary-003",
+      "target": "itinerary",
+      "scenario": "exact_schedule",
+      "label": "Canonical non-overlapping exact-window allocation",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "no_new_fact", "no_overlap", "no_unexpected_call", "privacy_safe", "time_window_exact"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-z", "curated:eval-poi-a", "curated:eval-poi-m"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "itinerary-004",
+      "target": "itinerary",
+      "scenario": "impossible_window",
+      "label": "Impossible time window fails safely",
+      "tags": ["deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_failure", "no_unexpected_call", "privacy_safe"],
+        "failure_code": "unsatisfiable_time_window"
+      },
+      "expected_poi_ids": [],
+      "expected_failure": "unsatisfiable_time_window"
+    },
+    {
+      "case_id": "itinerary-005",
+      "target": "itinerary",
+      "scenario": "invalid_model_fallback",
+      "label": "Invalid model output uses no-invention planner fallback",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_order", "no_new_fact", "no_overlap", "no_unexpected_call", "privacy_safe", "time_window_exact"]
+      },
+      "expected_poi_ids": ["curated:eval-poi-z", "curated:eval-poi-a", "curated:eval-poi-m"],
+      "expected_failure": null
+    },
+    {
+      "case_id": "local-culture-001",
+      "target": "local_culture",
+      "scenario": "complete_supported",
+      "label": "Complete supported local guidance",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "complete",
+      "expected_guidance_count": 1
+    },
+    {
+      "case_id": "local-culture-002",
+      "target": "local_culture",
+      "scenario": "insufficient_evidence",
+      "label": "Insufficient evidence remains limited",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_guidance_count": 0
+    },
+    {
+      "case_id": "local-culture-003",
+      "target": "local_culture",
+      "scenario": "stereotype_rejected",
+      "label": "Stereotype and absolute generalization rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_guidance_count": 0
+    },
+    {
+      "case_id": "local-culture-004",
+      "target": "local_culture",
+      "scenario": "restricted_topic_rejected",
+      "label": "Unsupported restricted-topic assertion rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_guidance_count": 0
+    },
+    {
+      "case_id": "local-culture-005",
+      "target": "local_culture",
+      "scenario": "exact_union_and_caution",
+      "label": "Exact source union and fixed respectful caution",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "complete",
+      "expected_guidance_count": 1
+    },
+    {
+      "case_id": "narration-001",
+      "target": "narration",
+      "scenario": "complete_grounded",
+      "label": "Valid complete grounded narration",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "complete",
+      "expected_word_count": 100
+    },
+    {
+      "case_id": "narration-002",
+      "target": "narration",
+      "scenario": "insufficient_evidence",
+      "label": "Insufficient evidence remains limited",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_word_count": 0
+    },
+    {
+      "case_id": "narration-003",
+      "target": "narration",
+      "scenario": "unconfigured",
+      "label": "Unconfigured model remains limited",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_word_count": 0
+    },
+    {
+      "case_id": "narration-004",
+      "target": "narration",
+      "scenario": "invalid_model_output",
+      "label": "Invalid structured output falls back safely",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_word_count": 0
+    },
+    {
+      "case_id": "narration-005",
+      "target": "narration",
+      "scenario": "invalid_closure_and_range",
+      "label": "Unrelated source and word-range rejection",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_items", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "source_union_exact"]
+      },
+      "expected_status": "limited",
+      "expected_word_count": 0
+    },
+    {
+      "case_id": "router-001",
+      "target": "router",
+      "scenario": "nearby_hcmc",
+      "label": "Nearby discovery with city extraction",
+      "tags": ["deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "nearby_discovery",
+      "expected_plan": ["discovery"],
+      "expected_city": "hcmc"
+    },
+    {
+      "case_id": "router-002",
+      "target": "router",
+      "scenario": "poi_information",
+      "label": "Point-of-interest information plan",
+      "tags": ["deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "poi_information",
+      "expected_plan": ["narration"],
+      "expected_city": null
+    },
+    {
+      "case_id": "router-003",
+      "target": "router",
+      "scenario": "culture_city_conflict",
+      "label": "Local culture with explicit city conflict precedence",
+      "tags": ["deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "local_culture",
+      "expected_plan": ["local_culture"],
+      "expected_city": "hcmc"
+    },
+    {
+      "case_id": "router-004",
+      "target": "router",
+      "scenario": "itinerary_bangkok",
+      "label": "Itinerary drafting canonical specialist plan",
+      "tags": ["deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "itinerary_drafting",
+      "expected_plan": ["discovery", "itinerary"],
+      "expected_city": "bkk"
+    },
+    {
+      "case_id": "router-005",
+      "target": "router",
+      "scenario": "general_help",
+      "label": "General travel help without specialists",
+      "tags": ["deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "general_travel_help",
+      "expected_plan": [],
+      "expected_city": null
+    },
+    {
+      "case_id": "router-006",
+      "target": "router",
+      "scenario": "unsupported",
+      "label": "Unsupported request fails closed",
+      "tags": ["deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "expected_intent", "expected_items", "expected_plan", "no_unexpected_call", "privacy_safe"]
+      },
+      "expected_intent": "unsupported",
+      "expected_plan": [],
+      "expected_city": null
+    },
+    {
+      "case_id": "runtime-001",
+      "target": "runtime",
+      "scenario": "complete_success",
+      "label": "Complete orchestration success",
+      "tags": ["closure", "deterministic", "privacy"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "success",
+      "expected_failure": null
+    },
+    {
+      "case_id": "runtime-002",
+      "target": "runtime",
+      "scenario": "specialist_failure_partial",
+      "label": "Failed specialist retains usable partial result",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "partial",
+      "expected_failure": "specialist_failed"
+    },
+    {
+      "case_id": "runtime-003",
+      "target": "runtime",
+      "scenario": "discovery_warning_partial",
+      "label": "Partial Discovery warning propagation",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "partial",
+      "expected_failure": null
+    },
+    {
+      "case_id": "runtime-004",
+      "target": "runtime",
+      "scenario": "missing_itinerary_window",
+      "label": "Missing explicit itinerary window fails safely",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "partial",
+      "expected_failure": "invalid_input"
+    },
+    {
+      "case_id": "runtime-005",
+      "target": "runtime",
+      "scenario": "grounding_rejection",
+      "label": "Grounding rejection removes conflicting fact",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "partial",
+      "expected_failure": null
+    },
+    {
+      "case_id": "runtime-006",
+      "target": "runtime",
+      "scenario": "retry_success",
+      "label": "Retryable first attempt succeeds on second attempt",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "success",
+      "expected_failure": null
+    },
+    {
+      "case_id": "runtime-007",
+      "target": "runtime",
+      "scenario": "latency_budget_failure",
+      "label": "Injected overall latency budget failure",
+      "tags": ["closure", "deterministic", "privacy", "safety"],
+      "expected": {
+        "check_codes": ["contract_valid", "deterministic_repeat", "evidence_closed", "expected_failure", "expected_status", "no_new_fact", "no_unexpected_call", "privacy_safe", "warning_preserved"]
+      },
+      "expected_status": "failed",
+      "expected_failure": "latency_budget_exceeded"
+    }
+  ]
+}
