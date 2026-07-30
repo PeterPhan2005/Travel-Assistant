@@ -21,9 +21,13 @@ coordinates. The app shell now observes validated Internet connectivity without
 making a network request and presents Checking, Online and Offline explicitly.
 Offline Room search and POI detail remain usable. Local package version and
 publication metadata are observed by the app-shell state owner and displayed
-in Downloads. Assistant still explains its Internet requirement without
-claiming unfinished AI behavior works. External navigation is not disabled
-solely because the app is offline. Live Google Places, Android nearby
+in Downloads. Assistant now provides a Vietnamese-first transient query
+composer with editable manual input, push-to-talk Android speech recognition,
+partial/final transcripts, cancellation, typed unavailable/permission/error
+states and local confirmation. Microphone permission is requested only from the
+voice action; the app discards audio buffers and does not persist or upload
+audio or transcripts. No assistant request is sent. External navigation is not
+disabled solely because the app is offline. Live Google Places, Android nearby
 transport, production hosting and the end-to-end OpenAI Agents SDK runtime
 remain incomplete. T041 now provides one independent Router execution with
 strict `RouterOutput`, no tools/handoffs/sessions, explicit optional model
@@ -159,8 +163,8 @@ case/aggregate metadata.
 
 ## Current goal
 
-T050 agent evaluation runner is complete. T060 Android speech-to-text input is
-next but has not been started.
+T060 Android speech-to-text input is complete after emulator and ZTE nubia V60
+physical-device validation. T061 has not been started.
 
 ## Completed
 
@@ -206,6 +210,7 @@ next but has not been started.
 - T048 Implement strict multi-agent orchestrator.
 - T049 Add agent observability.
 - T050 Create agent evaluation runner.
+- T060 Implement Android speech-to-text input.
 
 ## In progress
 
@@ -213,7 +218,7 @@ next but has not been started.
 
 ## Next up
 
-- T060 Implement Android speech-to-text input.
+- T061 Connect voice query to assistant API.
 
 ## Open questions
 
@@ -256,6 +261,20 @@ next but has not been started.
   owning Flow and failures remain a controlled Checking state. A separate Room
   Flow selects HCMC package metadata by publication timestamp, version and
   package ID, so connectivity and local-data failures stay independent.
+- Assistant speech input uses a feature-owned platform-neutral contract and a
+  ViewModel-scoped Android `SpeechRecognizer` adapter. The adapter requests
+  Vietnamese free-form partial results, maps all compile-SDK-36.1 platform
+  errors into a closed failure taxonomy, ignores audio buffers and invalidates
+  callbacks after cancellation or close. Activity-owned `RECORD_AUDIO`
+  permission handling starts only from the explicit voice action. A bounded
+  process-local attempt identity rejects stale permission callbacks, and both
+  Assistant departure and `onStop` invalidate pending or active sessions.
+  Activity resume safely re-reads the current Android permission Boolean so a
+  grant made in App Info clears only stale permission-denied UI; it never
+  creates an attempt, requests permission or starts recognition.
+  Query, partial/final transcript and local confirmation share one
+  1,000-Unicode-code-point bound and remain transient `StateFlow` UI state with
+  no repository, persistence or transport.
 - Firebase uses the official Google Services Gradle plugin only in the app
   module, with the plugin version and Firebase Android BoM managed by the version
   catalog. Only the dedicated development config at
@@ -2117,3 +2136,100 @@ POI/source/claim content, final response, exception, model name, trace ID,
 credential or machine path in reports. T050 changed no requirement pin,
 production agent behavior, FastAPI route, database model/migration, Android
 file or T060 behavior. T060 remains unstarted.
+
+T060 implementation and emulator validation reached acceptance on 2026-07-30
+with a Vietnamese-first transient Assistant query composer under
+`feature/assistant/`. The task remains in progress only for physical-device
+validation. Its domain boundary exposes only typed start results, events and
+failures. The ViewModel owns immutable `StateFlow` state for editable query
+text, speech phase and local confirmation; no repository, persistence or
+transport exists. Manual edits cancel an active recognition session before
+changing text, late callbacks are ignored, and confirmation trims the current
+nonblank transcript without sending it. The common length helper counts Unicode
+code points, keeps manual outer whitespace, trims recognized/confirmed text and
+does not split surrogate pairs.
+
+The ViewModel-scoped Android adapter uses the platform `SpeechRecognizer` with
+free-form `vi-VN`, partial results and one best result. It explicitly maps all
+15 recognition error constants from compile SDK 36.1, ignores RMS/audio-buffer
+callbacks, converts synchronous platform failures and keeps recognizer creation
+lazy. Cancellation or replacement invalidates the previous listener; close
+invalidates before platform calls, cancels an active recognizer, destroys
+exactly once and clears the reference. Start after close returns a typed client
+failure without calling the factory. Public feature contracts and UI state
+contain no Android intent/bundle/recognizer type, raw error integer, attempt
+identity, audio buffer, file path or exception.
+`SpeechRecognizer.ERROR_SPEECH_TIMEOUT` remains mapped to
+`SpeechRecognitionFailure.NO_SPEECH`; editable query text is retained and only
+an explicit retry starts another session.
+
+`MainActivity` now requests `RECORD_AUDIO` through an Activity Result launcher
+only after `Nói câu hỏi`; initial composition and availability checks do not
+request permission or start listening. Each explicit tap creates one bounded
+in-memory attempt ID, and the Activity forwards only the exact currently
+pending attempt. It blocks another permission launch until the outstanding
+unkeyed Android callback is consumed, so an obsolete callback cannot attach to
+a later attempt. Cancel, screen departure and `onStop` invalidate the attempt;
+the selected-destination `DisposableEffect` performs tab cancellation without
+depending on `onStop`, preserving editable text and preventing restart on
+return. Permission denial is recoverable and a permanent denial offers
+application settings. The voice button clears text-field focus and hides the
+IME before the application callback, preventing confusion with the keyboard
+microphone; composing or editing text does not invoke recognition. The manifest
+adds only that permission and the target-30+ recognition-service query while
+preserving the existing `geo:` query. The app does not use `MediaRecorder`,
+`AudioRecord`, files, Room, DataStore, networking, Firebase, analytics, agents,
+Gboard or keyboard voice-input APIs for this flow.
+
+Visible Assistant privacy text states that TravelAssistant does not write voice
+audio to a file, persist it or upload it; recognition is performed by the
+device-selected speech service, which may use network processing. Transcript
+text remains temporary, local and editable until a future submission feature
+exists.
+
+Current T060 verification passed `./gradlew test --no-daemon --stacktrace` with
+168 JVM tests and `./gradlew connectedDebugAndroidTest --no-daemon --stacktrace`
+with all 112 tests on both `Pixel_7_API_36_Google_Play_ARM64(AVD) - 17` and the
+ZTE nubia V60 (`NX721J`, Android 15, serial `320143952923`). The focused
+lint/unit/assemble command passed with zero lint issues. The independent T050
+evaluator check passed all 43 fixtures, and `git diff --check` passed.
+Install/cold-launch inspection confirmed the full composer is readable and the
+system microphone dialog first appears after the explicit voice tap. With
+macOS and emulator host-microphone access enabled, package `RECORD_AUDIO`
+granted and foreground AppOps access observed, the application-owned flow
+successfully produced `Tôi muốn tìm quán phở gần đây` in the editable Assistant
+field and allowed local confirmation. A later
+`Không nhận được âm thanh, hãy thử lại sau` toast came from Gboard voice typing,
+not the Assistant recognizer, and remains out of scope. No retry, timeout extra,
+offline forcing, package-specific recognition service, Gboard workaround or
+T061 API/response behavior was added.
+
+All previous physical-device checks on a ZTE nubia V60 passed, including T060
+application-owned recognition, cancellation, text editing and permission
+behavior. A final App Settings path exposed one stale-state defect:
+`RECORD_AUDIO` was initially denied, the permanent-denial action opened App
+Info, and Android reported `android.permission.RECORD_AUDIO: granted=true`
+after the user granted access, but the retained ViewModel still showed
+permission denied and kept `Nói câu hỏi` disabled until process restart.
+
+The repair rechecks `hasMicrophonePermission()` on every `MainActivity.onResume`
+and forwards only the Boolean value to the Assistant ViewModel. A granted
+refresh changes only `PermissionDenied` to the normal available idle state,
+preserving query and confirmed text and leaving every other recognition state
+unchanged. A denied refresh is a no-op. Refresh creates or consumes no attempt,
+does not start/cancel the engine, does not launch permission UI and does not
+persist permission.
+
+Final physical validation passed on the same nubia V60. Launch, Assistant entry
+and manual typing did not request microphone access; only `Nói câu hỏi` did.
+Application-owned Vietnamese recognition, editable/local confirmation,
+explicit cancellation, Assistant departure, Activity backgrounding, denial,
+permanent-denial settings recovery and force-stop/cold-launch non-persistence
+all passed. After granting `RECORD_AUDIO` in App Info and returning without
+restart, stale denial UI disappeared, the voice button enabled immediately,
+listening remained stopped, existing query/confirmation remained, and one
+explicit tap restarted recognition without another permission prompt. AppOps
+reported foreground allow and recent microphone use. TravelAssistant did not
+persist or upload audio, the repaired build was installed only on `NX721J` for
+the final retest, and Gboard voice typing remains outside T060. T060 is
+complete; T061 remains unstarted.

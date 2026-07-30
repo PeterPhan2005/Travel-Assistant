@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -13,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellStatusPresentation
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellUiState
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellViewModel
+import com.kltn.travelassistant.feature.assistant.presentation.AssistantUiState
+import com.kltn.travelassistant.feature.assistant.presentation.AssistantViewModel
 import com.kltn.travelassistant.feature.auth.presentation.AuthFormMode
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
@@ -32,26 +36,39 @@ import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 @Composable
 fun TravelAssistantApp(
     appShellViewModel: AppShellViewModel,
+    assistantViewModel: AssistantViewModel,
     homeViewModel: HomeViewModel,
     profileViewModel: ProfileViewModel,
     downloadsViewModel: DownloadsViewModel,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
+    onVoiceInput: () -> Unit,
+    onCancelVoiceInput: () -> Unit,
+    onAssistantScreenLeft: () -> Unit,
+    onOpenMicrophoneSettings: () -> Unit,
     onOpenExternalNavigation: (PoiNavigationTarget) -> ExternalNavigationResult,
     onGoogleSignIn: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appShellUiState by appShellViewModel.uiState.collectAsStateWithLifecycle()
+    val assistantUiState by assistantViewModel.uiState.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val downloadsUiState by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     TravelAssistantAppContent(
         appShellUiState = appShellUiState,
+        assistantUiState = assistantUiState,
         homeUiState = homeUiState,
         profileUiState = profileUiState,
         downloadsUiState = downloadsUiState,
         onUseCurrentLocation = onUseCurrentLocation,
         onOpenLocationSettings = onOpenLocationSettings,
+        onAssistantQueryChanged = assistantViewModel::onQueryChanged,
+        onVoiceInput = onVoiceInput,
+        onCancelVoiceInput = onCancelVoiceInput,
+        onAssistantScreenLeft = onAssistantScreenLeft,
+        onConfirmTranscript = assistantViewModel::confirmTranscript,
+        onOpenMicrophoneSettings = onOpenMicrophoneSettings,
         onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
         onAuthFormModeChanged = profileViewModel::onFormModeChanged,
         onAuthEmailChanged = profileViewModel::onEmailChanged,
@@ -75,11 +92,18 @@ fun TravelAssistantApp(
 fun TravelAssistantAppContent(
     homeUiState: HomeUiState,
     appShellUiState: AppShellUiState = AppShellUiState(),
+    assistantUiState: AssistantUiState = AssistantUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
     downloadsUiState: DownloadsUiState? = null,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    onAssistantQueryChanged: (String) -> Unit = {},
+    onVoiceInput: () -> Unit = {},
+    onCancelVoiceInput: () -> Unit = {},
+    onAssistantScreenLeft: () -> Unit = {},
+    onConfirmTranscript: () -> Unit = {},
+    onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
     onAuthPasswordChanged: (String) -> Unit = {},
@@ -109,6 +133,11 @@ fun TravelAssistantAppContent(
     val selectedDestination = TopLevelDestination.fromRoute(
         route = navBackStackEntry?.destination?.route,
     )
+    if (selectedDestination == TopLevelDestination.ASSISTANT) {
+        AssistantDestinationLifecycleBoundary(
+            onAssistantScreenLeft = onAssistantScreenLeft,
+        )
+    }
 
     TravelAssistantTheme {
         Scaffold(
@@ -136,6 +165,7 @@ fun TravelAssistantAppContent(
                 TravelAssistantNavHost(
                     navController = navController,
                     homeUiState = homeUiState,
+                    assistantUiState = assistantUiState,
                     profileUiState = profileUiState,
                     connectivityUiState = appShellUiState.connectivity,
                     localPackageUiState = appShellUiState.localPackage,
@@ -143,6 +173,11 @@ fun TravelAssistantAppContent(
                     onUseCurrentLocation = onUseCurrentLocation,
                     onOpenLocationSettings = onOpenLocationSettings,
                     onNearbyQueryChanged = onNearbyQueryChanged,
+                    onAssistantQueryChanged = onAssistantQueryChanged,
+                    onVoiceInput = onVoiceInput,
+                    onCancelVoiceInput = onCancelVoiceInput,
+                    onConfirmTranscript = onConfirmTranscript,
+                    onOpenMicrophoneSettings = onOpenMicrophoneSettings,
                     onAuthFormModeChanged = onAuthFormModeChanged,
                     onAuthEmailChanged = onAuthEmailChanged,
                     onAuthPasswordChanged = onAuthPasswordChanged,
@@ -160,6 +195,18 @@ fun TravelAssistantAppContent(
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AssistantDestinationLifecycleBoundary(
+    onAssistantScreenLeft: () -> Unit,
+) {
+    val currentOnAssistantScreenLeft by rememberUpdatedState(onAssistantScreenLeft)
+    DisposableEffect(Unit) {
+        onDispose {
+            currentOnAssistantScreenLeft()
         }
     }
 }

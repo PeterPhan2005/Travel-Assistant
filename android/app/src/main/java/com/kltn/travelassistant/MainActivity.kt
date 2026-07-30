@@ -15,11 +15,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.kltn.travelassistant.data.auth.GoogleCredentialCoordinator
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellViewModel
-import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
+import com.kltn.travelassistant.feature.assistant.presentation.AssistantViewModel
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInFailure
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInResult
-import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
+import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
+import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
 import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,9 +39,12 @@ class MainActivity : ComponentActivity() {
     lateinit var googleCredentialCoordinator: GoogleCredentialCoordinator
 
     private val appShellViewModel: AppShellViewModel by viewModels()
+    private val assistantViewModel: AssistantViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
     private val downloadsViewModel: DownloadsViewModel by viewModels()
+    private var pendingMicrophonePermissionAttemptId: Long? = null
+    private var isMicrophonePermissionResultOutstanding = false
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
@@ -64,6 +68,23 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
+    private val microphonePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        isMicrophonePermissionResultOutstanding = false
+        val attemptId = pendingMicrophonePermissionAttemptId ?: return@registerForActivityResult
+        pendingMicrophonePermissionAttemptId = null
+        if (granted || hasMicrophonePermission()) {
+            assistantViewModel.onMicrophonePermissionGranted(attemptId)
+        } else {
+            assistantViewModel.onMicrophonePermissionDenied(
+                attemptId = attemptId,
+                canRequestPermissionAgain = shouldShowRequestPermissionRationale(
+                    Manifest.permission.RECORD_AUDIO,
+                ),
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,18 +92,31 @@ class MainActivity : ComponentActivity() {
         setContent {
             TravelAssistantApp(
                 appShellViewModel = appShellViewModel,
+                assistantViewModel = assistantViewModel,
                 homeViewModel = homeViewModel,
                 profileViewModel = profileViewModel,
                 downloadsViewModel = downloadsViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
-                onOpenLocationSettings = ::openLocationSettings,
+                onOpenLocationSettings = ::openApplicationSettings,
+                onVoiceInput = ::onVoiceInput,
+                onCancelVoiceInput = ::onCancelVoiceInput,
+                onAssistantScreenLeft = ::onAssistantScreenLeft,
+                onOpenMicrophoneSettings = ::openApplicationSettings,
                 onOpenExternalNavigation = externalNavigationCoordinator::open,
                 onGoogleSignIn = ::onGoogleSignIn,
             )
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        assistantViewModel.onMicrophonePermissionStatusRefreshed(
+            isGranted = hasMicrophonePermission(),
+        )
+    }
+
     override fun onStop() {
+        onAssistantScreenLeft()
         homeViewModel.onLocationRequestCancelled()
         super.onStop()
     }
@@ -107,7 +141,42 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
 
-    private fun openLocationSettings() {
+    private fun onVoiceInput() {
+        if (
+            pendingMicrophonePermissionAttemptId != null ||
+            isMicrophonePermissionResultOutstanding
+        ) {
+            return
+        }
+        val attemptId = assistantViewModel.beginVoiceInputAttempt() ?: return
+
+        if (hasMicrophonePermission()) {
+            assistantViewModel.onMicrophonePermissionGranted(attemptId)
+        } else {
+            pendingMicrophonePermissionAttemptId = attemptId
+            isMicrophonePermissionResultOutstanding = true
+            assistantViewModel.onMicrophonePermissionRequestStarted(attemptId)
+            microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun onCancelVoiceInput() {
+        pendingMicrophonePermissionAttemptId = null
+        assistantViewModel.cancelSpeechRecognition()
+    }
+
+    private fun onAssistantScreenLeft() {
+        pendingMicrophonePermissionAttemptId = null
+        assistantViewModel.onAssistantScreenLeft()
+    }
+
+    private fun hasMicrophonePermission(): Boolean =
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PackageManager.PERMISSION_GRANTED
+
+    private fun openApplicationSettings() {
         startActivity(
             Intent(
                 Settings.ACTION_APPLICATION_DETAILS_SETTINGS,

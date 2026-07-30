@@ -19,6 +19,8 @@ import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState
 import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageMetadataSection
 import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageUiState
+import com.kltn.travelassistant.feature.assistant.presentation.AssistantScreen
+import com.kltn.travelassistant.feature.assistant.presentation.AssistantUiState
 import com.kltn.travelassistant.feature.auth.presentation.AuthFormMode
 import com.kltn.travelassistant.feature.auth.presentation.ProfileScreen
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
@@ -73,6 +75,7 @@ fun TravelAssistantNavigationBar(
 fun TravelAssistantNavHost(
     navController: NavHostController,
     homeUiState: HomeUiState,
+    assistantUiState: AssistantUiState = AssistantUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
     connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
     localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
@@ -80,6 +83,11 @@ fun TravelAssistantNavHost(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    onAssistantQueryChanged: (String) -> Unit = {},
+    onVoiceInput: () -> Unit = {},
+    onCancelVoiceInput: () -> Unit = {},
+    onConfirmTranscript: () -> Unit = {},
+    onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
     onAuthPasswordChanged: (String) -> Unit = {},
@@ -122,15 +130,14 @@ fun TravelAssistantNavHost(
             )
         }
         composable(TopLevelDestination.ASSISTANT.route) {
-            PlaceholderDestinationScreen(
-                titleRes = R.string.destination_assistant,
-                unavailableExplanationRes = if (
-                    connectivityUiState == ConnectivityUiState.Offline
-                ) {
-                    R.string.assistant_offline_explanation
-                } else {
-                    null
-                },
+            AssistantScreen(
+                uiState = assistantUiState,
+                isOffline = connectivityUiState == ConnectivityUiState.Offline,
+                onQueryChanged = onAssistantQueryChanged,
+                onVoiceInput = onVoiceInput,
+                onCancelVoiceInput = onCancelVoiceInput,
+                onConfirmTranscript = onConfirmTranscript,
+                onOpenPermissionSettings = onOpenMicrophoneSettings,
             )
         }
         composable(TopLevelDestination.ITINERARY.route) {

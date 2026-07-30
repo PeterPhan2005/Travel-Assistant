@@ -40,12 +40,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 - Android architecture shell trong `android/` đã được xác thực với package hiện
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
   thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
-  thành với năm destination placeholder.
+  thành với năm destination.
 - Room version-2 schema và core DAO layer đã có; một bundled HCMC demo seed được
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Các destination còn
-  lại vẫn là placeholder, ngoại trừ Profile đã có đăng ký/đăng nhập
+  Itinerary vẫn là placeholder. Assistant nay có query composer tạm thời trên
+  thiết bị: text chỉnh sửa được, xác nhận cục bộ và push-to-talk tiếng Việt qua
+  Android `SpeechRecognizer`; quyền micrô chỉ được hỏi sau hành động người dùng,
+  audio/bản ghi không được app lưu hay gửi. Profile đã có đăng ký/đăng nhập
   email-password, gửi/làm mới/gửi lại xác minh email, đăng xuất và khôi phục
   phiên dựa trên Firebase. Người dùng chưa xác minh không được xem nội dung
   Profile đã xác thực. Profile cũng có đăng nhập Google rõ ràng qua Android
