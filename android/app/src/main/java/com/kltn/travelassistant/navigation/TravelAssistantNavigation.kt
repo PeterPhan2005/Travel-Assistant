@@ -26,6 +26,9 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileScreen
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.home.presentation.HomeScreen
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
+import com.kltn.travelassistant.feature.itinerary.presentation.ItineraryScreen
+import com.kltn.travelassistant.feature.itinerary.presentation.ItineraryUiState
 import com.kltn.travelassistant.feature.downloads.domain.ActivePackageMetadata
 import com.kltn.travelassistant.feature.downloads.domain.PackageCity
 import com.kltn.travelassistant.feature.downloads.domain.PackageOrigin
@@ -72,10 +75,11 @@ fun TravelAssistantNavigationBar(
 }
 
 @Composable
-fun TravelAssistantNavHost(
+internal fun TravelAssistantNavHost(
     navController: NavHostController,
     homeUiState: HomeUiState,
     assistantUiState: AssistantUiState = AssistantUiState(),
+    itineraryUiState: ItineraryUiState = ItineraryUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
     connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
     localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
@@ -90,6 +94,16 @@ fun TravelAssistantNavHost(
     onSubmitAssistantQuery: () -> Unit = {},
     onCancelAssistantQuery: () -> Unit = {},
     onRetryAssistantQuery: () -> Unit = {},
+    onItineraryCitySelected: (ItineraryCity) -> Unit = {},
+    onItineraryDateChanged: (String) -> Unit = {},
+    onItineraryStartTimeChanged: (String) -> Unit = {},
+    onItineraryEndTimeChanged: (String) -> Unit = {},
+    onItineraryMaximumStopsChanged: (String) -> Unit = {},
+    onItineraryNotesChanged: (String) -> Unit = {},
+    onGenerateItinerary: () -> Unit = {},
+    onCancelItineraryGeneration: () -> Unit = {},
+    onRetryItineraryGeneration: () -> Unit = {},
+    onSaveItinerary: () -> Unit = {},
     onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
@@ -147,7 +161,19 @@ fun TravelAssistantNavHost(
             )
         }
         composable(TopLevelDestination.ITINERARY.route) {
-            PlaceholderDestinationScreen(titleRes = R.string.destination_itinerary)
+            ItineraryScreen(
+                uiState = itineraryUiState,
+                onCitySelected = onItineraryCitySelected,
+                onLocalDateChanged = onItineraryDateChanged,
+                onStartTimeChanged = onItineraryStartTimeChanged,
+                onEndTimeChanged = onItineraryEndTimeChanged,
+                onMaximumStopsChanged = onItineraryMaximumStopsChanged,
+                onNotesChanged = onItineraryNotesChanged,
+                onGenerate = onGenerateItinerary,
+                onCancelGeneration = onCancelItineraryGeneration,
+                onRetry = onRetryItineraryGeneration,
+                onSave = onSaveItinerary,
+            )
         }
         composable(TopLevelDestination.DOWNLOADS.route) {
             DownloadsScreen(

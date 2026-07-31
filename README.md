@@ -51,6 +51,14 @@ chưa có hosting và không cho cleartext. Android nearby transport và live Go
 Places vẫn chưa được triển khai. Assistant gửi duy nhất confirmed text foreground
 tới private `POST /v1/assistant/query`, hiển thị loading/cancel/retry cùng kết quả
 structured và không persist transcript/response; audio không được upload.
+Itinerary đã thay placeholder bằng biểu mẫu nháp một ngày cho HCMC/Bangkok,
+validation local và timeline/warning/save UI typed. Timeline chỉ nhận kết quả
+đã validate, không tự generate và không tự lưu. Endpoint Assistant hiện không
+nhận đủ city/date/timezone/window/max-stop cùng candidate/evidence, nên adapter
+production báo generation chưa được hỗ trợ thay vì đóng gói field thành prose;
+save production cũng báo chưa persistence cho đến T071. T070 còn
+`in_progress` vì blocker transport này; timeline/save flow hiện chỉ được xác
+minh bằng fake inject trong test.
 Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.

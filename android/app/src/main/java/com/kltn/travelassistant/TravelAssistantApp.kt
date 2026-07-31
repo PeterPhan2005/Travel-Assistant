@@ -24,6 +24,9 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
+import com.kltn.travelassistant.feature.itinerary.domain.ItineraryLocationSnapshot
+import com.kltn.travelassistant.feature.itinerary.presentation.ItineraryUiState
+import com.kltn.travelassistant.feature.itinerary.presentation.ItineraryViewModel
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
@@ -40,6 +43,7 @@ fun TravelAssistantApp(
     appShellViewModel: AppShellViewModel,
     assistantViewModel: AssistantViewModel,
     homeViewModel: HomeViewModel,
+    itineraryViewModel: ItineraryViewModel,
     profileViewModel: ProfileViewModel,
     downloadsViewModel: DownloadsViewModel,
     onUseCurrentLocation: () -> Unit,
@@ -55,12 +59,14 @@ fun TravelAssistantApp(
     val appShellUiState by appShellViewModel.uiState.collectAsStateWithLifecycle()
     val assistantUiState by assistantViewModel.uiState.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val itineraryUiState by itineraryViewModel.uiState.collectAsStateWithLifecycle()
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val downloadsUiState by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     TravelAssistantAppContent(
         appShellUiState = appShellUiState,
         assistantUiState = assistantUiState,
         homeUiState = homeUiState,
+        itineraryUiState = itineraryUiState,
         profileUiState = profileUiState,
         downloadsUiState = downloadsUiState,
         onUseCurrentLocation = onUseCurrentLocation,
@@ -84,6 +90,19 @@ fun TravelAssistantApp(
                     com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState.Online,
             )
         },
+        onItineraryCitySelected = itineraryViewModel::onCitySelected,
+        onItineraryDateChanged = itineraryViewModel::onLocalDateChanged,
+        onItineraryStartTimeChanged = itineraryViewModel::onStartTimeChanged,
+        onItineraryEndTimeChanged = itineraryViewModel::onEndTimeChanged,
+        onItineraryMaximumStopsChanged = itineraryViewModel::onMaximumStopsChanged,
+        onItineraryNotesChanged = itineraryViewModel::onNotesChanged,
+        onGenerateItinerary = {
+            itineraryViewModel.generate(homeUiState.itineraryLocationSnapshot())
+        },
+        onCancelItineraryGeneration = itineraryViewModel::cancelGeneration,
+        onRetryItineraryGeneration = itineraryViewModel::retry,
+        onSaveItinerary = itineraryViewModel::save,
+        onItineraryScreenLeft = itineraryViewModel::onScreenLeft,
         onOpenMicrophoneSettings = onOpenMicrophoneSettings,
         onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
         onAuthFormModeChanged = profileViewModel::onFormModeChanged,
@@ -105,10 +124,11 @@ fun TravelAssistantApp(
 }
 
 @Composable
-fun TravelAssistantAppContent(
+internal fun TravelAssistantAppContent(
     homeUiState: HomeUiState,
     appShellUiState: AppShellUiState = AppShellUiState(),
     assistantUiState: AssistantUiState = AssistantUiState(),
+    itineraryUiState: ItineraryUiState = ItineraryUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
     downloadsUiState: DownloadsUiState? = null,
     onUseCurrentLocation: () -> Unit,
@@ -122,6 +142,17 @@ fun TravelAssistantAppContent(
     onSubmitAssistantQuery: () -> Unit = {},
     onCancelAssistantQuery: () -> Unit = {},
     onRetryAssistantQuery: () -> Unit = {},
+    onItineraryCitySelected: (com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity) -> Unit = {},
+    onItineraryDateChanged: (String) -> Unit = {},
+    onItineraryStartTimeChanged: (String) -> Unit = {},
+    onItineraryEndTimeChanged: (String) -> Unit = {},
+    onItineraryMaximumStopsChanged: (String) -> Unit = {},
+    onItineraryNotesChanged: (String) -> Unit = {},
+    onGenerateItinerary: () -> Unit = {},
+    onCancelItineraryGeneration: () -> Unit = {},
+    onRetryItineraryGeneration: () -> Unit = {},
+    onSaveItinerary: () -> Unit = {},
+    onItineraryScreenLeft: () -> Unit = {},
     onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
@@ -157,6 +188,11 @@ fun TravelAssistantAppContent(
             onAssistantScreenLeft = onAssistantScreenLeft,
         )
     }
+    if (selectedDestination == TopLevelDestination.ITINERARY) {
+        ItineraryDestinationLifecycleBoundary(
+            onItineraryScreenLeft = onItineraryScreenLeft,
+        )
+    }
 
     TravelAssistantTheme {
         Scaffold(
@@ -185,6 +221,7 @@ fun TravelAssistantAppContent(
                     navController = navController,
                     homeUiState = homeUiState,
                     assistantUiState = assistantUiState,
+                    itineraryUiState = itineraryUiState,
                     profileUiState = profileUiState,
                     connectivityUiState = appShellUiState.connectivity,
                     localPackageUiState = appShellUiState.localPackage,
@@ -199,6 +236,16 @@ fun TravelAssistantAppContent(
                     onSubmitAssistantQuery = onSubmitAssistantQuery,
                     onCancelAssistantQuery = onCancelAssistantQuery,
                     onRetryAssistantQuery = onRetryAssistantQuery,
+                    onItineraryCitySelected = onItineraryCitySelected,
+                    onItineraryDateChanged = onItineraryDateChanged,
+                    onItineraryStartTimeChanged = onItineraryStartTimeChanged,
+                    onItineraryEndTimeChanged = onItineraryEndTimeChanged,
+                    onItineraryMaximumStopsChanged = onItineraryMaximumStopsChanged,
+                    onItineraryNotesChanged = onItineraryNotesChanged,
+                    onGenerateItinerary = onGenerateItinerary,
+                    onCancelItineraryGeneration = onCancelItineraryGeneration,
+                    onRetryItineraryGeneration = onRetryItineraryGeneration,
+                    onSaveItinerary = onSaveItinerary,
                     onOpenMicrophoneSettings = onOpenMicrophoneSettings,
                     onAuthFormModeChanged = onAuthFormModeChanged,
                     onAuthEmailChanged = onAuthEmailChanged,
@@ -234,6 +281,19 @@ private fun HomeUiState.assistantLocationSnapshot(): AssistantLocationSnapshot? 
     }
 }
 
+private fun HomeUiState.itineraryLocationSnapshot(): ItineraryLocationSnapshot? {
+    val location = (locationState as? LocationUiState.Available)?.location
+        ?: return null
+    return try {
+        ItineraryLocationSnapshot(
+            latitude = location.latitude,
+            longitude = location.longitude,
+        )
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}
+
 @Composable
 private fun AssistantDestinationLifecycleBoundary(
     onAssistantScreenLeft: () -> Unit,
@@ -242,6 +302,18 @@ private fun AssistantDestinationLifecycleBoundary(
     DisposableEffect(Unit) {
         onDispose {
             currentOnAssistantScreenLeft()
+        }
+    }
+}
+
+@Composable
+private fun ItineraryDestinationLifecycleBoundary(
+    onItineraryScreenLeft: () -> Unit,
+) {
+    val currentOnItineraryScreenLeft by rememberUpdatedState(onItineraryScreenLeft)
+    DisposableEffect(Unit) {
+        onDispose {
+            currentOnItineraryScreenLeft()
         }
     }
 }

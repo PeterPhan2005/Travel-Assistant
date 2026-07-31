@@ -1690,6 +1690,42 @@ structured deterministic response hiển thị đúng, offline/cancel/retry,
 signed-out no-request, force-stop non-restoration và privacy-safe logs đều qua.
 Không có audio upload. Live-model validation vẫn là kiểm tra riêng và chưa chạy.
 
+### Biểu mẫu lịch trình nháp T070
+
+Destination **Lịch trình** có biểu mẫu transient một ngày với city đóng
+`Thành phố Hồ Chí Minh`/`Bangkok`, date `YYYY-MM-DD`, start/end `HH:mm`, maximum
+stops 1–20 và notes tùy chọn tối đa 500 Unicode code point. HCMC map explicit
+tới `Asia/Ho_Chi_Minh`; Bangkok map explicit tới `Asia/Bangkok`. Không có
+past-date rule, overnight window, city inference từ coordinates, auto-generation
+hoặc auto-save.
+
+T045/T048 cần city, local date, timezone, exact local window, maximum stops,
+candidates và evidence. Request public hiện tại của
+`POST /v1/assistant/query` chỉ có text, locale, optional coordinate pair,
+null-only trip ID và online mode; route dựng `AgentRuntimeContext()` rỗng. Vì
+vậy T070 không dùng endpoint này cho form, không serialize field thành prose và
+không tạo candidate/timeline giả. Production generator trả
+`UnsupportedTransport`; production save trả `PersistenceUnavailable`. Timeline,
+assumption, warning và explicit-save UI được kiểm tra bằng injected fake
+generator/save boundary. T071 vẫn sở hữu Room/backend CRUD/sync.
+
+Manual Emulator validation production:
+
+1. Force-stop/cold-launch rồi mở **Lịch trình**: form phải rỗng, không request
+   hoặc save tự chạy.
+2. Nhập start `09:00`, end `09:00` và các field hợp lệ khác, chọn
+   **Tạo lịch trình nháp**: phải thấy lỗi end phải sau start; generator không
+   được gọi.
+3. Đổi end thành `17:00` rồi generate: form phải được giữ và UI phải báo rõ
+   structured transport chưa hỗ trợ; không timeline giả và nút save vẫn
+   disabled.
+4. Chuyển tab rồi quay lại: không auto-generate/auto-save. Force-stop/relaunch:
+   form/result không restore và không request/save tự chạy.
+
+Timeline chronological, loading/cancel/retry, warning, draft-only label và save
+unavailable được xác nhận trong deterministic JVM/Compose tests. Không báo đây
+là live/real generation.
+
 ### Đồng bộ preference riêng tư
 
 Hai endpoint canonical sau đều private và bắt buộc Firebase Bearer ID token:

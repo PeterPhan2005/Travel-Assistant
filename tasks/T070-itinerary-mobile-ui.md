@@ -1,7 +1,7 @@
 ---
 id: T070
 title: Implement itinerary generation UI
-status: todo
+status: in_progress
 depends_on: [T012, T045, T048]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Required constraints are validated.
-- [ ] Warnings are visible.
-- [ ] User must explicitly save.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Required constraints are validated.
+- [x] Warnings are visible.
+- [x] User must explicitly save.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

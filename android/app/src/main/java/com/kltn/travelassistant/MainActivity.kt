@@ -22,6 +22,7 @@ import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
+import com.kltn.travelassistant.feature.itinerary.presentation.ItineraryViewModel
 import com.kltn.travelassistant.navigation.external.ExternalNavigationCoordinator
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private val appShellViewModel: AppShellViewModel by viewModels()
     private val assistantViewModel: AssistantViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
+    private val itineraryViewModel: ItineraryViewModel by viewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
     private val downloadsViewModel: DownloadsViewModel by viewModels()
     private var pendingMicrophonePermissionAttemptId: Long? = null
@@ -94,6 +96,7 @@ class MainActivity : ComponentActivity() {
                 appShellViewModel = appShellViewModel,
                 assistantViewModel = assistantViewModel,
                 homeViewModel = homeViewModel,
+                itineraryViewModel = itineraryViewModel,
                 profileViewModel = profileViewModel,
                 downloadsViewModel = downloadsViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
@@ -117,6 +120,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         onAssistantScreenLeft()
+        itineraryViewModel.onAppBackgrounded()
         homeViewModel.onLocationRequestCancelled()
         super.onStop()
     }

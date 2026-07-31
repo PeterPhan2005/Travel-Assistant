@@ -165,9 +165,14 @@ case/aggregate metadata.
 
 ## Current goal
 
-T061 confirmed-text assistant integration is complete after automated,
-authenticated Emulator and authenticated physical-device validation. T070 is
-the sole Next Up task and has not been started.
+T070 itinerary mobile UI is in progress. The complete Android form, local
+validation, typed generation/save boundaries, lifecycle cancellation and
+fail-closed timeline preview are implemented. The approved Assistant transport
+cannot carry city/date/timezone/window/maximum-stops plus candidates/evidence,
+so production generation truthfully reports unsupported and production save
+reports persistence unavailable. Deterministic fake-generator UI validation is
+complete; T070 cannot be marked done until the structured transport blocker is
+resolved by an explicitly assigned full-stack task.
 
 ## Completed
 
@@ -218,11 +223,12 @@ the sole Next Up task and has not been started.
 
 ## In progress
 
-- None.
+- T070 Implement itinerary generation UI (blocked on an approved structured
+  generation transport; no backend or persistence work is included).
 
 ## Next up
 
-- T070 Implement itinerary generation UI.
+- None while T070 remains in progress.
 
 ## Open questions
 
@@ -288,6 +294,19 @@ the sole Next Up task and has not been started.
   coordinate, token or identity is logged or persisted. The Hilt-bound no-op
   analytics boundary receives only a closed Router intent and terminal
   success/partial/failed outcome.
+- Itinerary draft UI owns only transient Android form, validation, generation
+  state and preview rendering. Supported cities/timezones are exact HCMC →
+  `Asia/Ho_Chi_Minh` and Bangkok → `Asia/Bangkok`; date/time/max-stop/500-code-
+  point notes fail locally without defaults, swapping, clamping or truncation.
+  One immutable request may run at a time; edit, explicit cancel, destination
+  departure, Activity background and ViewModel clear cancel it, and retry is
+  explicit. Accepted drafts must match the exact request window and contain
+  nonempty chronological nonoverlapping bounded items; assumptions and safe
+  warnings are preserved. Save is explicit only. The current text-only
+  Assistant transport cannot carry the full structured request or
+  candidates/evidence, so production generator/save adapters return
+  unsupported/persistence-unavailable without network, Room, WorkManager or
+  fabricated output. T071 retains all persistence/sync ownership.
 - Firebase uses the official Google Services Gradle plugin only in the app
   module, with the plugin version and Firebase Android BoM managed by the version
   catalog. Only the dedicated development config at
@@ -2349,3 +2368,46 @@ Android JVM is 185 passed; connected tests are 115/115; T050 is 43/43.
 Live-model validation was not run and remains reported separately rather than
 being inferred from deterministic validation. T070 is the sole Next Up task
 according to `tasks/index.json`; it has not been modified or started.
+
+T070 implementation began on 2026-07-31 after verifying a clean worktree,
+`HEAD`/`origin/main` equality at
+`da67647a0e03ae6ff901052580f8d7d37e55e7ac` and completed successful GitHub CI
+run 30617984438 for that exact SHA. The architecture audit confirmed
+`POST /v1/assistant/query` accepts only confirmed text, locale, an optional
+coordinate pair, null trip ID and online mode, then constructs an empty runtime
+context. It cannot carry the required explicit city, local date, IANA timezone,
+start/end local times, maximum stops and candidates/evidence. No Android-only
+adapter can safely bridge that gap without inventing behavior.
+
+Android now replaces the Itinerary placeholder with a Vietnamese Material 3
+form for exactly HCMC/Bangkok. Strict local validation covers ISO local date,
+`HH:mm` times, same-day strictly ordered window, integer maximum stops 1–20 and
+optional notes bounded at 500 Unicode code points. Fields are never defaulted,
+swapped, clamped or truncated. The typed ViewModel keeps form and generation
+state separate, snapshots one immutable request with only an optional current
+Home in-memory location, ignores duplicate generate/save taps, cancels on edit,
+explicit action, navigation, background and clear, ignores late results and
+retries only explicitly when typed retryability allows it.
+
+Validated injected results render only exact-request, nonempty chronological
+items with positive nonoverlapping intervals inside the requested window and
+within the maximum stop count. Invalid output maps to `InvalidResponse` without
+repair or reordering. Draft-only label, city/date/timezone context, assumptions
+and every safe warning are visible with live-region/accessibility semantics.
+`Lưu lịch trình` is disabled without a valid draft and calls a typed boundary
+only after a tap. Production generation returns `UnsupportedTransport`;
+production save returns `PersistenceUnavailable`; neither path uses
+Assistant prose, Room, DataStore, SharedPreferences, files, WorkManager,
+analytics, audio or logging.
+
+Production Emulator validation opened a blank cold-start form without automatic
+generation, showed local equal-time validation, retained an exact valid HCMC
+`2026-08-01`/`09:00`–`17:00`/four-stop form, and displayed the structured
+transport blocker without a fake timeline. Tab return did not generate/save;
+force-stop/relaunch restored no form/result and started no request/save.
+Timeline/loading/cancel/retry/warning/draft-label and explicit save-unavailable
+behavior were validated only with injected fakes in automated tests, not a real
+backend result. T070 remains `in_progress`; T071/T080/T090 remain untouched.
+Final verification passed 228 Android JVM tests and 122 connected Emulator
+tests, `lintDebug`, `assembleDebug`, all 43 T050 agent-evaluation fixtures and
+repository diff checks. No backend or future-task diff was introduced.

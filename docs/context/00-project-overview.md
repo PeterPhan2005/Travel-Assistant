@@ -44,8 +44,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 - Room version-2 schema và core DAO layer đã có; một bundled HCMC demo seed được
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
-  Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Các destination còn
-  Itinerary vẫn là placeholder. Assistant nay có query composer transient:
+  Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Itinerary nay có
+  biểu mẫu tạo bản nháp một ngày cho HCMC/Bangkok, validation local, state
+  loading/cancel/retry typed, timeline draft được kiểm tra fail-closed, warning
+  hiển thị đầy đủ và nút lưu explicit. Tuy nhiên transport
+  `/v1/assistant/query` hiện không nhận city/date/timezone/window/max-stop cùng
+  candidate/evidence, nên production generator báo unsupported trung thực và
+  production save báo persistence unavailable; không có timeline hoặc lưu giả.
+  T070 vì vậy còn `in_progress`, còn T071 vẫn sở hữu persistence/sync.
+  Assistant nay có query composer transient:
   text chỉnh sửa được, push-to-talk tiếng Việt qua Android `SpeechRecognizer`,
   và gửi foreground confirmed text tới private backend khi online. Loading,
   hủy, retry explicit, auth/offline/error và structured response đều là state
