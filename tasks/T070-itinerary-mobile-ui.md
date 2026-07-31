@@ -1,7 +1,7 @@
 ---
 id: T070
 title: Implement itinerary generation UI
-status: in_progress
+status: done
 depends_on: [T012, T045, T048]
 area: android
 ---
@@ -51,3 +51,14 @@ Implement only the goal and acceptance criteria in this file.
 - Exact files changed.
 - Test/check output.
 - Known limitations.
+
+# Completion record
+
+- The Android form, strict local validation, typed state machine, timeline UI,
+  warning rendering, lifecycle cancellation and explicit-save boundary are
+  complete.
+- Production generation was deliberately not fabricated. Real structured
+  generation is not claimed as part of T070 and its transport is assigned to
+  T062.
+- Persistence, CRUD and synchronization remain assigned to T071.
+- T070 completed as an Android UI and boundary task.

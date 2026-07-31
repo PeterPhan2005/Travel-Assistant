@@ -165,14 +165,12 @@ case/aggregate metadata.
 
 ## Current goal
 
-T070 itinerary mobile UI is in progress. The complete Android form, local
-validation, typed generation/save boundaries, lifecycle cancellation and
-fail-closed timeline preview are implemented. The approved Assistant transport
-cannot carry city/date/timezone/window/maximum-stops plus candidates/evidence,
-so production generation truthfully reports unsupported and production save
-reports persistence unavailable. Deterministic fake-generator UI validation is
-complete; T070 cannot be marked done until the structured transport blocker is
-resolved by an explicitly assigned full-stack task.
+T070 is complete as an Android UI and boundary task. Its form, local validation,
+typed generation/save boundaries, lifecycle cancellation, fail-closed timeline
+preview and warning rendering are complete. It does not falsely claim real
+structured generation: production generation remains pending in T062, which
+owns the authenticated structured draft-generation transport. Persistence
+remains assigned to T071, which has not started.
 
 ## Completed
 
@@ -220,15 +218,15 @@ resolved by an explicitly assigned full-stack task.
 - T050 Create agent evaluation runner.
 - T060 Implement Android speech-to-text input.
 - T061 Connect voice query to assistant API.
+- T070 Implement itinerary generation UI.
 
 ## In progress
 
-- T070 Implement itinerary generation UI (blocked on an approved structured
-  generation transport; no backend or persistence work is included).
+- None.
 
 ## Next up
 
-- None while T070 remains in progress.
+- T062 Implement structured itinerary generation transport.
 
 ## Open questions
 
@@ -306,7 +304,8 @@ resolved by an explicitly assigned full-stack task.
   Assistant transport cannot carry the full structured request or
   candidates/evidence, so production generator/save adapters return
   unsupported/persistence-unavailable without network, Room, WorkManager or
-  fabricated output. T071 retains all persistence/sync ownership.
+  fabricated output. T062 owns production structured generation transport;
+  T071 retains all persistence/sync ownership.
 - Firebase uses the official Google Services Gradle plugin only in the app
   module, with the plugin version and Firebase Android BoM managed by the version
   catalog. Only the dedicated development config at
@@ -2407,7 +2406,14 @@ transport blocker without a fake timeline. Tab return did not generate/save;
 force-stop/relaunch restored no form/result and started no request/save.
 Timeline/loading/cancel/retry/warning/draft-label and explicit save-unavailable
 behavior were validated only with injected fakes in automated tests, not a real
-backend result. T070 remains `in_progress`; T071/T080/T090 remain untouched.
-Final verification passed 228 Android JVM tests and 122 connected Emulator
-tests, `lintDebug`, `assembleDebug`, all 43 T050 agent-evaluation fixtures and
-repository diff checks. No backend or future-task diff was introduced.
+backend result. Final verification passed 228 Android JVM tests and 122
+connected Emulator tests, `lintDebug`, `assembleDebug`, all 43 T050
+agent-evaluation fixtures and repository diff checks. No backend or future-task
+diff was introduced.
+
+T070 completed as an Android UI and boundary task at checkpoint commit
+`c562eb4`, whose exact-SHA CI passed. Production generation was deliberately not
+fabricated, and T070 does not claim real structured generation. T062 now owns
+the missing authenticated structured generation transport and remains `todo`.
+T071 has not started and retains persistence, CRUD and synchronization
+ownership; T071, T080 and T090 remain untouched.

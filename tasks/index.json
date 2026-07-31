@@ -393,6 +393,20 @@
     ]
   },
   {
+    "id": "T062",
+    "file": "T062-structured-itinerary-generation-transport.md",
+    "title": "Implement structured itinerary generation transport",
+    "area": "fullstack",
+    "depends_on": [
+      "T024",
+      "T033",
+      "T045",
+      "T048",
+      "T061",
+      "T070"
+    ]
+  },
+  {
     "id": "T070",
     "file": "T070-itinerary-mobile-ui.md",
     "title": "Implement itinerary generation UI",
