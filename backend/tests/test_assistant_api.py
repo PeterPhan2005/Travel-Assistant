@@ -8,7 +8,7 @@ from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
-from pydantic import SecretStr
+from pydantic import HttpUrl, SecretStr
 import pytest
 
 from app.agents.contracts import (
@@ -20,6 +20,7 @@ from app.agents.contracts import (
     AgentWarning,
     ComposerStageOutcome,
     DiscoveryCompleteness,
+    DiscoveryOrigin,
     DiscoveryOutput,
     DiscoveryStageOutcome,
     EvidenceBundle,
@@ -191,7 +192,7 @@ def _source(source_id: str, label: str) -> SourceRecord:
         source_type=SourceType.OFFICIAL_OPERATOR,
         label=label,
         publisher="Nhà xuất bản",
-        url=f"https://example.com/{source_id}",
+        url=HttpUrl(f"https://example.com/{source_id}"),
         retrieved_at=datetime(2026, 7, 31, tzinfo=timezone.utc),
     )
 
@@ -556,10 +557,10 @@ def test_valid_token_maps_exact_strict_runtime_request_without_identity() -> Non
         locale="vi-VN",
         city=None,
         preferences=None,
-        discovery_origin={
-            "latitude": 10.776,
-            "longitude": 106.7,
-        },
+        discovery_origin=DiscoveryOrigin(
+            latitude=10.776,
+            longitude=106.7,
+        ),
     )
     serialized = str(request.model_dump(mode="json"))
     assert UID_SENTINEL not in serialized

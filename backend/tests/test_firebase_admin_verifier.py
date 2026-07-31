@@ -21,6 +21,10 @@ from app.auth.models import (
 
 TEST_PROJECT_ID = "travel-assistant-test"
 SENTINEL_TOKEN = "adapter-sentinel-token-NEVER-STORE"
+TRANSPORT_ERROR_TYPE = cast(
+    type[Exception],
+    google_auth_exceptions.TransportError,
+)
 
 
 class InitializationCall(TypedDict):
@@ -215,7 +219,7 @@ def test_expected_invalid_sdk_failures_are_normalized(
             "provider configuration unavailable",
         ),
         firebase_admin.exceptions.UnavailableError("network unavailable"),
-        google_auth_exceptions.TransportError("ADC transport unavailable"),
+        TRANSPORT_ERROR_TYPE("ADC transport unavailable"),
     ],
 )
 def test_sdk_unavailability_is_normalized(
