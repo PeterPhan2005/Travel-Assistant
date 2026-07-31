@@ -1,7 +1,7 @@
 ---
 id: T061
 title: Connect voice query to assistant API
-status: todo
+status: done
 depends_on: [T060, T048, T024]
 area: fullstack
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] No audio upload.
-- [ ] Loading/cancel/retry states work.
-- [ ] Intent result is captured for analytics.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] No audio upload.
+- [x] Loading/cancel/retry states work.
+- [x] Intent result is captured for analytics.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

@@ -9,7 +9,10 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 import pytest
 
-from app.auth.models import AuthenticatedPrincipal
+from app.auth.models import (
+    AuthenticatedPrincipal,
+    AuthenticationServiceUnavailableError,
+)
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
 from app.preferences.contracts import PreferenceDocument
@@ -30,6 +33,19 @@ class TokenVerifier:
         raw_token: str,
     ) -> AuthenticatedPrincipal:
         return AuthenticatedPrincipal(uid=f"owner-{raw_token}")
+
+
+class UnavailableTokenVerifier:
+    async def verify_id_token(
+        self,
+        raw_token: str,
+    ) -> AuthenticatedPrincipal:
+        raise AuthenticationServiceUnavailableError(
+            "InvalidArgumentError project=private-project "
+            "credential=/private/adc.json "
+            "url=https://identitytoolkit.googleapis.com/v1/accounts:lookup "
+            f"uid={PRIVATE_UID} token={raw_token}"
+        )
 
 
 class MemoryPreferenceStore:
@@ -79,11 +95,14 @@ def _settings() -> Settings:
     )
 
 
-def _client(store: MemoryPreferenceStore) -> TestClient:
+def _client(
+    store: MemoryPreferenceStore,
+    verifier: TokenVerifier | UnavailableTokenVerifier | None = None,
+) -> TestClient:
     return TestClient(
         create_app(
             _settings(),
-            token_verifier=TokenVerifier(),
+            token_verifier=verifier or TokenVerifier(),
             preference_store=store,
         ),
         raise_server_exceptions=False,
@@ -107,6 +126,48 @@ def test_get_and_put_require_authentication_without_touching_store() -> None:
     assert put_response.status_code == 401
     assert store.get_calls == 0
     assert store.replace_calls == 0
+
+
+def test_authentication_provider_failure_uses_shared_sanitized_503(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    request_id = "preference-auth-unavailable"
+    private_token = "private-preference-token"
+    store = MemoryPreferenceStore()
+    caplog.set_level(logging.DEBUG)
+    with _client(store, UnavailableTokenVerifier()) as client:
+        response = client.get(
+            "/preferences",
+            headers={
+                "Authorization": f"Bearer {private_token}",
+                "X-Request-ID": request_id,
+            },
+        )
+
+    assert response.status_code == 503
+    assert response.headers["X-Request-ID"] == request_id
+    assert response.json()["error"] == {
+        "code": "authentication_unavailable",
+        "message": "Authentication is temporarily unavailable.",
+        "request_id": request_id,
+        "details": None,
+    }
+    assert store.get_calls == 0
+    assert store.replace_calls == 0
+    combined_logs = "\n".join(
+        record.getMessage() for record in caplog.records
+    )
+    for private_value in (
+        "InvalidArgumentError",
+        "private-project",
+        "/private/adc.json",
+        "accounts:lookup",
+        PRIVATE_UID,
+        private_token,
+        "Authorization",
+    ):
+        assert private_value not in response.text
+        assert private_value not in combined_logs
 
 
 def test_missing_row_returns_canonical_empty_document_without_write() -> None:

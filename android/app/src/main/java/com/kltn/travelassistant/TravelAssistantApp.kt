@@ -17,11 +17,13 @@ import com.kltn.travelassistant.feature.appshell.presentation.AppShellUiState
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellViewModel
 import com.kltn.travelassistant.feature.assistant.presentation.AssistantUiState
 import com.kltn.travelassistant.feature.assistant.presentation.AssistantViewModel
+import com.kltn.travelassistant.feature.assistant.domain.AssistantLocationSnapshot
 import com.kltn.travelassistant.feature.auth.presentation.AuthFormMode
 import com.kltn.travelassistant.feature.auth.presentation.ProfileUiState
 import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeUiState
+import com.kltn.travelassistant.feature.home.presentation.LocationUiState
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
@@ -68,6 +70,20 @@ fun TravelAssistantApp(
         onCancelVoiceInput = onCancelVoiceInput,
         onAssistantScreenLeft = onAssistantScreenLeft,
         onConfirmTranscript = assistantViewModel::confirmTranscript,
+        onSubmitAssistantQuery = {
+            assistantViewModel.submitQuery(
+                isOnline = appShellUiState.connectivity ==
+                    com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState.Online,
+                location = homeUiState.assistantLocationSnapshot(),
+            )
+        },
+        onCancelAssistantQuery = assistantViewModel::cancelQuery,
+        onRetryAssistantQuery = {
+            assistantViewModel.retryQuery(
+                isOnline = appShellUiState.connectivity ==
+                    com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState.Online,
+            )
+        },
         onOpenMicrophoneSettings = onOpenMicrophoneSettings,
         onNearbyQueryChanged = homeViewModel::onNearbyQueryChanged,
         onAuthFormModeChanged = profileViewModel::onFormModeChanged,
@@ -103,6 +119,9 @@ fun TravelAssistantAppContent(
     onCancelVoiceInput: () -> Unit = {},
     onAssistantScreenLeft: () -> Unit = {},
     onConfirmTranscript: () -> Unit = {},
+    onSubmitAssistantQuery: () -> Unit = {},
+    onCancelAssistantQuery: () -> Unit = {},
+    onRetryAssistantQuery: () -> Unit = {},
     onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
@@ -177,6 +196,9 @@ fun TravelAssistantAppContent(
                     onVoiceInput = onVoiceInput,
                     onCancelVoiceInput = onCancelVoiceInput,
                     onConfirmTranscript = onConfirmTranscript,
+                    onSubmitAssistantQuery = onSubmitAssistantQuery,
+                    onCancelAssistantQuery = onCancelAssistantQuery,
+                    onRetryAssistantQuery = onRetryAssistantQuery,
                     onOpenMicrophoneSettings = onOpenMicrophoneSettings,
                     onAuthFormModeChanged = onAuthFormModeChanged,
                     onAuthEmailChanged = onAuthEmailChanged,
@@ -196,6 +218,19 @@ fun TravelAssistantAppContent(
                 )
             }
         }
+    }
+}
+
+private fun HomeUiState.assistantLocationSnapshot(): AssistantLocationSnapshot? {
+    val location = (locationState as? LocationUiState.Available)?.location
+        ?: return null
+    return try {
+        AssistantLocationSnapshot(
+            latitude = location.latitude,
+            longitude = location.longitude,
+        )
+    } catch (_: IllegalArgumentException) {
+        null
     }
 }
 

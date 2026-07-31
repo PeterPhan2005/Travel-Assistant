@@ -1,6 +1,16 @@
 package com.kltn.travelassistant.feature.assistant.presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentOutcome
+import com.kltn.travelassistant.feature.assistant.domain.AssistantLocationSnapshot
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRepository
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRequest
+import com.kltn.travelassistant.feature.assistant.domain.AssistantRepositoryResult
+import com.kltn.travelassistant.feature.assistant.domain.AssistantResultStatus
+import com.kltn.travelassistant.feature.assistant.domain.MAX_ASSISTANT_SUBMISSION_CODE_POINTS
 import com.kltn.travelassistant.feature.assistant.domain.boundAssistantQueryText
 import com.kltn.travelassistant.feature.assistant.domain.normalizeConfirmedAssistantQuery
 import com.kltn.travelassistant.feature.assistant.domain.normalizeRecognizedAssistantQuery
@@ -11,14 +21,19 @@ import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionListen
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionStartResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AssistantViewModel @Inject constructor(
     private val speechRecognitionEngine: SpeechRecognitionEngine,
+    private val queryRepository: AssistantQueryRepository,
+    private val intentAnalytics: AssistantIntentAnalytics,
 ) : ViewModel() {
     private val speechRecognitionAvailable = speechRecognitionEngine.isAvailable()
     private val mutableUiState = MutableStateFlow(
@@ -35,17 +50,23 @@ class AssistantViewModel @Inject constructor(
     private var acceptsRecognitionEvents = false
     private var activeVoiceAttemptId: Long? = null
     private val attemptIdGenerator = VoiceInputAttemptIdGenerator()
+    private var submissionJob: Job? = null
+    private var submissionGeneration = 0L
+    private var retrySnapshot: AssistantQueryRequest? = null
 
     fun onQueryChanged(query: String) {
         val wasRecognitionActive = mutableUiState.value.speechInputState.isRecognitionActive
         if (activeVoiceAttemptId != null || wasRecognitionActive) {
             invalidateCurrentAttempt(cancelEngine = wasRecognitionActive)
         }
+        cancelActiveSubmission(showCancelled = false)
+        retrySnapshot = null
         mutableUiState.update { state ->
             state.copy(
                 queryText = boundAssistantQueryText(query),
                 speechInputState = availableIdleState(),
                 confirmedTranscript = null,
+                querySubmissionState = AssistantSubmissionUiState.Idle,
             )
         }
     }
@@ -135,9 +156,11 @@ class AssistantViewModel @Inject constructor(
     fun onAssistantScreenLeft() {
         val hadPendingAttempt = activeVoiceAttemptId != null
         val wasRecognitionActive = mutableUiState.value.speechInputState.isRecognitionActive
-        if (!hadPendingAttempt && !wasRecognitionActive) return
-        invalidateCurrentAttempt(cancelEngine = wasRecognitionActive)
-        updateSpeechState(SpeechInputUiState.Cancelled)
+        if (hadPendingAttempt || wasRecognitionActive) {
+            invalidateCurrentAttempt(cancelEngine = wasRecognitionActive)
+            updateSpeechState(SpeechInputUiState.Cancelled)
+        }
+        cancelActiveSubmission(showCancelled = true)
     }
 
     fun confirmTranscript() {
@@ -152,10 +175,130 @@ class AssistantViewModel @Inject constructor(
         }
     }
 
+    fun submitQuery(
+        isOnline: Boolean,
+        location: AssistantLocationSnapshot?,
+    ) {
+        if (submissionJob?.isActive == true) return
+        val confirmed = normalizeConfirmedAssistantQuery(
+            mutableUiState.value.queryText,
+        )
+        if (confirmed.isBlank()) return
+        if (
+            confirmed.codePointCount(0, confirmed.length) >
+            MAX_ASSISTANT_SUBMISSION_CODE_POINTS
+        ) {
+            mutableUiState.update { state ->
+                state.copy(
+                    confirmedTranscript = null,
+                    querySubmissionState = AssistantSubmissionUiState.QueryTooLong,
+                )
+            }
+            return
+        }
+        val snapshot = AssistantQueryRequest(
+            text = confirmed,
+            location = location,
+        )
+        retrySnapshot = snapshot
+        mutableUiState.update { state ->
+            state.copy(
+                queryText = confirmed,
+                confirmedTranscript = confirmed,
+            )
+        }
+        if (!isOnline) {
+            updateSubmissionState(AssistantSubmissionUiState.Offline)
+            return
+        }
+        execute(snapshot)
+    }
+
+    fun retryQuery(isOnline: Boolean) {
+        if (submissionJob?.isActive == true) return
+        val snapshot = retrySnapshot ?: return
+        if (!mutableUiState.value.querySubmissionState.canRetry) return
+        if (!isOnline) {
+            updateSubmissionState(AssistantSubmissionUiState.Offline)
+            return
+        }
+        execute(snapshot)
+    }
+
+    fun cancelQuery() {
+        cancelActiveSubmission(showCancelled = true)
+    }
+
+    fun onAppBackgrounded() {
+        onAssistantScreenLeft()
+    }
+
     override fun onCleared() {
+        cancelActiveSubmission(showCancelled = false)
         invalidateCurrentAttempt(cancelEngine = false)
         speechRecognitionEngine.close()
         super.onCleared()
+    }
+
+    private fun execute(snapshot: AssistantQueryRequest) {
+        val generation = ++submissionGeneration
+        updateSubmissionState(AssistantSubmissionUiState.Loading)
+        submissionJob = viewModelScope.launch {
+            val repositoryResult = try {
+                queryRepository.submit(snapshot)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                AssistantRepositoryResult.Failure(
+                    AssistantQueryFailure.INVALID_RESPONSE,
+                )
+            }
+            if (generation != submissionGeneration) return@launch
+            submissionJob = null
+            when (repositoryResult) {
+                is AssistantRepositoryResult.Structured -> {
+                    val result = repositoryResult.result
+                    val state = when (result.status) {
+                        AssistantResultStatus.SUCCESS ->
+                            AssistantSubmissionUiState.Success(result)
+                        AssistantResultStatus.PARTIAL ->
+                            AssistantSubmissionUiState.Partial(result)
+                        AssistantResultStatus.FAILED ->
+                            AssistantSubmissionUiState.Failed(result)
+                    }
+                    updateSubmissionState(state)
+                    result.intent?.let { intent ->
+                        intentAnalytics.record(
+                            intent = intent,
+                            outcome = when (result.status) {
+                                AssistantResultStatus.SUCCESS ->
+                                    AssistantIntentOutcome.SUCCESS
+                                AssistantResultStatus.PARTIAL ->
+                                    AssistantIntentOutcome.PARTIAL
+                                AssistantResultStatus.FAILED ->
+                                    AssistantIntentOutcome.FAILED
+                            },
+                        )
+                    }
+                }
+                is AssistantRepositoryResult.Failure -> {
+                    updateSubmissionState(
+                        repositoryResult.reason.toSubmissionState(),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun cancelActiveSubmission(showCancelled: Boolean) {
+        val active = submissionJob?.isActive == true
+        if (!active) return
+        submissionGeneration += 1
+        submissionJob?.cancel()
+        submissionJob = null
+        if (showCancelled) {
+            updateSubmissionState(AssistantSubmissionUiState.Cancelled)
+        }
     }
 
     private fun onSpeechRecognitionEvent(
@@ -227,6 +370,14 @@ class AssistantViewModel @Inject constructor(
         mutableUiState.update { state -> state.copy(speechInputState = speechInputState) }
     }
 
+    private fun updateSubmissionState(
+        querySubmissionState: AssistantSubmissionUiState,
+    ) {
+        mutableUiState.update { state ->
+            state.copy(querySubmissionState = querySubmissionState)
+        }
+    }
+
     private fun availableIdleState(): SpeechInputUiState =
         if (speechRecognitionAvailable) {
             SpeechInputUiState.Idle
@@ -249,6 +400,21 @@ class AssistantViewModel @Inject constructor(
         const val VIETNAMESE_LANGUAGE_TAG = "vi-VN"
     }
 }
+
+private fun AssistantQueryFailure.toSubmissionState(): AssistantSubmissionUiState =
+    when (this) {
+        AssistantQueryFailure.OFFLINE -> AssistantSubmissionUiState.Offline
+        AssistantQueryFailure.AUTHENTICATION_REQUIRED ->
+            AssistantSubmissionUiState.AuthenticationRequired
+        AssistantQueryFailure.TIMEOUT,
+        AssistantQueryFailure.RATE_LIMITED,
+        AssistantQueryFailure.UNAVAILABLE,
+        -> AssistantSubmissionUiState.Error(this, retryable = true)
+        AssistantQueryFailure.CONFIGURATION,
+        AssistantQueryFailure.INVALID_REQUEST,
+        AssistantQueryFailure.INVALID_RESPONSE,
+        -> AssistantSubmissionUiState.Error(this, retryable = false)
+    }
 
 internal class VoiceInputAttemptIdGenerator(
     private val maximumId: Long = Long.MAX_VALUE,

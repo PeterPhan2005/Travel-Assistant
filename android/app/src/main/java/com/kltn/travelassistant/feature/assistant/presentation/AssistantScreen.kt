@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -20,9 +22,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.kltn.travelassistant.R
+import com.kltn.travelassistant.feature.assistant.domain.AssistantPoiResult
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryResult
+import com.kltn.travelassistant.feature.assistant.domain.MAX_ASSISTANT_SUBMISSION_CODE_POINTS
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionFailure
 import com.kltn.travelassistant.ui.theme.AppSpacing
 
@@ -34,11 +41,18 @@ fun AssistantScreen(
     onVoiceInput: () -> Unit,
     onCancelVoiceInput: () -> Unit,
     onConfirmTranscript: () -> Unit,
+    onSubmitQuery: () -> Unit = {},
+    onCancelQuery: () -> Unit = {},
+    onRetryQuery: () -> Unit = {},
     onOpenPermissionSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val queryExceedsSubmissionLimit = uiState.queryText.codePointCount(
+        0,
+        uiState.queryText.length,
+    ) > MAX_ASSISTANT_SUBMISSION_CODE_POINTS
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -80,6 +94,11 @@ fun AssistantScreen(
                 maxLines = 6,
             )
         }
+        if (queryExceedsSubmissionLimit) {
+            item {
+                SubmissionError(R.string.assistant_request_too_long)
+            }
+        }
         item {
             SpeechInputControls(
                 state = uiState.speechInputState,
@@ -100,24 +119,240 @@ fun AssistantScreen(
         }
         item {
             Button(
-                onClick = onConfirmTranscript,
+                onClick = {
+                    onConfirmTranscript()
+                    onSubmitQuery()
+                },
                 enabled = uiState.queryText.isNotBlank() &&
-                    !uiState.speechInputState.isRecognitionActive,
+                    !queryExceedsSubmissionLimit &&
+                    !uiState.speechInputState.isRecognitionActive &&
+                    !uiState.querySubmissionState.isRequestActive,
+                modifier = Modifier.semantics {
+                    contentDescription = "Gửi câu hỏi tới trợ lý"
+                },
             ) {
-                Text(text = stringResource(R.string.assistant_confirm_transcript))
+                Text(text = stringResource(R.string.assistant_send_query))
             }
         }
-        uiState.confirmedTranscript?.let {
-            item {
+        item {
+            AssistantSubmissionPresentation(
+                state = uiState.querySubmissionState,
+                onCancelQuery = onCancelQuery,
+                onRetryQuery = onRetryQuery,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AssistantSubmissionPresentation(
+    state: AssistantSubmissionUiState,
+    onCancelQuery: () -> Unit,
+    onRetryQuery: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
+    ) {
+        when (state) {
+            AssistantSubmissionUiState.Idle -> Unit
+            AssistantSubmissionUiState.Loading -> {
+                CircularProgressIndicator()
                 Text(
-                    text = stringResource(R.string.assistant_confirmed_local),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = stringResource(R.string.assistant_request_loading),
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
                 )
+                OutlinedButton(
+                    onClick = onCancelQuery,
+                    modifier = Modifier.semantics {
+                        contentDescription = "Hủy yêu cầu trợ lý đang xử lý"
+                    },
+                ) {
+                    Text(stringResource(R.string.assistant_cancel_request))
+                }
+            }
+            AssistantSubmissionUiState.Cancelled -> SubmissionMessage(
+                R.string.assistant_request_cancelled,
+            )
+            AssistantSubmissionUiState.Offline -> {
+                SubmissionError(R.string.assistant_request_offline)
+                RetryButton(onRetryQuery)
+            }
+            AssistantSubmissionUiState.AuthenticationRequired -> {
+                SubmissionError(R.string.assistant_request_auth_required)
+                RetryButton(onRetryQuery)
+            }
+            AssistantSubmissionUiState.QueryTooLong -> SubmissionError(
+                R.string.assistant_request_too_long,
+            )
+            is AssistantSubmissionUiState.Error -> {
+                SubmissionError(state.reason.messageRes)
+                if (state.retryable) {
+                    RetryButton(onRetryQuery)
+                }
+            }
+            is AssistantSubmissionUiState.Success -> StructuredResult(state.result)
+            is AssistantSubmissionUiState.Partial -> {
+                StructuredResult(state.result)
+                if (state.result.retryable) {
+                    RetryButton(onRetryQuery)
+                }
+            }
+            is AssistantSubmissionUiState.Failed -> {
+                StructuredResult(state.result)
+                if (state.result.retryable) {
+                    RetryButton(onRetryQuery)
+                }
             }
         }
     }
 }
+
+@Composable
+private fun SubmissionMessage(@StringRes messageRes: Int) {
+    Text(
+        text = stringResource(messageRes),
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun SubmissionError(@StringRes messageRes: Int) {
+    Text(
+        text = stringResource(messageRes),
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun RetryButton(onRetryQuery: () -> Unit) {
+    OutlinedButton(
+        onClick = onRetryQuery,
+        modifier = Modifier.semantics {
+            contentDescription = "Thử gửi lại câu hỏi"
+        },
+    ) {
+        Text(stringResource(R.string.assistant_retry_request))
+    }
+}
+
+@Composable
+private fun StructuredResult(result: AssistantQueryResult) {
+    Text(
+        text = result.message,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        style = MaterialTheme.typography.bodyLarge,
+    )
+    result.poiResults.forEach { poi ->
+        AssistantPoiCard(poi)
+    }
+    result.narration?.let { narration ->
+        HorizontalDivider()
+        Text(
+            text = stringResource(R.string.assistant_narration_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(narration.text)
+        narration.keyPoints.forEach { point -> Text("• $point") }
+    }
+    result.itinerary?.let { itinerary ->
+        HorizontalDivider()
+        Text(
+            text = stringResource(R.string.assistant_itinerary_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(itinerary.localDate)
+        itinerary.items.forEach { item ->
+            Text("${item.startLocalTime}–${item.endLocalTime}: ${item.title}")
+        }
+        itinerary.assumptions.forEach { assumption -> Text("• $assumption") }
+    }
+    if (result.warnings.isNotEmpty()) {
+        HorizontalDivider()
+        Text(
+            text = stringResource(R.string.assistant_warnings_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        result.warnings.forEach { warning ->
+            Text(
+                text = warning.message,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+    }
+    if (result.sources.isNotEmpty()) {
+        HorizontalDivider()
+        Text(
+            text = stringResource(R.string.assistant_sources_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        result.sources.forEach { source ->
+            Column(
+                modifier = Modifier.semantics {
+                    contentDescription = "Nguồn tham khảo ${source.label}"
+                },
+            ) {
+                Text(source.label)
+                source.publisher?.let { Text(it) }
+                source.url?.let { Text(it) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssistantPoiCard(poi: AssistantPoiResult) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = "Địa điểm gợi ý ${poi.name}"
+            },
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
+        ) {
+            Text(poi.name, style = MaterialTheme.typography.titleMedium)
+            Text(poi.category)
+            poi.address?.let { Text(it) }
+            poi.distanceMetres?.let {
+                Text(formatAssistantDistance(it))
+            }
+            poi.rating?.let {
+                Text(formatAssistantRating(it, poi.ratingCount))
+            }
+            poi.price?.let {
+                Text(formatAssistantPrice(it))
+            }
+            poi.openingHoursSummary?.let { Text(it) }
+        }
+    }
+}
+
+private val AssistantQueryFailure.messageRes: Int
+    @StringRes get() = when (this) {
+        AssistantQueryFailure.OFFLINE -> R.string.assistant_request_offline
+        AssistantQueryFailure.AUTHENTICATION_REQUIRED ->
+            R.string.assistant_request_auth_required
+        AssistantQueryFailure.CONFIGURATION ->
+            R.string.assistant_request_configuration
+        AssistantQueryFailure.INVALID_REQUEST ->
+            R.string.assistant_request_invalid
+        AssistantQueryFailure.TIMEOUT ->
+            R.string.assistant_request_timeout
+        AssistantQueryFailure.RATE_LIMITED ->
+            R.string.assistant_request_rate_limited
+        AssistantQueryFailure.UNAVAILABLE ->
+            R.string.assistant_request_unavailable
+        AssistantQueryFailure.INVALID_RESPONSE ->
+            R.string.assistant_request_invalid_response
+    }
 
 @Composable
 private fun SpeechInputControls(

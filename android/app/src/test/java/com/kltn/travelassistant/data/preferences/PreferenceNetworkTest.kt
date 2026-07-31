@@ -32,6 +32,46 @@ class PreferenceNetworkTest {
         api = apiFor(server, tokens)
     }
 
+    @Test
+    fun backendEndpointPolicyAllowsOnlyHttpsOrApprovedDebugLoopback() {
+        assertEquals(
+            "https://api.example.com/",
+            BackendEndpointPolicy.endpointOrNull(
+                raw = "https://api.example.com/",
+                allowDebugLoopback = false,
+            )?.baseUrl.toString(),
+        )
+        assertNull(
+            BackendEndpointPolicy.endpointOrNull(
+                raw = "http://127.0.0.1:8000/",
+                allowDebugLoopback = false,
+            ),
+        )
+        listOf("10.0.2.2", "127.0.0.1").forEach { host ->
+            assertEquals(
+                host,
+                BackendEndpointPolicy.endpointOrNull(
+                    raw = "http://$host:8000/",
+                    allowDebugLoopback = true,
+                )?.baseUrl?.host,
+            )
+        }
+        listOf(
+            "http://localhost:8000/",
+            "http://192.168.1.10:8000/",
+            "http://example.com/",
+            "https://api.example.com/path",
+            "https://user:password@api.example.com/",
+        ).forEach { raw ->
+            assertNull(
+                BackendEndpointPolicy.endpointOrNull(
+                    raw = raw,
+                    allowDebugLoopback = true,
+                ),
+            )
+        }
+    }
+
     @After
     fun tearDown() {
         server.shutdown()
@@ -196,4 +236,3 @@ class PreferenceNetworkTest {
         const val PRIVATE_VALUE = "private-document-fragment"
     }
 }
-

@@ -1064,8 +1064,9 @@ def test_fastapi_route_set_remains_unchanged() -> None:
         "/auth/me",
         "/preferences",
         "/pois/nearby",
+        "/v1/assistant/query",
     }
     assert not any(
-        "assistant" in path or "itinerary" in path
+        "itinerary" in path
         for path in paths
     )

@@ -207,7 +207,15 @@ def test_expected_invalid_sdk_failures_are_normalized(
             ValueError("cause"),
             None,
         ),
+        firebase_admin.exceptions.InvalidArgumentError(
+            "provider project mismatch",
+        ),
+        firebase_admin.exceptions.FirebaseError(
+            "provider_failure",
+            "provider configuration unavailable",
+        ),
         firebase_admin.exceptions.UnavailableError("network unavailable"),
+        google_auth_exceptions.TransportError("ADC transport unavailable"),
     ],
 )
 def test_sdk_unavailability_is_normalized(
@@ -246,8 +254,21 @@ def test_sdk_unavailability_is_normalized(
     assert SENTINEL_TOKEN not in str(error.value)
 
 
-def test_adc_initialization_failure_is_unavailable(
+@pytest.mark.parametrize(
+    "initialization_error",
+    [
+        google_auth_exceptions.DefaultCredentialsError(  # type: ignore[no-untyped-call]
+            "credential unavailable",
+        ),
+        firebase_admin.exceptions.InvalidArgumentError(
+            "project configuration mismatch",
+        ),
+        ValueError("invalid Firebase app configuration"),
+    ],
+)
+def test_firebase_initialization_failure_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
+    initialization_error: Exception,
 ) -> None:
     def initialize_app(
         credential: object | None = None,
@@ -255,9 +276,7 @@ def test_adc_initialization_failure_is_unavailable(
         name: str = "[DEFAULT]",
     ) -> App:
         del credential, options, name
-        raise google_auth_exceptions.DefaultCredentialsError(  # type: ignore[no-untyped-call]
-            "credential unavailable",
-        )
+        raise initialization_error
 
     monkeypatch.setattr(firebase_admin, "initialize_app", initialize_app)
 

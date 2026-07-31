@@ -22,14 +22,15 @@ making a network request and presents Checking, Online and Offline explicitly.
 Offline Room search and POI detail remain usable. Local package version and
 publication metadata are observed by the app-shell state owner and displayed
 in Downloads. Assistant now provides a Vietnamese-first transient query
-composer with editable manual input, push-to-talk Android speech recognition,
-partial/final transcripts, cancellation, typed unavailable/permission/error
-states and local confirmation. Microphone permission is requested only from the
-voice action; the app discards audio buffers and does not persist or upload
-audio or transcripts. No assistant request is sent. External navigation is not
-disabled solely because the app is offline. Live Google Places, Android nearby
-transport, production hosting and the end-to-end OpenAI Agents SDK runtime
-remain incomplete. T041 now provides one independent Router execution with
+composer with editable manual input, push-to-talk Android speech recognition
+and confirmed-text foreground submission to the private backend. Speech and
+submission have separate typed state; loading, cancellation, explicit retry,
+auth/offline/error and structured success/partial/failed rendering are visible.
+Microphone permission is requested only from the voice action; the app discards
+audio buffers and neither audio, transcript nor response is persisted. External
+navigation is not disabled solely because the app is offline. Live Google
+Places, Android nearby transport, production hosting and live-model assistant
+validation remain incomplete. T041 now provides one independent Router execution with
 strict `RouterOutput`, no tools/handoffs/sessions, explicit optional model
 configuration and a deterministic six-intent fallback. T042 now provides one
 independent Discovery execution over normalized POI/menu tools with deterministic
@@ -138,8 +139,8 @@ configuration, one no-tool run, deterministic guidance identity, stereotype
 rejection and content-free limited fallback. T045 implements the independent
 one-day Itinerary Agent with a no-tool optional model run, strict candidate and
 evidence closure, deterministic no-model planning, exact non-overlapping time
-allocation and no saved-itinerary access. Live Google Places, preference
-taxonomy/UI and assistant transport remain unimplemented. T046
+  allocation and no saved-itinerary access. Live Google Places and preference
+taxonomy/UI remain unimplemented. T046
 implements the independent Grounding Reviewer with pure closed-world
 claim/source/freshness decisions, specialist-output approval, optional isolated
 model review and deterministic safety fallback. T047 implements the independent
@@ -150,8 +151,9 @@ observability at `backend/app/agents/observability/`: one SDK-format trace ID pe
 runtime request, exact request-ID correlation, canonical stage/attempt
 observations, safe aggregate SDK token usage, bounded FIFO process-local storage
 and typed trace/request/usage queries. SDK export is explicit and disabled by
-default; every model run keeps sensitive trace data disabled. The assistant HTTP
-route, observability route and Android transport remain unimplemented. T050
+default; every model run keeps sensitive trace data disabled. T061 adds private
+`POST /v1/assistant/query` and Android confirmed-text transport; there remains
+no observability HTTP route. T050
 implements the strict offline evaluation package at `backend/app/agent_evals/`.
 Its schema-version-1 fixture set has 43 synthetic cases (Router 6; Discovery,
 Narration, Local Culture, Itinerary, Grounding Reviewer and Response Composer 5
@@ -163,8 +165,9 @@ case/aggregate metadata.
 
 ## Current goal
 
-T060 Android speech-to-text input is complete after emulator and ZTE nubia V60
-physical-device validation. T061 has not been started.
+T061 confirmed-text assistant integration is complete after automated,
+authenticated Emulator and authenticated physical-device validation. T070 is
+the sole Next Up task and has not been started.
 
 ## Completed
 
@@ -211,6 +214,7 @@ physical-device validation. T061 has not been started.
 - T049 Add agent observability.
 - T050 Create agent evaluation runner.
 - T060 Implement Android speech-to-text input.
+- T061 Connect voice query to assistant API.
 
 ## In progress
 
@@ -218,7 +222,7 @@ physical-device validation. T061 has not been started.
 
 ## Next up
 
-- T061 Connect voice query to assistant API.
+- T070 Implement itinerary generation UI.
 
 ## Open questions
 
@@ -274,7 +278,16 @@ physical-device validation. T061 has not been started.
   creates an attempt, requests permission or starts recognition.
   Query, partial/final transcript and local confirmation share one
   1,000-Unicode-code-point bound and remain transient `StateFlow` UI state with
-  no repository, persistence or transport.
+  no persistence.
+- Assistant submission accepts only the latest edited query, trims and rejects
+  blank or over-500-code-point text without truncation, captures one immutable
+  text/optional in-memory Home-location snapshot and allows one foreground
+  request. Edit, explicit cancel, destination departure, Activity background
+  and ViewModel clear cancel the active job and OkHttp call. Retry is explicit;
+  only a 401 may force-refresh the Firebase token once. No request/response,
+  coordinate, token or identity is logged or persisted. The Hilt-bound no-op
+  analytics boundary receives only a closed Router intent and terminal
+  success/partial/failed outcome.
 - Firebase uses the official Google Services Gradle plugin only in the app
   module, with the plugin version and Firebase Android BoM managed by the version
   catalog. Only the dedicated development config at
@@ -2232,4 +2245,107 @@ explicit tap restarted recognition without another permission prompt. AppOps
 reported foreground allow and recent microphone use. TravelAssistant did not
 persist or upload audio, the repaired build was installed only on `NX721J` for
 the final retest, and Gboard voice typing remains outside T060. T060 is
-complete; T061 remains unstarted.
+complete; at that T060 completion point, T061 was still unstarted.
+
+T061 implementation reached automated acceptance on 2026-07-31 and is complete
+after authenticated local end-to-end validation. Backend now
+registers private `POST /v1/assistant/query` through the existing Firebase
+dependency and request-ID/error boundaries. The extra-forbidden request accepts
+trimmed `NormalizedQuery` text up to 500 code points, strict locale, an optional
+complete finite WGS84 coordinate pair, null-only `trip_id` and online-only
+`client_mode`. It maps no UID, token, email, preferences, audio, HTTP object or
+arbitrary metadata into the runtime. Production construction creates
+Router/Discovery/Narration/Local Culture/Itinerary/Grounding/Composer services
+per request; the curated POI provider and menu reader share the same read-only
+async session. Tests inject a fake orchestrator and open no database/model
+connection.
+
+The public response maps only request ID, closed status, validated Router intent,
+composer final text or a fixed safe failure, composer-approved POI presentation,
+approved narration/draft itinerary without evidence IDs, referenced public
+source metadata, bounded safe warning text and retryability. Narration and
+itinerary require both their exact Grounding-approved runtime output IDs and a
+successful final Composer output; a later Composer failure exposes neither
+specialist result. It omits request
+coordinates, identity/token, internal stages/agents, trace/model identifiers,
+usage/timing, prompts, exceptions and audio. Route logging contains only request
+ID, status, intent and counts; transcript, coordinate, identity, response
+content and source URLs are absent.
+
+Android adds an Assistant-owned strict Kotlin-serialization/OkHttp repository.
+It reuses the validated backend origin and verified Firebase session patterns,
+posts UTF-8 JSON only to `v1/assistant/query`, follows no redirect, bounds request
+and response bytes and timeouts, force-refreshes after at most one 401 and never
+auto-retries another result. A cancellable OkHttp callback cancels the active
+call immediately. The ViewModel keeps speech and submission states separate,
+uses the latest edited text and optional current in-memory Home location, allows
+one request, cancels on edit/user action/navigation/background/clear, retains
+editable text and retries only explicitly from the immutable snapshot.
+Structured UI omits absent POI values and renders safe message, POIs, price/date,
+warnings, sources and optional narration/itinerary. No Room, DataStore,
+SharedPreferences, file or WorkManager boundary receives the request/response.
+The no-op analytics binding records only typed intent and success/partial/failed
+outcome, at most once per structured terminal result.
+
+Verification: exact T060 commit
+`4b2f96f3210babfd50373f2933d5f2b54d3f3882` has successful GitHub CI run
+30535291881; initial worktree and `git diff --check` were clean. Backend Ruff and
+strict mypy pass. With the repository Compose PostgreSQL/PostGIS service healthy
+and local `DATABASE_URL` loaded, all 748 collected tests pass with zero skips;
+the earlier 28 database-unavailable skips are resolved. Android
+`./gradlew test` passes 185 JVM tests; the Assistant
+Compose suite passes 13/13 and the full emulator instrumentation suite passes
+115/115 on `Pixel_7_API_36_Google_Play_ARM64(AVD) - 17`. Debug lint, unit test
+and assemble pass. `pip check` reports no broken requirements and the T050
+deterministic evaluator passes all 43 fixtures and thresholds. Final
+`git diff --check` passes. No dependency/plugin version changed.
+
+Local endpoint configuration keeps `10.0.2.2:8000` as the emulator debug
+default. A Gradle-property override permits physical-device
+`127.0.0.1:8000` only with ADB reverse. The override is parsed and constrained
+to an origin-only URL before being safely escaped into generated BuildConfig;
+unsafe cleartext hosts fail Gradle configuration. The shared endpoint validator
+and debug network-security config allow only `10.0.2.2` and `127.0.0.1` for
+cleartext. Release remains HTTPS-only. `SETUP.md` records both paths, the
+deterministic fallback procedure and the authenticated manual checklist.
+
+The authenticated Android-to-local-FastAPI path now succeeds with aligned
+Firebase development-project, backend and ADC configuration. Health returned
+200; missing credentials returned the controlled
+`401 authentication_required`; typed text and an edited Vietnamese speech
+transcript each produced `POST /v1/assistant/query` 200 and rendered the safe
+deterministic structured fallback plus warning. No prior-project error,
+traceback or ASGI exception remained. Submitted text was absent from backend
+logs, and text/token/coordinates/identity were absent from the Android
+application-process log. Offline and explicit cancellation UI paths were also
+observed manually.
+
+The Firebase Admin adapter now preserves token-specific invalid/expired/revoked/
+disabled-user 401 classifications before catching the broad Firebase Admin and
+Google Auth provider families. Non-token `InvalidArgumentError`, ADC,
+configuration and transport failures map to the shared
+`AuthenticationServiceUnavailableError`, producing fixed sanitized
+`503 authentication_unavailable` responses on Assistant, Preferences and other
+Firebase-authenticated routes. Provider exception type/text, project, credential
+path, lookup URL, UID/email/token and stack details are neither returned nor
+normally logged. Revocation checking remains enabled; cancellation still
+propagates. No bypass, unsigned-token path, credential, dependency or Android
+behavior was added.
+
+Final authenticated validation is complete. On the Emulator, one typed query
+and one edited Vietnamese speech query each returned HTTP 200 and rendered the
+safe deterministic structured response. Offline behavior and explicit
+cancellation passed; explicit retry succeeded after backend recovery. Signed-out
+submission started no network request and preserved text. Force-stop/relaunch
+restored neither query nor response and did not resubmit. On the ZTE nubia
+V60/NX721J through ADB reverse, typed and edited-speech queries each returned
+HTTP 200 and rendered the structured deterministic response. No audio was
+uploaded. Transcript, token, coordinates and identity were absent from Android
+application-process and backend logs. Firebase Admin provider failures remain
+sanitized as `authentication_unavailable`.
+
+T061 is complete. Backend verification is 748 passed/0 skipped/0 failed;
+Android JVM is 185 passed; connected tests are 115/115; T050 is 43/43.
+Live-model validation was not run and remains reported separately rather than
+being inferred from deterministic validation. T070 is the sole Next Up task
+according to `tasks/index.json`; it has not been modified or started.

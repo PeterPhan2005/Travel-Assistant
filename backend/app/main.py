@@ -6,6 +6,19 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.agents.composer.service import ResponseComposerService
+from app.agents.discovery.menu import SqlAlchemyPoiMenuReader
+from app.agents.discovery.service import DiscoveryService
+from app.agents.grounding.service import GroundingReviewerService
+from app.agents.itinerary.service import ItineraryService
+from app.agents.local_culture.service import LocalCultureService
+from app.agents.narration.service import NarrationService
+from app.agents.orchestration import (
+    AgentOrchestrator,
+    AgentOrchestratorService,
+)
+from app.agents.router.service import RouterService
+from app.api.routes.assistant import create_assistant_router
 from app.api.routes.auth import create_auth_router
 from app.api.routes.health import create_health_router
 from app.api.routes.pois import create_pois_router
@@ -32,6 +45,7 @@ def create_app(
     token_verifier: FirebaseTokenVerifier | None = None,
     poi_provider: PoiProvider | None = None,
     preference_store: PreferenceStore | None = None,
+    assistant_orchestrator: AgentOrchestrator | None = None,
 ) -> FastAPI:
     """Build an independent application without starting external services."""
     resolved_settings = (
@@ -91,6 +105,28 @@ def create_app(
         async with runtime.session_factory() as session:
             yield PreferenceService(SqlAlchemyPreferenceStore(session))
 
+    async def request_assistant_orchestrator() -> AsyncIterator[
+        AgentOrchestrator
+    ]:
+        if assistant_orchestrator is not None:
+            yield assistant_orchestrator
+            return
+        runtime = await ensure_database_runtime()
+        async with runtime.session_factory() as session:
+            provider = CuratedPoiProvider(session)
+            yield AgentOrchestratorService(
+                router=RouterService(),
+                discovery=DiscoveryService(
+                    provider,
+                    SqlAlchemyPoiMenuReader(session),
+                ),
+                narration=NarrationService(),
+                local_culture=LocalCultureService(),
+                itinerary=ItineraryService(),
+                grounding=GroundingReviewerService(),
+                composer=ResponseComposerService(),
+            )
+
     app = FastAPI(
         title=resolved_settings.application_name,
         version=resolved_settings.application_version,
@@ -101,6 +137,12 @@ def create_app(
     register_error_handlers(app)
     app.include_router(create_health_router(resolved_settings))
     app.include_router(create_auth_router(authentication))
+    app.include_router(
+        create_assistant_router(
+            request_assistant_orchestrator,
+            authentication,
+        )
+    )
     app.include_router(
         create_preferences_router(
             request_preference_service,

@@ -1090,6 +1090,7 @@ def test_dependency_route_settings_and_public_shape_are_unchanged() -> None:
         "/auth/me",
         "/preferences",
         "/pois/nearby",
+        "/v1/assistant/query",
     }
     assert OPENAI_API_KEY_ENV.casefold() not in Settings.model_fields
     assert (

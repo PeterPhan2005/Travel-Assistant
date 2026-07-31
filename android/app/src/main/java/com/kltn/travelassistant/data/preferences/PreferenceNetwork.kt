@@ -30,11 +30,13 @@ internal interface BackendEndpointProvider {
     fun endpointOrNull(): BackendEndpoint?
 }
 
-@Singleton
-internal class BuildConfigBackendEndpointProvider @Inject constructor() :
-    BackendEndpointProvider {
-    override fun endpointOrNull(): BackendEndpoint? {
-        val raw = BuildConfig.BACKEND_BASE_URL
+internal object BackendEndpointPolicy {
+    private val debugLoopbackHosts = setOf("10.0.2.2", "127.0.0.1")
+
+    fun endpointOrNull(
+        raw: String,
+        allowDebugLoopback: Boolean,
+    ): BackendEndpoint? {
         if (raw.isBlank()) return null
         val url = raw.toHttpUrlOrNull() ?: return null
         if (
@@ -47,16 +49,22 @@ internal class BuildConfigBackendEndpointProvider @Inject constructor() :
             return null
         }
         val allowedScheme = url.scheme == "https" || (
-            BuildConfig.DEBUG &&
+            allowDebugLoopback &&
                 url.scheme == "http" &&
-                url.host == DEBUG_EMULATOR_HOST
+                url.host in debugLoopbackHosts
             )
         return if (allowedScheme) BackendEndpoint(url) else null
     }
+}
 
-    private companion object {
-        const val DEBUG_EMULATOR_HOST = "10.0.2.2"
-    }
+@Singleton
+internal class BuildConfigBackendEndpointProvider @Inject constructor() :
+    BackendEndpointProvider {
+    override fun endpointOrNull(): BackendEndpoint? =
+        BackendEndpointPolicy.endpointOrNull(
+            raw = BuildConfig.BACKEND_BASE_URL,
+            allowDebugLoopback = BuildConfig.DEBUG,
+        )
 }
 
 internal enum class PreferenceApiError {

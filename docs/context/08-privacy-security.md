@@ -8,8 +8,11 @@
   explicit open question in the progress tracker.
 - Itinerary: retained until user deletes it/account.
 - Preferences: retained until user deletes them/account.
-- Voice audio: not stored.
-- Transcript: not stored by default; analytics stores only intent and success state.
+- Voice audio: not stored or uploaded by TravelAssistant.
+- Transcript: confirmed text is sent only in the foreground assistant request
+  and is not persisted by Android or backend. T061 analytics is a no-op boundary
+  that receives only closed intent and outcome values; T090 owns any future
+  analytics storage.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
 
 ## Security controls

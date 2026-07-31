@@ -1604,6 +1604,92 @@ line; route vẫn nhận đủ query parameters để validation và discovery.
 Android app chưa gọi `/auth/me` hoặc `/pois/nearby`; transport private hiện chỉ
 phục vụ preference sync.
 
+### Truy vấn Assistant bằng confirmed text
+
+`POST /v1/assistant/query` là endpoint private và bắt buộc Firebase Bearer ID
+token đã verify. Endpoint chỉ nhận confirmed text; không nhận audio, file, URI,
+bytes, recording hoặc MIME metadata. Request/response chỉ tồn tại trong memory
+cho foreground call và không được lưu vào Room, DataStore, SharedPreferences,
+file hoặc WorkManager.
+
+Request canonical:
+
+```json
+{
+  "text": "Tôi muốn ăn phở gần đây",
+  "latitude": 10.776,
+  "longitude": 106.7,
+  "locale": "vi-VN",
+  "trip_id": null,
+  "client_mode": "online"
+}
+```
+
+`latitude` và `longitude` phải cùng có mặt hoặc cùng vắng mặt. `text` tối đa 500
+Unicode code point; unknown field, audio field, non-null `trip_id` và mode khác
+`online` đều bị từ chối. Ví dụ contract với placeholder:
+
+```bash
+curl --include \
+  --request POST \
+  --header 'Authorization: Bearer <Firebase-ID-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"text":"Tôi muốn ăn phở gần đây","latitude":10.776,"longitude":106.7,"locale":"vi-VN","trip_id":null,"client_mode":"online"}' \
+  http://127.0.0.1:8000/v1/assistant/query
+```
+
+Không thay placeholder bằng token thật trong tài liệu hoặc command history.
+Android lấy ID token từ Firebase ngay trước foreground request, refresh đúng một
+lần sau `401`, không tự retry lỗi khác và không gửi UID trong body.
+
+Chạy backend local theo phần `Backend virtual environment` ở trên, gồm migration
+và seed HCMC/Bangkok. Khi không cấu hình model/API key tùy chọn của agent, runtime
+dùng deterministic fallback; đây là đường local chuẩn để kiểm tra orchestration,
+JSON contract và structured rendering mà không gọi model. Live-model validation
+là kiểm tra riêng và chưa được hoàn thành trong T061.
+
+Android Emulator dùng debug endpoint mặc định:
+
+```text
+http://10.0.2.2:8000/
+```
+
+Với physical device, chỉ dùng debug loopback đã duyệt qua ADB reverse:
+
+```bash
+adb reverse tcp:8000 tcp:8000
+cd android
+./gradlew :app:installDebug \
+  -PtravelAssistantDebugBackendBaseUrl=http://127.0.0.1:8000/
+```
+
+Debug cleartext policy chỉ cho phép `10.0.2.2` và `127.0.0.1`. Release vẫn từ
+chối HTTP và chỉ chấp nhận HTTPS base URL hợp lệ; không dùng LAN IP hoặc mở rộng
+cleartext policy để thử physical device. Sau khi kiểm tra có thể gỡ mapping:
+
+```bash
+adb reverse --remove tcp:8000
+```
+
+Checklist manual authenticated local validation (đã hoàn thành):
+
+1. Sign in bằng account đã verify của đúng Firebase development project.
+2. Gửi typed query rồi gửi confirmed transcript đã chỉnh sửa; kiểm tra request
+   chỉ có text và các field contract, không có audio.
+3. Kiểm tra deterministic no-model response hiển thị status, message, POI và các
+   optional narration/itinerary/source/warning khi có.
+4. Kiểm tra cancel dừng call, retry chỉ chạy sau thao tác explicit, signed-out và
+   offline không gửi request, rời Assistant/background đều hủy call.
+5. Force-stop/cold-launch và xác nhận query/response trước đó không được restore.
+6. Kiểm tra log backend/Android không chứa transcript, tọa độ, token, UID, source
+   URL hoặc response prose.
+
+T061 authenticated validation đã qua trên Emulator và ZTE nubia V60/NX721J qua
+ADB reverse: typed query và edited Vietnamese speech query đều trả HTTP 200,
+structured deterministic response hiển thị đúng, offline/cancel/retry,
+signed-out no-request, force-stop non-restoration và privacy-safe logs đều qua.
+Không có audio upload. Live-model validation vẫn là kiểm tra riêng và chưa chạy.
+
 ### Đồng bộ preference riêng tư
 
 Hai endpoint canonical sau đều private và bắt buộc Firebase Bearer ID token:

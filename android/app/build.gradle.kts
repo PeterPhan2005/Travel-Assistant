@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
@@ -7,6 +9,46 @@ plugins {
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.google.services)
 }
+
+fun validateDebugBackendBaseUrl(raw: String): String {
+    require(raw.none(Char::isISOControl)) {
+        "Debug backend base URL must not contain control characters."
+    }
+    val uri = runCatching { URI(raw) }.getOrElse {
+        throw GradleException("Debug backend base URL must be a valid absolute URL.")
+    }
+    require(
+        uri.isAbsolute &&
+            uri.host != null &&
+            uri.rawUserInfo == null &&
+            uri.rawQuery == null &&
+            uri.rawFragment == null &&
+            (uri.rawPath.isNullOrEmpty() || uri.rawPath == "/") &&
+            uri.port != 0 &&
+            uri.port <= 65_535,
+    ) {
+        "Debug backend base URL must have an origin-only root path."
+    }
+    val scheme = uri.scheme.lowercase()
+    require(
+        scheme == "https" ||
+            (
+                scheme == "http" &&
+                    uri.host in setOf("10.0.2.2", "127.0.0.1")
+                ),
+    ) {
+        "Cleartext debug backend URL must use 10.0.2.2 or 127.0.0.1."
+    }
+    return raw
+}
+
+fun String.asBuildConfigStringLiteral(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val debugBackendBaseUrl = validateDebugBackendBaseUrl(
+    providers.gradleProperty("travelAssistantDebugBackendBaseUrl")
+        .getOrElse("http://10.0.2.2:8000/"),
+)
 
 android {
     namespace = "com.kltn.travelassistant"
@@ -31,7 +73,7 @@ android {
             buildConfigField(
                 "String",
                 "BACKEND_BASE_URL",
-                "\"http://10.0.2.2:8000/\"",
+                debugBackendBaseUrl.asBuildConfigStringLiteral(),
             )
             buildConfigField(
                 "String",

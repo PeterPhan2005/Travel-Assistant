@@ -47,8 +47,11 @@ app-private staging, kiểm tra exact size/SHA-256 và strict contract trước 
 kích hoạt nguyên tử trong Room. Gói cũ và itinerary được giữ an toàn khi tải,
 validation hoặc transaction thất bại; bundled seed chỉ chạy khi HCMC chưa có
 active package hợp lệ. Debug dùng endpoint emulator localhost riêng, còn release
-chưa có hosting và không cho cleartext. Android nearby transport, live Google Places và AI runtime end-to-end
-vẫn chưa được triển khai. Backend hiện có FastAPI application factory, settings được
+chưa có hosting và không cho cleartext. Android nearby transport và live Google
+Places vẫn chưa được triển khai. Assistant gửi duy nhất confirmed text foreground
+tới private `POST /v1/assistant/query`, hiển thị loading/cancel/retry cùng kết quả
+structured và không persist transcript/response; audio không được upload.
+Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.
 Backend đã có SQLAlchemy 2 typed models và Alembic migration đầu tiên cho dữ
@@ -61,7 +64,9 @@ timeout/lỗi và provenance chuẩn hóa. Canonical `GET /pois/nearby` API hi�
 app-scoped async engine, request-scoped read-only session và optional Firebase
 Bearer authentication để trả normalized curated POI với distance metre,
 provenance/freshness và bounded `is_complete`. Chưa có live Google Places hoặc
-AI runtime end-to-end; Android app chưa gọi nearby API này. Backend đã có Router
+live-model assistant validation; authenticated deterministic assistant
+end-to-end validation đã qua trên Emulator và physical device. Android app chưa
+gọi nearby API này. Backend đã có Router
 Agent độc lập T041 với structured `RouterOutput`, một OpenAI Agents SDK run
 không tool/handoff/session khi có cấu hình rõ ràng và deterministic fallback
 khi thiếu cấu hình hoặc model thất bại. T042 bổ sung Discovery execution độc
@@ -97,7 +102,10 @@ Discovery prerequisite, specialist fan-out song song, Grounding/Composer tuần
 tự, per-stage/overall timeout, tối đa một retry đủ điều kiện và safe partial
 output. Runtime context chỉ nhận selected POI, approved evidence, ordered
 candidates và explicit itinerary window; không có supervisor agent, shared
-transcript/session, assistant route hay Android transport. T049 thêm package
+transcript/session. T061 thêm private assistant route và Android transport:
+Firebase token lấy ngay trước request, 401 force-refresh tối đa một lần, không
+auto retry lỗi khác, cancellation hủy active OkHttp call, và analytics no-op chỉ
+nhận typed intent/outcome. T049 thêm package
 observability inject được với one trace ID theo Agents SDK format cho mỗi
 runtime request, exact request-ID correlation, canonical stage/attempt status,
 latency và aggregate token usage. Query typed đọc bounded process-local FIFO

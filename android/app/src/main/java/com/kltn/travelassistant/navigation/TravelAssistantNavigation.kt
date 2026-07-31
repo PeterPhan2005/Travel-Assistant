@@ -87,6 +87,9 @@ fun TravelAssistantNavHost(
     onVoiceInput: () -> Unit = {},
     onCancelVoiceInput: () -> Unit = {},
     onConfirmTranscript: () -> Unit = {},
+    onSubmitAssistantQuery: () -> Unit = {},
+    onCancelAssistantQuery: () -> Unit = {},
+    onRetryAssistantQuery: () -> Unit = {},
     onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
@@ -137,6 +140,9 @@ fun TravelAssistantNavHost(
                 onVoiceInput = onVoiceInput,
                 onCancelVoiceInput = onCancelVoiceInput,
                 onConfirmTranscript = onConfirmTranscript,
+                onSubmitQuery = onSubmitAssistantQuery,
+                onCancelQuery = onCancelAssistantQuery,
+                onRetryQuery = onRetryAssistantQuery,
                 onOpenPermissionSettings = onOpenMicrophoneSettings,
             )
         }

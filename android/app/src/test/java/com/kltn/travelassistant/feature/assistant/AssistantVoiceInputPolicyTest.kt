@@ -20,12 +20,12 @@ class AssistantVoiceInputPolicyTest {
     }
 
     @Test
-    fun voiceFlowUsesNoRecordingPersistenceOrT061TransportApi() {
-        val source = productionAssistantSource()
+    fun speechRecognitionFlowUsesNoRecordingOrPersistenceApi() {
+        val source = speechRecognitionSource()
 
         FORBIDDEN_RECORDING_PERSISTENCE_AND_TRANSPORT.forEach { forbiddenToken ->
             assertFalse(
-                "T060 production source must not use $forbiddenToken",
+                "T060 speech source must not use $forbiddenToken",
                 source.contains(forbiddenToken),
             )
         }
@@ -43,6 +43,40 @@ class AssistantVoiceInputPolicyTest {
 
         assertFalse(uiStateSource.contains("attempt", ignoreCase = true))
         assertFalse(productionAssistantSource().contains("android.util.Log"))
+    }
+
+    @Test
+    fun assistantSubmissionHasNoAudioPersistenceWorkManagerOrLogging() {
+        val source = productionAssistantSource()
+        val requestDocument = source
+            .substringAfter("private data class AssistantRequestDocument(")
+            .substringBefore(")\n\n@Serializable")
+
+        listOf(
+            "audio",
+            "file",
+            "recording",
+            "mimeType",
+            "uri",
+            "ByteArray",
+        ).forEach { forbiddenField ->
+            assertFalse(
+                "Assistant JSON request must not contain $forbiddenField",
+                requestDocument.contains(forbiddenField, ignoreCase = true),
+            )
+        }
+        listOf(
+            "WorkManager",
+            "RoomDatabase",
+            "DataStore<",
+            "SharedPreferences",
+            "android.util.Log",
+        ).forEach { forbiddenDependency ->
+            assertFalse(
+                "Assistant submission must not use $forbiddenDependency",
+                source.contains(forbiddenDependency),
+            )
+        }
     }
 
     @Test
@@ -90,6 +124,22 @@ class AssistantVoiceInputPolicyTest {
     private fun mainActivitySource(): String = findAppProjectDirectory()
         .resolve("src/main/java/com/kltn/travelassistant/MainActivity.kt")
         .readText()
+
+    private fun speechRecognitionSource(): String {
+        val appProjectDirectory = findAppProjectDirectory()
+        val sourceRoot = appProjectDirectory.resolve("src/main/java")
+        return sourceRoot.walkTopDown()
+            .filter(File::isFile)
+            .filter { file ->
+                file.extension == "kt" &&
+                    (
+                        "SpeechRecognition" in file.name ||
+                            file.name == "MainActivity.kt"
+                    )
+            }
+            .sortedBy(File::getPath)
+            .joinToString(separator = "\n", transform = File::readText)
+    }
 
     private fun findAppProjectDirectory(): File {
         val workingDirectory = File(requireNotNull(System.getProperty("user.dir")))

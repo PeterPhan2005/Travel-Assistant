@@ -439,6 +439,7 @@ def test_no_agent_route_or_global_openai_settings_were_added() -> None:
         "/auth/me",
         "/preferences",
         "/pois/nearby",
+        "/v1/assistant/query",
     }
     assert OPENAI_API_KEY_ENV.casefold() not in Settings.model_fields
     assert OPENAI_ROUTER_MODEL_ENV.casefold() not in Settings.model_fields

@@ -1,5 +1,12 @@
 package com.kltn.travelassistant.feature.assistant.presentation
 
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntent
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentOutcome
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRepository
+import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRequest
+import com.kltn.travelassistant.feature.assistant.domain.AssistantRepositoryResult
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionEngine
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionEvent
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionFailure
@@ -11,11 +18,32 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+private fun createAssistantViewModel(
+    engine: SpeechRecognitionEngine,
+): AssistantViewModel = AssistantViewModel(
+    speechRecognitionEngine = engine,
+    queryRepository = object : AssistantQueryRepository {
+        override suspend fun submit(
+            request: AssistantQueryRequest,
+        ): AssistantRepositoryResult {
+            return AssistantRepositoryResult.Failure(
+                AssistantQueryFailure.CONFIGURATION,
+            )
+        }
+    },
+    intentAnalytics = object : AssistantIntentAnalytics {
+        override fun record(
+            intent: AssistantIntent,
+            outcome: AssistantIntentOutcome,
+        ) = Unit
+    },
+)
+
 class AssistantViewModelTest {
     @Test
     fun initialStateChecksAvailabilityWithoutStartingOrRequestingAnything() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
 
         assertEquals(AssistantUiState(), viewModel.uiState.value)
         assertEquals(1, engine.availabilityCheckCount)
@@ -26,7 +54,7 @@ class AssistantViewModelTest {
     @Test
     fun unavailableServiceKeepsManualComposerUsable() {
         val engine = FakeSpeechRecognitionEngine(available = false)
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
 
         assertEquals(SpeechInputUiState.Unavailable, viewModel.uiState.value.speechInputState)
 
@@ -41,7 +69,7 @@ class AssistantViewModelTest {
 
     @Test
     fun manualTextCanBeEditedConfirmedLocallyAndEditedAgain() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
 
         viewModel.onQueryChanged("  Tôi muốn ăn phở  ")
         assertNull(viewModel.uiState.value.confirmedTranscript)
@@ -58,7 +86,7 @@ class AssistantViewModelTest {
     @Test
     fun permissionRequestAndDenialDoNotStartRecognition() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
 
         viewModel.onMicrophonePermissionRequestStarted(attemptId)
@@ -82,7 +110,7 @@ class AssistantViewModelTest {
     @Test
     fun grantedPermissionRefreshClearsDenialAndPreservesTextAndConfirmation() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         viewModel.onQueryChanged("  Nội dung đã xác nhận  ")
         viewModel.confirmTranscript()
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
@@ -104,7 +132,7 @@ class AssistantViewModelTest {
     @Test
     fun deniedPermissionRefreshPreservesPermissionDeniedWithoutEngineCalls() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionDenied(
             attemptId = attemptId,
@@ -123,7 +151,7 @@ class AssistantViewModelTest {
     @Test
     fun permissionRefreshWhileIdleIsNoOpAndCreatesNoVoiceAttempt() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val expectedState = viewModel.uiState.value
 
         viewModel.onMicrophonePermissionStatusRefreshed(isGranted = true)
@@ -137,7 +165,7 @@ class AssistantViewModelTest {
     @Test
     fun permissionRefreshWhileCompletedIsNoOpAndDoesNotRestartRecognition() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         startRecognition(viewModel)
         engine.emit(SpeechRecognitionEvent.FinalTranscript("Tôi muốn ăn phở"))
         val expectedState = viewModel.uiState.value
@@ -152,7 +180,7 @@ class AssistantViewModelTest {
     @Test
     fun grantedPermissionStartsVietnameseRecognitionAndShowsPartialAndFinalTranscript() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
 
         startRecognition(viewModel)
 
@@ -192,7 +220,7 @@ class AssistantViewModelTest {
     @Test
     fun explicitCancellationStopsEngineAndIgnoresLateTranscript() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         viewModel.onQueryChanged("Nội dung trước đó")
         startRecognition(viewModel)
         engine.emit(SpeechRecognitionEvent.PartialTranscript("bản ghi tạm"))
@@ -211,7 +239,7 @@ class AssistantViewModelTest {
     @Test
     fun editingDuringRecognitionCancelsBeforeApplyingManualText() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         startRecognition(viewModel)
         engine.emit(SpeechRecognitionEvent.Listening)
 
@@ -225,7 +253,7 @@ class AssistantViewModelTest {
     @Test
     fun noSpeechRetainsEditableTextAndExplicitRetryStartsANewSession() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         viewModel.onQueryChanged("Tôi muốn tìm quán phở gần đây")
         startRecognition(viewModel)
 
@@ -249,7 +277,7 @@ class AssistantViewModelTest {
     @Test
     fun typedRecognitionFailuresNeverExposePlatformCodesOrExceptions() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
 
         val recoverableFailures = SpeechRecognitionFailure.entries - setOf(
             SpeechRecognitionFailure.SERVICE_UNAVAILABLE,
@@ -287,7 +315,7 @@ class AssistantViewModelTest {
                 SpeechRecognitionFailure.BUSY,
             ),
         )
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
 
         startRecognition(viewModel)
 
@@ -299,7 +327,7 @@ class AssistantViewModelTest {
 
     @Test
     fun oneVoiceTapCreatesOneAttemptAndDuplicateTapWhilePermissionPendingIsIgnored() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
 
         val attemptId = viewModel.beginVoiceInputAttempt()
         viewModel.onMicrophonePermissionRequestStarted(requireNotNull(attemptId))
@@ -315,7 +343,7 @@ class AssistantViewModelTest {
     @Test
     fun validGrantStartsExactlyOnceAndDuplicateGrantIsIgnored() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionRequestStarted(attemptId)
 
@@ -328,7 +356,7 @@ class AssistantViewModelTest {
     @Test
     fun staleGrantAndDenialAfterCancelAreIgnored() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionRequestStarted(attemptId)
 
@@ -346,7 +374,7 @@ class AssistantViewModelTest {
     @Test
     fun staleGrantAfterScreenLeftIsIgnored() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionRequestStarted(attemptId)
 
@@ -360,7 +388,7 @@ class AssistantViewModelTest {
     @Test
     fun resultFromAttemptOneCannotStartAttemptTwo() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val firstAttempt = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionRequestStarted(firstAttempt)
         viewModel.cancelSpeechRecognition()
@@ -377,7 +405,7 @@ class AssistantViewModelTest {
     @Test
     fun hostStopInvalidatesPendingAttempt() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
         viewModel.onMicrophonePermissionRequestStarted(attemptId)
 
@@ -391,7 +419,7 @@ class AssistantViewModelTest {
     @Test
     fun screenLeftCancelsActiveRecognitionRetainsPartialTextAndReturnDoesNotRestart() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         startRecognition(viewModel)
         engine.emit(SpeechRecognitionEvent.PartialTranscript("  bản ghi tạm  "))
 
@@ -408,7 +436,7 @@ class AssistantViewModelTest {
 
     @Test
     fun screenLeftDuringPermissionKeepsManualAndConfirmedText() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
         viewModel.onQueryChanged("  Nội dung thủ công  ")
         viewModel.confirmTranscript()
         val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
@@ -432,7 +460,7 @@ class AssistantViewModelTest {
 
     @Test
     fun manualTextAtMaximumIsPreservedWithoutTrimming() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
         val text = " " + "ă".repeat(MAX_ASSISTANT_QUERY_CODE_POINTS - 1)
 
         viewModel.onQueryChanged(text)
@@ -442,7 +470,7 @@ class AssistantViewModelTest {
 
     @Test
     fun manualTextBeyondMaximumIsBoundedByUnicodeCodePoint() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
         val text = "a".repeat(MAX_ASSISTANT_QUERY_CODE_POINTS + 1)
 
         viewModel.onQueryChanged(text)
@@ -456,7 +484,7 @@ class AssistantViewModelTest {
     @Test
     fun partialAndFinalTranscriptsAreTrimmedAndBounded() {
         val engine = FakeSpeechRecognitionEngine()
-        val viewModel = AssistantViewModel(engine)
+        val viewModel = createAssistantViewModel(engine)
         startRecognition(viewModel)
         engine.emit(
             SpeechRecognitionEvent.PartialTranscript(
@@ -481,7 +509,7 @@ class AssistantViewModelTest {
 
     @Test
     fun confirmationTrimsEditedTextAndIgnoresBlankText() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
         viewModel.onQueryChanged("  Nội dung xác nhận  ")
 
         viewModel.confirmTranscript()
@@ -505,7 +533,7 @@ class AssistantViewModelTest {
 
     @Test
     fun vietnameseUnicodeAndSurrogatePairsArePreservedWithoutSplitting() {
-        val viewModel = AssistantViewModel(FakeSpeechRecognitionEngine())
+        val viewModel = createAssistantViewModel(FakeSpeechRecognitionEngine())
         val vietnamese = "Tôi muốn tìm quán phở gần đây"
         viewModel.onQueryChanged(vietnamese)
         assertEquals(vietnamese, viewModel.uiState.value.queryText)

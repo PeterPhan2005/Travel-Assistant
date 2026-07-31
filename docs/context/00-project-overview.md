@@ -45,10 +45,12 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Các destination còn
-  Itinerary vẫn là placeholder. Assistant nay có query composer tạm thời trên
-  thiết bị: text chỉnh sửa được, xác nhận cục bộ và push-to-talk tiếng Việt qua
-  Android `SpeechRecognizer`; quyền micrô chỉ được hỏi sau hành động người dùng,
-  audio/bản ghi không được app lưu hay gửi. Profile đã có đăng ký/đăng nhập
+  Itinerary vẫn là placeholder. Assistant nay có query composer transient:
+  text chỉnh sửa được, push-to-talk tiếng Việt qua Android `SpeechRecognizer`,
+  và gửi foreground confirmed text tới private backend khi online. Loading,
+  hủy, retry explicit, auth/offline/error và structured response đều là state
+  typed; request/response không được persist. Quyền micrô chỉ được hỏi sau hành
+  động người dùng, audio/bản ghi không được app lưu hay gửi. Profile đã có đăng ký/đăng nhập
   email-password, gửi/làm mới/gửi lại xác minh email, đăng xuất và khôi phục
   phiên dựa trên Firebase. Người dùng chưa xác minh không được xem nội dung
   Profile đã xác thực. Profile cũng có đăng nhập Google rõ ràng qua Android
@@ -81,8 +83,8 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   `GET /preferences` và `PUT /preferences` đọc hoặc thay toàn bộ bounded generic
   schema-version-1 document theo authenticated Firebase UID. GET missing-row
   không ghi dữ liệu; PUT upsert user/preference trong một transaction với
-  server timestamp. Android-to-backend transport hiện chỉ có cho preferences;
-  live Google Places và agent runtime end-to-end chưa được triển khai. T041 đã
+  server timestamp. Android-to-backend transport hiện có cho preferences và
+  confirmed-text Assistant; live Google Places chưa được triển khai. T041 đã
   bổ sung Router Agent độc lập trả strict `RouterOutput`: một OpenAI Agents SDK
   run không tool/handoff/session khi cả key và model được cấu hình rõ ràng, hoặc
   deterministic fallback khi thiếu cấu hình hay model thất bại. T042 bổ sung
@@ -143,8 +145,10 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   JSON/Markdown reports. Runner gọi real T041–T049 boundaries bằng dependency
   deterministic được inject, chạy không key/model/network/database/Firebase và
   CI fail khi case, threshold hoặc committed report regress. Report không giữ
-  raw query/output, coordinate, POI/evidence content hay final prose. Chưa có
-  assistant HTTP route, observability route hay Android transport.
+  raw query/output, coordinate, POI/evidence content hay final prose. Private
+  `POST /v1/assistant/query` yêu cầu Firebase auth, map strict text/locale và
+  optional request-only origin vào T048, rồi trả safe public subset. Không có
+  observability route.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
   schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.

@@ -44,15 +44,9 @@ class FirebaseAdminTokenVerifier:
         try:
             firebase_app = self._firebase_app()
         except (
-            auth.CertificateFetchError,
-            auth.InsufficientPermissionError,
-            firebase_exceptions.DeadlineExceededError,
-            firebase_exceptions.InternalError,
-            firebase_exceptions.UnavailableError,
-            firebase_exceptions.UnknownError,
-            google_auth_exceptions.DefaultCredentialsError,
-            google_auth_exceptions.RefreshError,
-            google_auth_exceptions.TransportError,
+            ValueError,
+            firebase_exceptions.FirebaseError,
+            google_auth_exceptions.GoogleAuthError,
         ) as error:
             raise AuthenticationServiceUnavailableError from error
 
@@ -70,15 +64,8 @@ class FirebaseAdminTokenVerifier:
         ) as error:
             raise InvalidAuthenticationTokenError from error
         except (
-            auth.CertificateFetchError,
-            auth.InsufficientPermissionError,
-            firebase_exceptions.DeadlineExceededError,
-            firebase_exceptions.InternalError,
-            firebase_exceptions.UnavailableError,
-            firebase_exceptions.UnknownError,
-            google_auth_exceptions.DefaultCredentialsError,
-            google_auth_exceptions.RefreshError,
-            google_auth_exceptions.TransportError,
+            firebase_exceptions.FirebaseError,
+            google_auth_exceptions.GoogleAuthError,
         ) as error:
             raise AuthenticationServiceUnavailableError from error
 
