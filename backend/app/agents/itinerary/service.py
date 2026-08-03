@@ -91,9 +91,8 @@ class ItineraryService:
         output: ItineraryOutput,
     ) -> None:
         logger.info(
-            "operation=draft path=%s city=%s items=%d reason=%s",
+            "operation=draft path=%s items=%d reason=%s",
             path,
-            request.city.value,
             len(output.items),
             reason,
         )
@@ -104,7 +103,6 @@ class ItineraryService:
         error: ItineraryExecutionError,
     ) -> None:
         logger.info(
-            "operation=draft path=deterministic city=%s items=0 reason=%s",
-            request.city.value,
+            "operation=draft path=deterministic items=0 reason=%s",
             error.reason.value,
         )

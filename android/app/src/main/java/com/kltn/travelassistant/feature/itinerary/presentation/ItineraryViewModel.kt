@@ -61,7 +61,10 @@ class ItineraryViewModel @Inject internal constructor(
         updateForm { copy(notes = value) }
     }
 
-    internal fun generate(currentLocation: ItineraryLocationSnapshot?) {
+    internal fun generate(
+        currentLocation: ItineraryLocationSnapshot?,
+        isOnline: Boolean = true,
+    ) {
         if (generationJob?.isActive == true) return
         when (
             val validation = validateItineraryForm(
@@ -84,17 +87,39 @@ class ItineraryViewModel @Inject internal constructor(
                 mutableUiState.update { state ->
                     state.copy(fieldErrors = ItineraryFieldErrors())
                 }
-                execute(validation.request)
+                if (isOnline) {
+                    execute(validation.request)
+                } else {
+                    mutableUiState.update { state ->
+                        state.copy(
+                            generationState = ItineraryGenerationUiState.Error(
+                                ItineraryDraftFailure.OFFLINE,
+                            ),
+                            saveState = ItinerarySaveUiState.Idle,
+                        )
+                    }
+                }
             }
         }
     }
 
-    internal fun retry() {
+    internal fun retry(isOnline: Boolean = true) {
         if (generationJob?.isActive == true) return
         val error = mutableUiState.value.generationState as? ItineraryGenerationUiState.Error
             ?: return
         if (!error.reason.retryable) return
-        execute(retrySnapshot ?: return)
+        val request = retrySnapshot ?: return
+        if (isOnline) {
+            execute(request)
+        } else {
+            mutableUiState.update { state ->
+                state.copy(
+                    generationState = ItineraryGenerationUiState.Error(
+                        ItineraryDraftFailure.OFFLINE,
+                    ),
+                )
+            }
+        }
     }
 
     internal fun cancelGeneration() {

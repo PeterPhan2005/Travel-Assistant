@@ -1699,32 +1699,77 @@ tới `Asia/Ho_Chi_Minh`; Bangkok map explicit tới `Asia/Bangkok`. Không có
 past-date rule, overnight window, city inference từ coordinates, auto-generation
 hoặc auto-save.
 
-T045/T048 cần city, local date, timezone, exact local window, maximum stops,
-candidates và evidence. Request public hiện tại của
-`POST /v1/assistant/query` chỉ có text, locale, optional coordinate pair,
-null-only trip ID và online mode; route dựng `AgentRuntimeContext()` rỗng. Vì
-vậy T070 không dùng endpoint này cho form, không serialize field thành prose và
-không tạo candidate/timeline giả. Production generator trả
-`UnsupportedTransport`; production save trả `PersistenceUnavailable`. Timeline,
-assumption, warning và explicit-save UI được kiểm tra bằng injected fake
-generator/save boundary. T071 vẫn sở hữu Room/backend CRUD/sync.
+T062 dùng endpoint private generation-only:
 
-Manual Emulator validation production:
+```text
+POST /v1/itinerary-drafts/generate
+```
+
+Android gửi JSON typed gồm city/date/timezone/start/end/maximum stops/optional
+notes/locale/online mode và optional current Home coordinate pair. Form không đi
+qua `/v1/assistant/query`, không thành transcript/prose và không mang candidate,
+evidence hoặc internal ID. Offline chặn trước generator; signed-out/unverified
+session chặn trước HTTP. Token Firebase được lấy ngay trước call, `401` chỉ được
+force-refresh và replay một lần, còn mọi retry khác phải do người dùng bấm.
+
+Backend bắt buộc Firebase auth và mở một request-scoped session. Có coordinates,
+Discovery dùng curated PostGIS distance ordering thật với radius policy hiện có.
+Không coordinates, city-only reader chỉ đọc canonical POI/source/menu theo city,
+bounded và order theo POI ID; distance để `null`. Service gọi trực tiếp typed
+T045 Itinerary request, validate response closure và không ghi/commit itinerary.
+Production save vẫn trả `PersistenceUnavailable`; T071 sở hữu Room/backend
+CRUD/sync.
+
+Checklist manual production validation T062 (đã hoàn thành trên Emulator và
+nubia V60/NX721J):
 
 1. Force-stop/cold-launch rồi mở **Lịch trình**: form phải rỗng, không request
    hoặc save tự chạy.
 2. Nhập start `09:00`, end `09:00` và các field hợp lệ khác, chọn
    **Tạo lịch trình nháp**: phải thấy lỗi end phải sau start; generator không
    được gọi.
-3. Đổi end thành `17:00` rồi generate: form phải được giữ và UI phải báo rõ
-   structured transport chưa hỗ trợ; không timeline giả và nút save vẫn
-   disabled.
-4. Chuyển tab rồi quay lại: không auto-generate/auto-save. Force-stop/relaunch:
+3. Đổi end thành `17:00`, đăng nhập verified development account rồi generate:
+   phải thấy loading và một validated HCMC timeline hoặc safe closed failure;
+   khi backend khả dụng với seeded curated data, deterministic fallback phải trả
+   timeline thật từ curated candidates.
+4. Chọn Bangkok, giữ exact `Asia/Bangkok` mapping và generate lại bằng explicit
+   tap; timeline phải giữ đúng Bangkok/window/maximum stop.
+5. Chuyển tab rồi quay lại: không auto-generate/auto-save. Force-stop/relaunch:
    form/result không restore và không request/save tự chạy.
 
-Timeline chronological, loading/cancel/retry, warning, draft-only label và save
-unavailable được xác nhận trong deterministic JVM/Compose tests. Không báo đây
-là live/real generation.
+Kết quả đã xác nhận: verified Firebase email/password auth thành công; HCMC và
+Bangkok đều trả HTTP 200 và render timeline validated đúng city/timezone,
+`2026-08-02`, `09:00`–`17:00` trên Emulator và nubia V60/NX721J (qua ADB
+reverse). Assumption, safe warning khi có, draft-only label, fixed heading và
+đúng một save action đều hiển thị. Save chỉ enable sau valid draft, explicit tap
+báo đúng persistence unavailable; không auto-save hoặc persist itinerary.
+Cancellation, explicit retry sau backend recovery, offline/signed-out
+no-request, tab return và force-stop non-restoration đều qua; ADB reverse đã
+được gỡ sau physical-device validation.
+
+Sentinel note, Authorization/token, UID/email, exact coordinates, itinerary
+request/response body/content, traceback và provider exception detail không có
+trong backend hoặc process-only Android logs. Không audio upload. Validation này
+dùng deterministic no-model fallback; live OpenAI itinerary-model validation
+chưa chạy, được báo riêng và không chặn completion T062.
+
+Có thể kiểm tra backend contract độc lập bằng placeholder token; không ghi token
+thật vào shell history hoặc tài liệu:
+
+```bash
+curl --include \
+  --header 'Authorization: Bearer <Firebase-ID-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"city":"hcmc","local_date":"2026-08-01","timezone":"Asia/Ho_Chi_Minh","start_local_time":"09:00","end_local_time":"17:00","maximum_stops":4,"notes":null,"locale":"vi-VN","client_mode":"online","latitude":null,"longitude":null}' \
+  http://127.0.0.1:8000/v1/itinerary-drafts/generate
+```
+
+Timeline chronological, loading/cancel/retry, warning, draft-only label, typed
+HTTP mapping và save unavailable được xác nhận trong deterministic JVM/Compose
+tests. Live-model validation vẫn phải báo riêng với deterministic fallback.
+Public response serialize minute-aligned time theo canonical Pydantic
+`HH:mm:ss` (ví dụ `09:00:00`); Android request vẫn gửi `HH:mm` và response codec
+fail closed nếu server trả format khác hoặc giây khác `00`.
 
 ### Đồng bộ preference riêng tư
 

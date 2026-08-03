@@ -21,6 +21,7 @@ from app.agents.router.service import RouterService
 from app.api.routes.assistant import create_assistant_router
 from app.api.routes.auth import create_auth_router
 from app.api.routes.health import create_health_router
+from app.api.routes.itinerary_drafts import create_itinerary_drafts_router
 from app.api.routes.pois import create_pois_router
 from app.api.routes.preferences import create_preferences_router
 from app.auth.dependencies import FirebaseAuthentication
@@ -33,6 +34,14 @@ from app.middleware.privacy import RedactAccessLogQueryMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.providers.poi.contracts import PoiProvider
 from app.providers.poi.curated import CuratedPoiProvider
+from app.itinerary_generation import (
+    StructuredItineraryGenerationService,
+    StructuredItineraryGenerator,
+)
+from app.itinerary_generation.candidates import (
+    DefaultItineraryCandidateResolver,
+    SqlAlchemyCuratedCityCandidateReader,
+)
 from app.preferences.service import PreferenceService
 from app.preferences.store import (
     PreferenceStore,
@@ -46,6 +55,7 @@ def create_app(
     poi_provider: PoiProvider | None = None,
     preference_store: PreferenceStore | None = None,
     assistant_orchestrator: AgentOrchestrator | None = None,
+    itinerary_generator: StructuredItineraryGenerator | None = None,
 ) -> FastAPI:
     """Build an independent application without starting external services."""
     resolved_settings = (
@@ -127,6 +137,25 @@ def create_app(
                 composer=ResponseComposerService(),
             )
 
+    async def request_itinerary_generator() -> AsyncIterator[
+        StructuredItineraryGenerator
+    ]:
+        if itinerary_generator is not None:
+            yield itinerary_generator
+            return
+        runtime = await ensure_database_runtime()
+        async with runtime.session_factory() as session:
+            provider = CuratedPoiProvider(session)
+            menu_reader = SqlAlchemyPoiMenuReader(session)
+            yield StructuredItineraryGenerationService(
+                DefaultItineraryCandidateResolver(
+                    DiscoveryService(provider, menu_reader),
+                    SqlAlchemyCuratedCityCandidateReader(session),
+                    menu_reader,
+                ),
+                ItineraryService(),
+            )
+
     app = FastAPI(
         title=resolved_settings.application_name,
         version=resolved_settings.application_version,
@@ -146,6 +175,12 @@ def create_app(
     app.include_router(
         create_preferences_router(
             request_preference_service,
+            authentication,
+        )
+    )
+    app.include_router(
+        create_itinerary_drafts_router(
+            request_itinerary_generator,
             authentication,
         )
     )

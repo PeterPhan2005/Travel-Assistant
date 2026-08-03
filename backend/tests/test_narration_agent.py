@@ -758,10 +758,11 @@ def test_dependency_route_settings_and_public_shape_are_unchanged() -> None:
     assert set(create_app(settings).openapi()["paths"]) == {
         "/health",
         "/auth/me",
-        "/preferences",
-        "/pois/nearby",
-        "/v1/assistant/query",
-    }
+            "/preferences",
+            "/pois/nearby",
+            "/v1/assistant/query",
+            "/v1/itinerary-drafts/generate",
+        }
     assert OPENAI_API_KEY_ENV.casefold() not in Settings.model_fields
     assert OPENAI_NARRATION_MODEL_ENV.casefold() not in Settings.model_fields
     assert "final_text" not in NarrationOutput.model_fields

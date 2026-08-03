@@ -11,7 +11,7 @@
     <string name="open_downloads">Mở nội dung đã tải</string>
     <string name="open_profile">Mở Hồ sơ</string>
     <string name="feature_coming_later">Tính năng này sẽ có trong phiên bản sau.</string>
-    <string name="itinerary_explanation">Tạo bản nháp lịch trình một ngày từ các ràng buộc bạn chọn. Ứng dụng không tự tạo hoặc tự lưu lịch trình.</string>
+    <string name="itinerary_explanation">Tạo bản nháp một ngày từ các ràng buộc bạn chọn. Dữ liệu chỉ được lưu sau khi bạn xác nhận rõ ràng; phiên bản này chưa hỗ trợ lưu.</string>
     <string name="itinerary_city_label">Thành phố</string>
     <string name="itinerary_city_hcmc">Thành phố Hồ Chí Minh</string>
     <string name="itinerary_city_bangkok">Bangkok</string>

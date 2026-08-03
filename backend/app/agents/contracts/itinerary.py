@@ -15,6 +15,7 @@ from app.agents.contracts.common import (
     ContractModel,
     EvidenceBundle,
     ItineraryItemId,
+    MediumText,
     PlainShortText,
     PoiId,
     ShortText,
@@ -58,7 +59,7 @@ class ItineraryConstraints(ContractModel):
         Field(max_length=10),
     ] = ()
     notes: Annotated[
-        tuple[ShortText, ...],
+        tuple[MediumText, ...],
         Field(max_length=10),
     ] = ()
 

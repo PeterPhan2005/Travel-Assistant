@@ -97,10 +97,19 @@ fun TravelAssistantApp(
         onItineraryMaximumStopsChanged = itineraryViewModel::onMaximumStopsChanged,
         onItineraryNotesChanged = itineraryViewModel::onNotesChanged,
         onGenerateItinerary = {
-            itineraryViewModel.generate(homeUiState.itineraryLocationSnapshot())
+            itineraryViewModel.generate(
+                currentLocation = homeUiState.itineraryLocationSnapshot(),
+                isOnline = appShellUiState.connectivity ==
+                    com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState.Online,
+            )
         },
         onCancelItineraryGeneration = itineraryViewModel::cancelGeneration,
-        onRetryItineraryGeneration = itineraryViewModel::retry,
+        onRetryItineraryGeneration = {
+            itineraryViewModel.retry(
+                isOnline = appShellUiState.connectivity ==
+                    com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState.Online,
+            )
+        },
         onSaveItinerary = itineraryViewModel::save,
         onItineraryScreenLeft = itineraryViewModel::onScreenLeft,
         onOpenMicrophoneSettings = onOpenMicrophoneSettings,

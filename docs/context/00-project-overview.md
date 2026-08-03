@@ -47,11 +47,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Itinerary nay có
   biểu mẫu tạo bản nháp một ngày cho HCMC/Bangkok, validation local, state
   loading/cancel/retry typed, timeline draft được kiểm tra fail-closed, warning
-  hiển thị đầy đủ và nút lưu explicit. Tuy nhiên transport
-  `/v1/assistant/query` hiện không nhận city/date/timezone/window/max-stop cùng
-  candidate/evidence, nên production generator báo unsupported trung thực và
-  production save báo persistence unavailable; không có timeline hoặc lưu giả.
-  T070 vì vậy còn `in_progress`, còn T071 vẫn sở hữu persistence/sync.
+  hiển thị đầy đủ và nút lưu explicit. T062 nối form này với private
+  `POST /v1/itinerary-drafts/generate` bằng JSON typed, Firebase auth và
+  same-origin OkHttp; backend tự dựng candidate/evidence từ curated data trong
+  session read-only rồi gọi trực tiếp T045, không chuyển constraint thành prose.
+  Production save vẫn báo persistence unavailable và T071 vẫn sở hữu toàn bộ
+  persistence/CRUD/sync. Authenticated deterministic HCMC/Bangkok generation đã
+  render validated timeline trên Emulator và nubia V60/NX721J; privacy/lifecycle
+  validation đã qua. Live OpenAI itinerary-model validation chưa chạy và không
+  phải completion blocker của T062.
   Assistant nay có query composer transient:
   text chỉnh sửa được, push-to-talk tiếng Việt qua Android `SpeechRecognizer`,
   và gửi foreground confirmed text tới private backend khi online. Loading,

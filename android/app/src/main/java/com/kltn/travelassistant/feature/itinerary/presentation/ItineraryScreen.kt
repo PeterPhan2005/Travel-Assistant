@@ -10,11 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +46,8 @@ import com.kltn.travelassistant.ui.theme.AppSpacing
 internal const val ITINERARY_TIMELINE_TEST_TAG = "itinerary_timeline"
 internal const val ITINERARY_GENERATE_TEST_TAG = "itinerary_generate"
 internal const val ITINERARY_SAVE_TEST_TAG = "itinerary_save"
+internal const val ITINERARY_HEADING_TEST_TAG = "itinerary_heading"
+internal const val ITINERARY_BODY_TEST_TAG = "itinerary_body"
 
 @Composable
 internal fun ItineraryScreen(
@@ -66,109 +67,138 @@ internal fun ItineraryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(AppSpacing.screen),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
     ) {
         Text(
             text = stringResource(R.string.destination_itinerary),
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
+            modifier = Modifier
+                .testTag(ITINERARY_HEADING_TEST_TAG)
+                .semantics { heading() },
         )
-        Text(
-            text = stringResource(R.string.itinerary_explanation),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        CitySelector(
-            selectedCity = uiState.form.city,
-            error = uiState.fieldErrors.city,
-            onCitySelected = onCitySelected,
-        )
-        ItineraryTextField(
-            value = uiState.form.localDate,
-            onValueChange = onLocalDateChanged,
-            labelRes = R.string.itinerary_date_label,
-            placeholderRes = R.string.itinerary_date_placeholder,
-            error = uiState.fieldErrors.localDate,
-            keyboardType = KeyboardType.Text,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.content),
-        ) {
-            ItineraryTextField(
-                value = uiState.form.startLocalTime,
-                onValueChange = onStartTimeChanged,
-                labelRes = R.string.itinerary_start_time_label,
-                placeholderRes = R.string.itinerary_time_placeholder,
-                error = uiState.fieldErrors.startLocalTime,
-                keyboardType = KeyboardType.Text,
-                modifier = Modifier.weight(1f),
-            )
-            ItineraryTextField(
-                value = uiState.form.endLocalTime,
-                onValueChange = onEndTimeChanged,
-                labelRes = R.string.itinerary_end_time_label,
-                placeholderRes = R.string.itinerary_time_placeholder,
-                error = uiState.fieldErrors.endLocalTime,
-                keyboardType = KeyboardType.Text,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        ItineraryTextField(
-            value = uiState.form.maximumStops,
-            onValueChange = onMaximumStopsChanged,
-            labelRes = R.string.itinerary_maximum_stops_label,
-            placeholderRes = R.string.itinerary_maximum_stops_placeholder,
-            error = uiState.fieldErrors.maximumStops,
-            keyboardType = KeyboardType.Number,
-        )
-        OutlinedTextField(
-            value = uiState.form.notes,
-            onValueChange = onNotesChanged,
-            label = { Text(stringResource(R.string.itinerary_notes_label)) },
-            placeholder = { Text(stringResource(R.string.itinerary_notes_placeholder)) },
-            minLines = 3,
-            maxLines = 5,
-            isError = uiState.fieldErrors.notes != null,
-            supportingText = {
-                val error = uiState.fieldErrors.notes
-                if (error != null) {
-                    ValidationMessage(error)
-                } else {
-                    Text(
-                        stringResource(
-                            R.string.itinerary_notes_count,
-                            uiState.form.notes.codePointCount(
-                                0,
-                                uiState.form.notes.length,
-                            ),
-                            MAX_ITINERARY_NOTES_CODE_POINTS,
-                        ),
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Button(
-            onClick = onGenerate,
-            enabled = uiState.generationState != ItineraryGenerationUiState.Loading,
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(ITINERARY_GENERATE_TEST_TAG),
+                .weight(1f)
+                .testTag(ITINERARY_BODY_TEST_TAG),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
         ) {
-            Text(stringResource(R.string.itinerary_generate))
+            item {
+                Text(
+                    text = stringResource(R.string.itinerary_explanation),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            item {
+                CitySelector(
+                    selectedCity = uiState.form.city,
+                    error = uiState.fieldErrors.city,
+                    onCitySelected = onCitySelected,
+                )
+            }
+            item {
+                ItineraryTextField(
+                    value = uiState.form.localDate,
+                    onValueChange = onLocalDateChanged,
+                    labelRes = R.string.itinerary_date_label,
+                    placeholderRes = R.string.itinerary_date_placeholder,
+                    error = uiState.fieldErrors.localDate,
+                    keyboardType = KeyboardType.Text,
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.content),
+                ) {
+                    ItineraryTextField(
+                        value = uiState.form.startLocalTime,
+                        onValueChange = onStartTimeChanged,
+                        labelRes = R.string.itinerary_start_time_label,
+                        placeholderRes = R.string.itinerary_time_placeholder,
+                        error = uiState.fieldErrors.startLocalTime,
+                        keyboardType = KeyboardType.Text,
+                        modifier = Modifier.weight(1f),
+                    )
+                    ItineraryTextField(
+                        value = uiState.form.endLocalTime,
+                        onValueChange = onEndTimeChanged,
+                        labelRes = R.string.itinerary_end_time_label,
+                        placeholderRes = R.string.itinerary_time_placeholder,
+                        error = uiState.fieldErrors.endLocalTime,
+                        keyboardType = KeyboardType.Text,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            item {
+                ItineraryTextField(
+                    value = uiState.form.maximumStops,
+                    onValueChange = onMaximumStopsChanged,
+                    labelRes = R.string.itinerary_maximum_stops_label,
+                    placeholderRes = R.string.itinerary_maximum_stops_placeholder,
+                    error = uiState.fieldErrors.maximumStops,
+                    keyboardType = KeyboardType.Number,
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = uiState.form.notes,
+                    onValueChange = onNotesChanged,
+                    label = { Text(stringResource(R.string.itinerary_notes_label)) },
+                    placeholder = {
+                        Text(stringResource(R.string.itinerary_notes_placeholder))
+                    },
+                    minLines = 3,
+                    maxLines = 5,
+                    isError = uiState.fieldErrors.notes != null,
+                    supportingText = {
+                        val error = uiState.fieldErrors.notes
+                        if (error != null) {
+                            ValidationMessage(error)
+                        } else {
+                            Text(
+                                stringResource(
+                                    R.string.itinerary_notes_count,
+                                    uiState.form.notes.codePointCount(
+                                        0,
+                                        uiState.form.notes.length,
+                                    ),
+                                    MAX_ITINERARY_NOTES_CODE_POINTS,
+                                ),
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Button(
+                    onClick = onGenerate,
+                    enabled = uiState.generationState != ItineraryGenerationUiState.Loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(ITINERARY_GENERATE_TEST_TAG),
+                ) {
+                    Text(stringResource(R.string.itinerary_generate))
+                }
+            }
+            item {
+                GenerationPresentation(
+                    state = uiState.generationState,
+                    onCancel = onCancelGeneration,
+                    onRetry = onRetry,
+                )
+            }
+            item {
+                SavePresentation(
+                    generationState = uiState.generationState,
+                    saveState = uiState.saveState,
+                    onSave = onSave,
+                )
+            }
         }
-        GenerationPresentation(
-            state = uiState.generationState,
-            onCancel = onCancelGeneration,
-            onRetry = onRetry,
-        )
-        SavePresentation(
-            generationState = uiState.generationState,
-            saveState = uiState.saveState,
-            onSave = onSave,
-        )
     }
 }
 

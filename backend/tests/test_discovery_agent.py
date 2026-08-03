@@ -782,7 +782,8 @@ def test_service_logs_only_safe_summary(
     )
 
     logs = "\n".join(record.getMessage() for record in caplog.records)
-    assert "operation=discover path=deterministic city=hcmc candidates=1" in logs
+    assert "operation=discover path=deterministic candidates=1" in logs
+    assert "city=hcmc" not in logs
     for private in (
         query,
         "10.7799",

@@ -57,7 +57,7 @@ claim/source/POI IDs. The response never contains request coordinates, Firebase
 identity/token, trace or model identifiers, stage structures/timing, token
 usage, prompts, exceptions, arbitrary metadata or audio.
 
-## GET /v1/pois/nearby
+## GET /pois/nearby
 
 Query: `lat`, `lng`, `radius_m`, `category`, `query`.
 
@@ -65,9 +65,52 @@ Query: `lat`, `lng`, `radius_m`, `category`, `query`.
 
 Returns canonical POI details, price timestamp and source metadata.
 
-## POST /v1/itineraries/generate
+## POST /v1/itinerary-drafts/generate
 
-Returns a structured draft plus validation warnings.
+Private generation-only endpoint. A verified Firebase Bearer ID token is
+required. Missing, invalid and temporarily unverifiable credentials use the
+shared sanitized `401 authentication_required`, `401 invalid_token` and
+`503 authentication_unavailable` policy.
+
+Strict input rejects unknown fields and accepts exactly:
+
+```json
+{
+  "city": "hcmc",
+  "local_date": "2026-08-01",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "start_local_time": "09:00",
+  "end_local_time": "17:00",
+  "maximum_stops": 4,
+  "notes": null,
+  "locale": "vi-VN",
+  "client_mode": "online",
+  "latitude": null,
+  "longitude": null
+}
+```
+
+`city` is only `hcmc` or `bkk`, with exact timezone closure to
+`Asia/Ho_Chi_Minh` or `Asia/Bangkok`. Date and minute-aligned local times are
+strict, start is before end, maximum stops is an integer 1–20, notes are at
+most 500 Unicode code points, and coordinates are either an absent pair or a
+finite WGS84 pair. Audio, transcript, candidates, evidence and internal IDs are
+not part of the contract.
+
+Every validly processed request returns HTTP 200 with closed `status` of
+`success`, `partial` or `failed`, exact request city/date/timezone/window,
+bounded chronological items, assumptions, safe warnings, optional stable
+`failure_category`, and `retryable`. The JSON contains no coordinates,
+distance/provider/candidate/evidence/claim/source IDs, Firebase identity,
+request/trace ID, agent metadata, prompts, usage or saved-itinerary ID. The
+operation performs no itinerary persistence or commit.
+
+The public response uses Pydantic's canonical JSON serialization for Python
+`time` values: every minute-aligned response window and item time is exactly
+`HH:mm:ss` with seconds `00` (for example, `"09:00:00"`). Android request fields
+remain the strict form contract `HH:mm`; its response codec accepts only the
+canonical whole-minute response representation and rejects format drift or
+nonzero seconds.
 
 ## GET /v1/travel-packages/{city}/manifest
 

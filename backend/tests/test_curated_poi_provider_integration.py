@@ -39,6 +39,9 @@ from app.data_pipeline.seeder import (
 )
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
+from app.itinerary_generation.candidates import (
+    SqlAlchemyCuratedCityCandidateReader,
+)
 from app.providers.poi.curated import CuratedPoiProvider
 from app.providers.poi.errors import PoiProviderError, ProviderErrorCode
 from app.providers.poi.models import (
@@ -214,6 +217,39 @@ async def _discover(
         await engine.dispose()
 
 
+async def _read_city_candidates_with_statement_capture(
+    database_url: str,
+    city: SupportedCity,
+    limit: int,
+) -> tuple[Any, list[str]]:
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    statements: list[str] = []
+
+    def capture(
+        connection: object,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        del connection, cursor, parameters, context, executemany
+        statements.append(statement)
+
+    event.listen(engine.sync_engine, "before_cursor_execute", capture)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            result = await SqlAlchemyCuratedCityCandidateReader(session).read(
+                city,
+                limit,
+            )
+            return result, statements
+    finally:
+        event.remove(engine.sync_engine, "before_cursor_execute", capture)
+        await engine.dispose()
+
+
 def test_hcmc_and_bangkok_results_are_city_scoped_with_metres(
     provider_database_url: str,
 ) -> None:
@@ -238,6 +274,51 @@ def test_hcmc_and_bangkok_results_are_city_scoped_with_metres(
     assert {item.city for item in bangkok.items} == {SupportedCity.BANGKOK}
     assert all(item.distance_metres is not None for item in hcmc.items)
     assert hcmc.items[0].distance_metres == pytest.approx(0.0, abs=0.01)
+
+
+def test_city_only_candidates_are_stable_read_only_and_have_no_distance(
+    provider_database_url: str,
+) -> None:
+    _run(_insert_user_fixture(provider_database_url))
+    before = _run(_database_snapshot(provider_database_url))
+
+    first, statements = _run(
+        _read_city_candidates_with_statement_capture(
+            provider_database_url,
+            SupportedCity.HCMC,
+            20,
+        )
+    )
+    second, _ = _run(
+        _read_city_candidates_with_statement_capture(
+            provider_database_url,
+            SupportedCity.HCMC,
+            20,
+        )
+    )
+    bangkok, _ = _run(
+        _read_city_candidates_with_statement_capture(
+            provider_database_url,
+            SupportedCity.BANGKOK,
+            20,
+        )
+    )
+    after = _run(_database_snapshot(provider_database_url))
+
+    assert [item.provider_id for item in first.items] == [
+        "hcmc-poi-central-post-office",
+        "hcmc-poi-war-remnants-museum",
+    ]
+    assert first == second
+    assert [item.provider_id for item in bangkok.items] == ["bkk-poi-wat-pho"]
+    assert all(item.distance_metres is None for item in first.items)
+    assert all(item.city is SupportedCity.HCMC for item in first.items)
+    assert before == after
+    assert len(statements) == 1
+    normalized_sql = statements[0].casefold()
+    assert normalized_sql.lstrip().startswith("with itinerary_city_candidates")
+    for user_table in USER_TABLES:
+        assert user_table not in normalized_sql
 
 
 def test_category_text_radius_and_limit_filters_are_bounded(

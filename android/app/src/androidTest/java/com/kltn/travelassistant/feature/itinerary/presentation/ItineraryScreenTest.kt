@@ -4,18 +4,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,6 +33,7 @@ import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -60,6 +65,8 @@ class ItineraryScreenTest {
             R.string.itinerary_generate,
             R.string.itinerary_save,
         ).forEach { resource ->
+            composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+                .performScrollToNode(hasText(getString(resource)))
             composeRule.onNodeWithText(getString(resource)).assertExists()
         }
         composeRule.onNodeWithTag(ITINERARY_SAVE_TEST_TAG).assertIsNotEnabled()
@@ -100,21 +107,29 @@ class ItineraryScreenTest {
         assertEquals(0, generateCount)
         composeRule.onNodeWithText(getString(R.string.itinerary_city_bangkok))
             .performClick()
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_date_label)))
         composeRule.onNode(
             hasText(getString(R.string.itinerary_date_label)) and hasSetTextAction(),
-        ).performTextInput("2026-08-01")
+        ).performScrollTo().performTextInput("2026-08-01")
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_start_time_label)))
         composeRule.onNode(
             hasText(getString(R.string.itinerary_start_time_label)) and hasSetTextAction(),
-        ).performTextInput("09:15")
+        ).performScrollTo().performTextInput("09:15")
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_end_time_label)))
         composeRule.onNode(
             hasText(getString(R.string.itinerary_end_time_label)) and hasSetTextAction(),
-        ).performTextInput("17:45")
+        ).performScrollTo().performTextInput("17:45")
         assertEquals(ItineraryCity.BANGKOK, uiState.form.city)
         assertEquals("2026-08-01", uiState.form.localDate)
         assertEquals("09:15", uiState.form.startLocalTime)
         assertEquals("17:45", uiState.form.endLocalTime)
         assertEquals(0, generateCount)
 
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_GENERATE_TEST_TAG))
         composeRule.onNodeWithTag(ITINERARY_GENERATE_TEST_TAG)
             .performScrollTo()
             .assertIsEnabled()
@@ -143,6 +158,8 @@ class ItineraryScreenTest {
             R.string.itinerary_error_maximum_stops_out_of_range,
             R.string.itinerary_error_notes_too_long,
         ).forEach { resource ->
+            composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+                .performScrollToNode(hasText(getString(resource)))
             composeRule.onNodeWithText(getString(resource)).assertExists()
         }
     }
@@ -171,6 +188,8 @@ class ItineraryScreenTest {
                 )
             }
         }
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_loading)))
         composeRule.onNodeWithText(getString(R.string.itinerary_loading)).assertExists()
         composeRule.onNodeWithText(getString(R.string.itinerary_cancel_generation))
             .performScrollTo()
@@ -184,6 +203,8 @@ class ItineraryScreenTest {
                 ),
             )
         }
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_retry)))
         composeRule.onNodeWithText(getString(R.string.itinerary_retry))
             .performScrollTo()
             .performClick()
@@ -194,6 +215,10 @@ class ItineraryScreenTest {
                 generationState = ItineraryGenerationUiState.Unavailable,
             )
         }
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(
+                hasText(getString(R.string.itinerary_transport_unavailable)),
+            )
         composeRule.onNodeWithText(getString(R.string.itinerary_transport_unavailable))
             .assertExists()
     }
@@ -207,6 +232,8 @@ class ItineraryScreenTest {
             ),
         )
 
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_TIMELINE_TEST_TAG))
         composeRule.onNodeWithTag(ITINERARY_TIMELINE_TEST_TAG)
             .performScrollTo()
             .assertIsDisplayed()
@@ -253,6 +280,8 @@ class ItineraryScreenTest {
         }
 
         assertEquals(0, saveCount)
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_SAVE_TEST_TAG))
         composeRule.onNodeWithTag(ITINERARY_SAVE_TEST_TAG)
             .performScrollTo()
             .assertIsEnabled()
@@ -264,10 +293,78 @@ class ItineraryScreenTest {
                 saveState = ItinerarySaveUiState.PersistenceUnavailable,
             )
         }
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(
+                hasText(getString(R.string.itinerary_persistence_unavailable)),
+            )
         composeRule.onNodeWithText(getString(R.string.itinerary_persistence_unavailable))
             .assertExists()
         composeRule.onNodeWithText(getString(R.string.itinerary_saved))
             .assertDoesNotExist()
+    }
+
+    @Test
+    fun headingStaysFixedWhenBodyScrollsAndIntroDoesNotDuplicateSaveLabel() {
+        setItineraryContent(ItineraryUiState())
+        val explanation = getString(R.string.itinerary_explanation)
+        val saveLabel = getString(R.string.itinerary_save)
+
+        assertTrue(explanation.contains("một ngày"))
+        assertTrue(explanation.contains("xác nhận rõ ràng"))
+        assertTrue(explanation.contains("chưa hỗ trợ lưu"))
+        assertFalse(explanation.contains(saveLabel))
+
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_SAVE_TEST_TAG))
+        composeRule.onNodeWithTag(ITINERARY_HEADING_TEST_TAG)
+            .assertIsDisplayed()
+            .assert(isHeading())
+        composeRule.onAllNodesWithText(saveLabel).assertCountEquals(1)
+    }
+
+    @Test
+    fun invalidResponseHasOneDisabledSaveActionAndValidContentEnablesIt() {
+        var uiState by mutableStateOf(
+            ItineraryUiState(
+                generationState = ItineraryGenerationUiState.Error(
+                    ItineraryDraftFailure.INVALID_RESPONSE,
+                ),
+            ),
+        )
+        composeRule.setContent {
+            TravelAssistantTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    uiState = uiState,
+                    onCitySelected = {},
+                    onLocalDateChanged = {},
+                    onStartTimeChanged = {},
+                    onEndTimeChanged = {},
+                    onMaximumStopsChanged = {},
+                    onNotesChanged = {},
+                    onGenerate = {},
+                    onCancelGeneration = {},
+                    onRetry = {},
+                    onSave = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_SAVE_TEST_TAG))
+        composeRule.onAllNodesWithText(getString(R.string.itinerary_save))
+            .assertCountEquals(1)
+        composeRule.onNodeWithTag(ITINERARY_SAVE_TEST_TAG).assertIsNotEnabled()
+
+        composeRule.runOnUiThread {
+            uiState = uiState.copy(
+                generationState = ItineraryGenerationUiState.Content(draft()),
+            )
+        }
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasTestTag(ITINERARY_SAVE_TEST_TAG))
+        composeRule.onAllNodesWithText(getString(R.string.itinerary_save))
+            .assertCountEquals(1)
+        composeRule.onNodeWithTag(ITINERARY_SAVE_TEST_TAG).assertIsEnabled()
     }
 
     private fun setItineraryContent(uiState: ItineraryUiState) {

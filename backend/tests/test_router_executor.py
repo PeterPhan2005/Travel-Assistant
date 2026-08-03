@@ -437,10 +437,11 @@ def test_no_agent_route_or_global_openai_settings_were_added() -> None:
     assert paths == {
         "/health",
         "/auth/me",
-        "/preferences",
-        "/pois/nearby",
-        "/v1/assistant/query",
-    }
+            "/preferences",
+            "/pois/nearby",
+            "/v1/assistant/query",
+            "/v1/itinerary-drafts/generate",
+        }
     assert OPENAI_API_KEY_ENV.casefold() not in Settings.model_fields
     assert OPENAI_ROUTER_MODEL_ENV.casefold() not in Settings.model_fields
 

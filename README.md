@@ -53,12 +53,16 @@ tới private `POST /v1/assistant/query`, hiển thị loading/cancel/retry cùn
 structured và không persist transcript/response; audio không được upload.
 Itinerary đã thay placeholder bằng biểu mẫu nháp một ngày cho HCMC/Bangkok,
 validation local và timeline/warning/save UI typed. Timeline chỉ nhận kết quả
-đã validate, không tự generate và không tự lưu. Endpoint Assistant hiện không
-nhận đủ city/date/timezone/window/max-stop cùng candidate/evidence, nên adapter
-production báo generation chưa được hỗ trợ thay vì đóng gói field thành prose;
-save production cũng báo chưa persistence cho đến T071. T070 còn
-`in_progress` vì blocker transport này; timeline/save flow hiện chỉ được xác
-minh bằng fake inject trong test.
+đã validate, không tự generate và không tự lưu. Production generator nay gửi
+đúng structured fields tới private `POST /v1/itinerary-drafts/generate`, dùng
+Firebase token ngay trước request, retry đúng một lần sau `401`, và không gửi
+audio/transcript/candidate/evidence. Backend tự resolve curated candidate/evidence
+trong request-scoped read-only session; khi không có location, thứ tự theo POI ID
+ổn định và distance vẫn absent. Save production tiếp tục báo chưa persistence
+cho đến T071. Authenticated deterministic validation đã render đúng timeline
+HCMC/Bangkok trên Emulator và nubia V60/NX721J; cancellation, explicit retry,
+offline/signed-out no-request, lifecycle non-restoration và privacy-safe logs đều
+qua. Live OpenAI itinerary-model validation chưa chạy và được báo riêng.
 Backend hiện có FastAPI application factory, settings được
 validation, liveness endpoint `/health`, request ID, JSON error envelope thống
 nhất và Firebase Admin ID-token verification cho endpoint UID-only `/auth/me`.

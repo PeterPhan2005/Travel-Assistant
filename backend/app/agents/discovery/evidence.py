@@ -38,6 +38,17 @@ def assemble_discovery_output(
     snapshot: DiscoveryRegistrySnapshot,
 ) -> DiscoveryOutput:
     """Convert one immutable registry into the only public result."""
+    return assemble_discovery_output_for_fact_kinds(
+        request.requested_fact_kinds,
+        snapshot,
+    )
+
+
+def assemble_discovery_output_for_fact_kinds(
+    requested_fact_kinds: tuple[FactKind, ...],
+    snapshot: DiscoveryRegistrySnapshot,
+) -> DiscoveryOutput:
+    """Assemble approved discovery data without requiring an invented origin."""
     if snapshot.poi_result is None:
         failure = (
             snapshot.failures[0]
@@ -49,7 +60,7 @@ def assemble_discovery_output(
     candidates = tuple(
         _candidate_from_tool(item) for item in snapshot.poi_result.items
     )
-    evidence = _assemble_evidence(request, snapshot)
+    evidence = _assemble_evidence(requested_fact_kinds, snapshot)
     has_partial_issue = bool(snapshot.failures) or not snapshot.poi_result.is_complete
     completeness = (
         DiscoveryCompleteness.PARTIAL
@@ -89,14 +100,14 @@ def validate_output_closure(
 
 
 def _assemble_evidence(
-    request: DiscoveryRequest,
+    requested_fact_kinds: tuple[FactKind, ...],
     snapshot: DiscoveryRegistrySnapshot,
 ) -> EvidenceBundle:
     if snapshot.poi_result is None:
         raise DiscoveryExecutionError(_invalid_registry_failure())
     sources: dict[str, SourceRecord] = {}
     claims: list[FactualClaim] = []
-    requested = frozenset(request.requested_fact_kinds)
+    requested = frozenset(requested_fact_kinds)
 
     for candidate in snapshot.poi_result.items:
         candidate_source_ids = _add_sources(sources, candidate.sources)

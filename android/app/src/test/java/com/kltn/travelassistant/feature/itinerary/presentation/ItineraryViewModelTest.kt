@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import com.kltn.travelassistant.feature.itinerary.data.ItineraryJsonCodec
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftFailure
@@ -15,6 +16,7 @@ import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftWarning
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryLocationSnapshot
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveBoundary
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveResult
+import com.kltn.travelassistant.feature.itinerary.readItineraryContractFixture
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.CompletableDeferred
@@ -61,6 +63,25 @@ class ItineraryViewModelTest {
 
         assertTrue(viewModel.uiState.value.fieldErrors.hasErrors)
         assertTrue(generator.requests.isEmpty())
+    }
+
+    @Test
+    fun offlineGenerateAndRetryPreserveFormWithoutStartingGenerator() = runTest {
+        val generator = FakeGenerator(success())
+        val viewModel = viewModel(generator)
+        enterValidForm(viewModel)
+
+        viewModel.generate(currentLocation = null, isOnline = false)
+        advanceUntilIdle()
+        viewModel.retry(isOnline = false)
+        advanceUntilIdle()
+
+        assertTrue(generator.requests.isEmpty())
+        assertEquals("2026-08-01", viewModel.uiState.value.form.localDate)
+        assertEquals(
+            ItineraryGenerationUiState.Error(ItineraryDraftFailure.OFFLINE),
+            viewModel.uiState.value.generationState,
+        )
     }
 
     @Test
@@ -128,9 +149,30 @@ class ItineraryViewModelTest {
     }
 
     @Test
-    fun invalidTimelineMapsToNonRetryableInvalidResponse() = runTest {
-        val invalid = draft().copy(items = emptyList())
-        val viewModel = viewModel(FakeGenerator(success(invalid)))
+    fun exactBackendProducedHcmcSuccessReachesContent() = runTest {
+        val decoded = ItineraryJsonCodec().decodeResponse(
+            readItineraryContractFixture("t062_itinerary_success_hcmc.json"),
+        )
+        val viewModel = viewModel(FakeGenerator(decoded))
+        viewModel.onCitySelected(ItineraryCity.HO_CHI_MINH_CITY)
+        viewModel.onLocalDateChanged("2026-08-02")
+        viewModel.onStartTimeChanged("09:00")
+        viewModel.onEndTimeChanged("17:00")
+        viewModel.onMaximumStopsChanged("2")
+
+        viewModel.generate(null)
+        advanceUntilIdle()
+
+        val content = viewModel.uiState.value.generationState as
+            ItineraryGenerationUiState.Content
+        assertEquals(LocalDate.of(2026, 8, 2), content.draft.localDate)
+        assertEquals(2, content.draft.items.size)
+    }
+
+    @Test
+    fun mismatchedTimelineMapsToNonRetryableInvalidResponse() = runTest {
+        val mismatched = draft().copy(localDate = LocalDate.of(2026, 8, 2))
+        val viewModel = viewModel(FakeGenerator(success(mismatched)))
         enterValidForm(viewModel)
 
         viewModel.generate(null)

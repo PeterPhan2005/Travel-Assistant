@@ -7,10 +7,12 @@ import org.junit.Test
 
 class ItinerarySourcePolicyTest {
     @Test
-    fun productionGeneratorIsTruthfullyUnsupportedWithoutTextSerialization() {
+    fun productionGeneratorUsesOnlyTheTypedStructuredEndpoint() {
         val source = itinerarySource()
 
-        assertTrue(source.contains("UNSUPPORTED_TRANSPORT"))
+        assertTrue(source.contains("DefaultItineraryDraftGenerator"))
+        assertTrue(source.contains("v1/itinerary-drafts/generate"))
+        assertFalse(source.contains("class UnsupportedTransportItineraryDraftGenerator"))
         assertFalse(source.contains("AssistantQueryRepository"))
         assertFalse(source.contains("AssistantHttpApi"))
         assertFalse(source.contains("/v1/assistant/query"))

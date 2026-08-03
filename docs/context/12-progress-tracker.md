@@ -165,12 +165,11 @@ case/aggregate metadata.
 
 ## Current goal
 
-T070 is complete as an Android UI and boundary task. Its form, local validation,
-typed generation/save boundaries, lifecycle cancellation, fail-closed timeline
-preview and warning rendering are complete. It does not falsely claim real
-structured generation: production generation remains pending in T062, which
-owns the authenticated structured draft-generation transport. Persistence
-remains assigned to T071, which has not started.
+T070 and T062 are complete. The transient form/timeline now uses the
+authenticated structured generation transport with request-scoped backend
+candidate/evidence resolution. T071 is exactly Next Up and has not started; it
+retains persistence, CRUD, offline saved-itinerary reading, synchronization and
+conflict handling.
 
 ## Completed
 
@@ -218,6 +217,7 @@ remains assigned to T071, which has not started.
 - T050 Create agent evaluation runner.
 - T060 Implement Android speech-to-text input.
 - T061 Connect voice query to assistant API.
+- T062 Implement structured itinerary generation transport.
 - T070 Implement itinerary generation UI.
 
 ## In progress
@@ -226,7 +226,7 @@ remains assigned to T071, which has not started.
 
 ## Next up
 
-- T062 Implement structured itinerary generation transport.
+- T071 Persist and sync itineraries.
 
 ## Open questions
 
@@ -300,12 +300,13 @@ remains assigned to T071, which has not started.
   departure, Activity background and ViewModel clear cancel it, and retry is
   explicit. Accepted drafts must match the exact request window and contain
   nonempty chronological nonoverlapping bounded items; assumptions and safe
-  warnings are preserved. Save is explicit only. The current text-only
-  Assistant transport cannot carry the full structured request or
-  candidates/evidence, so production generator/save adapters return
-  unsupported/persistence-unavailable without network, Room, WorkManager or
-  fabricated output. T062 owns production structured generation transport;
-  T071 retains all persistence/sync ownership.
+  warnings are preserved. Save is explicit only. Production generation uses
+  the authenticated T062 transport: Android sends typed constraints to
+  `POST /v1/itinerary-drafts/generate`, and the backend resolves request-scoped
+  candidates/evidence before returning a safe validated draft. Only the save
+  boundary remains persistence-unavailable without Room/backend itinerary
+  CRUD, WorkManager sync or fabricated persistence. T062 owns completed
+  structured generation transport; T071 retains all persistence/sync ownership.
 - Firebase uses the official Google Services Gradle plugin only in the app
   module, with the plugin version and Firebase Android BoM managed by the version
   catalog. Only the dedicated development config at
@@ -915,6 +916,12 @@ strict application-code orchestration path and injected privacy-safe local
 observability/query boundary are now implemented. Live Google Places,
 assistant HTTP/Android transport remain unimplemented. T050 subsequently added
 the offline evaluation behavior described above.
+
+T062 update to the implementation-state row: Assistant confirmed-text and the
+structured Itinerary draft now both have authenticated Android/backend HTTP
+transport. Itinerary generation is request-scoped and read-only, while saved
+itinerary persistence remains unimplemented and assigned to T071. Live Google
+Places remains unimplemented.
 
 ## Session notes
 
@@ -2394,10 +2401,11 @@ within the maximum stop count. Invalid output maps to `InvalidResponse` without
 repair or reordering. Draft-only label, city/date/timezone context, assumptions
 and every safe warning are visible with live-region/accessibility semantics.
 `Lưu lịch trình` is disabled without a valid draft and calls a typed boundary
-only after a tap. Production generation returns `UnsupportedTransport`;
-production save returns `PersistenceUnavailable`; neither path uses
-Assistant prose, Room, DataStore, SharedPreferences, files, WorkManager,
-analytics, audio or logging.
+only after a tap. At T070 completion, production generation returned
+`UnsupportedTransport`; completed T062 now replaces it with the authenticated
+structured transport. Production save still returns `PersistenceUnavailable`
+until T071; neither generation nor save uses Assistant prose or automatic
+persistence.
 
 Production Emulator validation opened a blank cold-start form without automatic
 generation, showed local equal-time validation, retained an exact valid HCMC
@@ -2417,3 +2425,128 @@ fabricated, and T070 does not claim real structured generation. T062 now owns
 the missing authenticated structured generation transport and remains `todo`.
 T071 has not started and retains persistence, CRUD and synchronization
 ownership; T071, T080 and T090 remain untouched.
+
+T062 implementation began on 2026-08-01 after verifying a clean worktree,
+`HEAD`/`origin/main` equality at
+`511ae10af14d569f925eddd76e74c3a559fecde0` and successful exact-SHA GitHub CI
+run 30623925779. The audit found `client_mode` is the closed string literal
+`online`; the curated provider requires an origin; T048 cannot accept the exact
+structured maximum-stop/note request without routing through query semantics;
+and T045 already exposes the safe city/date/timezone/window plus titled timeline,
+assumption and warning subset required by T070. T062 therefore uses a dedicated
+typed application service and never serializes form values into query text.
+
+Backend now registers authenticated
+`POST /v1/itinerary-drafts/generate` with a strict extra-forbidden request and a
+closed success/partial/failed response. With coordinates it reuses canonical
+Discovery/PostGIS distance ordering. Without coordinates a minimal injected
+session reader selects only exact-city canonical POI/source rows in stable POI-ID
+order, leaves distance absent, and combines the existing selected-POI menu reader
+and deterministic evidence assembler. The service maps exact form values into
+T045 `ItineraryRequest`, preserves deterministic fallback and cancellation,
+validates response closure, returns only presentation-safe fields, and performs
+no write or commit. Request/form/result values were removed from generation-path
+logs; only request ID plus result counts/status remain.
+
+Android production now binds `DefaultItineraryDraftGenerator` instead of
+`UnsupportedTransportItineraryDraftGenerator`. Its strict JSON codec sends only
+the approved structured fields to `v1/itinerary-drafts/generate`; bounded
+same-origin OkHttp disables redirects/retries, fetches an ephemeral Firebase ID
+token immediately before each call, refreshes/replays once after `401`, and
+cancels the active call with its coroutine. ViewModel connectivity gating starts
+no generator offline, and the generator starts no HTTP call signed out or
+unverified. Explicit retry, form retention, final T070 timeline validation and
+the unchanged `UnavailableItinerarySaveBoundary` preserve the T070/T071 split.
+
+Automated verification is green: backend Ruff, strict Mypy, Pip check, all 43
+agent eval fixtures and 798 Pytest tests passed against healthy local PostGIS,
+including a real one-query read-only city-candidate test with unchanged database
+snapshot. Android passed 238 JVM tests, `lintDebug`, `testDebugUnitTest`,
+`assembleDebug` and all 122 connected Emulator tests. The production Emulator
+force-stop/relaunch restored five empty form fields and no draft. A temporary
+verified development account also obtained a real Firebase ID token on the host
+and authenticated against the current local backend: HCMC returned deterministic
+`success` with two items and Bangkok returned deterministic `success` with one
+item; both exposed no forbidden internal field. `OPENAI_ITINERARY_MODEL` and
+`OPENAI_API_KEY` were absent, so this was deterministic fallback, not live-model
+validation. The production Emulator
+was clean and signed out; both Google Credential Manager and two temporary
+verified development-account password attempts failed at Firebase Auth with a
+network timeout, so no authenticated T062 Android request was made. The temporary
+Firebase test accounts and local credential file were deleted. The nubia V60 was
+not attached to ADB. Authenticated Emulator/nubia validation, privacy-safe live
+request log review and live-model validation therefore remain explicitly
+unresolved; T062 stays `in_progress`, Next Up stays empty, and T071/T080/T090
+remain untouched.
+
+T062 authenticated-Emulator repair automation completed on 2026-08-03 without
+claiming a new manual validation pass. The observed authenticated route result
+was HTTP 200. Reproduction through the production public Pydantic model proved
+that response windows and item times serialize as canonical `HH:mm:ss`, while
+the Android response codec accepted only `HH:mm`; that exact lexical invariant
+raised `InvalidItineraryJsonException`, mapped to `INVALID_RESPONSE`, and kept
+the valid timeline out of the ViewModel. Shared synthetic HCMC-success and
+Bangkok-partial fixtures are now generated/pinned from that public response
+shape and consumed by both backend route/model tests and the Android production
+codec tests. The Android repair remains fail closed: request times stay
+`HH:mm`, response times must be exact `HH:mm:ss` with seconds `00`, unknown
+fields remain rejected, and no invalid result is reordered, clamped or repaired.
+Both cities preserve exact request closure, assumptions and warnings, pass the
+final T070 draft validator, and the real-response-shaped HCMC ViewModel case now
+reaches `Content`; a date-mismatched result still maps to `INVALID_RESPONSE`.
+
+The Itinerary screen now keeps its heading in a non-scrolling outer column and
+scrolls explanation/form/result/save content in an inner weighted LazyColumn.
+The explanation states one-day draft, explicit confirmation and unavailable
+persistence without repeating the exact save-button label. Compose coverage
+keeps the heading visible at the save area, finds exactly one `Lưu lịch trình`
+node, keeps it disabled after `INVALID_RESPONSE`, and enables that same node
+only for valid `Content`; the existing five-destination navigation/lifecycle
+suite remains part of the passing connected run.
+
+Repair verification: backend focused itinerary suites passed 51 tests; Ruff
+and strict Mypy passed; the database-backed full suite passed 800/800 with zero
+skips; Pip check reported no broken requirements; T050 passed 43/43 fixtures.
+Android passed 241 JVM tests and 124/124 connected Emulator tests with zero
+skips/failures; `lintDebug`, `testDebugUnitTest` and `assembleDebug` passed.
+`git diff --check` and future-task/index diff checks are clean. No request or
+response body, notes, itinerary content, coordinates, Firebase identity/token
+or Authorization header was added to logs. Authenticated Emulator HCMC/Bangkok
+timeline rendering, privacy-safe live log review and the same lifecycle checks
+must be rerun manually on the repaired build; the nubia V60 path additionally
+requires attachment/ADB reverse and the same authenticated cases. T062 remains
+`in_progress`, Next Up remains empty, and T071/T080/T090/index remain untouched.
+
+T062 completed on 2026-08-03 after authenticated manual validation of the
+repaired production transport. Verified Firebase email/password authentication
+succeeded. On the Emulator, HCMC and Bangkok generation each returned HTTP 200
+and rendered validated `2026-08-02`, `09:00`–`17:00` timelines with exact
+`Asia/Ho_Chi_Minh`/`Asia/Bangkok` mapping and deterministic items. Assumptions,
+safe warnings when present and the draft-only label rendered; the fixed heading
+remained visible and exactly one save action was present. Save enabled only for
+a valid draft, ran only after an explicit tap and truthfully reported
+persistence unavailable. No itinerary was saved automatically or otherwise.
+
+Emulator cancellation, explicit retry after backend recovery, offline
+no-request, signed-out no-request with preserved form, tab departure/return and
+force-stop/relaunch all passed. No automatic retry, generation or save occurred,
+and the request count remained unchanged across relaunch. The same authenticated
+HCMC/Bangkok HTTP-200 timeline validation passed on the nubia V60/NX721J through
+ADB reverse. Tab return and force-stop/relaunch initiated nothing, no automatic
+save occurred, and ADB reverse was removed afterward.
+
+Manual privacy review found the sentinel note absent from backend and
+process-only Android logs. Authorization headers, Firebase tokens, UID/email,
+exact coordinates, itinerary request/response bodies and itinerary content were
+absent; no traceback or provider exception detail appeared. TravelAssistant
+uploaded no audio and persisted no itinerary. This validation exercised the
+deterministic no-model fallback and authenticated Android-to-local-backend
+integration. Live OpenAI model validation was not run, remains reported
+separately and is not a completion blocker.
+
+Final automated evidence is unchanged: Ruff passed; strict Mypy passed 173
+source files; database-backed Pytest passed 800/800 with zero skips/failures;
+T050 passed 43/43; Pip check passed; Android passed 241 JVM and 124/124 connected
+tests; `lintDebug`, `testDebugUnitTest` and `assembleDebug` passed. Repository
+diff checks passed. T062 is `done`; In progress is empty; exactly T071 is Next
+Up but remains unstarted. T071/T080/T090 and `tasks/index.json` remain untouched.

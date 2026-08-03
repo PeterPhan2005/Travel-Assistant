@@ -56,6 +56,8 @@ Show only fields with data:
   `HH:mm`, giờ bắt đầu phải trước giờ kết thúc trong cùng ngày, và số điểm dừng
   tối đa phải là số nguyên từ 1 đến 20.
 - Nhu cầu/lưu ý là tùy chọn, tối đa 500 Unicode code point và không bị truncate.
+- Heading `Lịch trình` nằm ngoài body scroll; explanation, form, result và đúng
+  một explicit save action nằm trong inner scrolling content.
 - Chỉ hành động `Tạo lịch trình nháp` mới bắt đầu generation; thay đổi field
   không tự generate và làm draft cũ hết hiệu lực.
 - Timeline chỉ hiển thị output đã validate theo đúng city/date/timezone/window:
@@ -64,6 +66,9 @@ Show only fields with data:
 - Draft luôn có nhãn chưa lưu. Chỉ tap `Lưu lịch trình` mới gọi save boundary;
   T070 không ghi Room/backend và production báo persistence chưa khả dụng cho
   đến T071.
-- Transport Assistant hiện không mang đủ structured constraint và
-  candidate/evidence, nên production itinerary generation báo unavailable thay
-  vì chuyển field sang prose hoặc tạo timeline giả.
+- Production generation chỉ chạy online sau explicit tap và verified Firebase
+  session. Nó gửi structured form tới `/v1/itinerary-drafts/generate`; offline
+  hoặc signed-out không bắt đầu request, không tự retry khi trạng thái thay đổi,
+  không mở Profile tự động và giữ nguyên form để người dùng retry rõ ràng.
+- Không location vẫn là input hợp lệ cho city-level generation. Itinerary không
+  tự xin quyền, không đọc location lịch sử và không tạo city-centre giả.

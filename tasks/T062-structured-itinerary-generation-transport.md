@@ -1,7 +1,7 @@
 ---
 id: T062
 title: Implement structured itinerary generation transport
-status: todo
+status: done
 depends_on: [T024, T033, T045, T048, T061, T070]
 area: fullstack
 ---
@@ -189,15 +189,34 @@ Do not return:
 
 # Acceptance criteria
 
-- [ ] The authenticated structured generation endpoint works.
-- [ ] The backend derives approved candidates and evidence internally.
-- [ ] Android renders a real validated draft through the T070 UI.
-- [ ] Loading, cancellation, retry, authentication and offline behavior works.
-- [ ] No itinerary is persisted.
-- [ ] Privacy and logging requirements pass.
-- [ ] Relevant tests and documentation are updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] The authenticated structured generation endpoint works.
+- [x] The backend derives approved candidates and evidence internally.
+- [x] Android renders a real validated draft through the T070 UI.
+- [x] Loading, cancellation, retry, authentication and offline behavior works.
+- [x] No itinerary is persisted.
+- [x] Privacy and logging requirements pass.
+- [x] Relevant tests and documentation are updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
+
+# Implementation status
+
+T062 is complete. The authenticated private endpoint derives request-scoped
+curated candidates/evidence and returns a safe structured draft without a write
+or commit. Production Android sends typed constraints, validates the canonical
+response fail closed and renders HCMC/Bangkok drafts through the completed T070
+timeline. Authenticated Emulator and nubia V60/NX721J validation passed for both
+cities, including cancellation, explicit retry after recovery, offline and
+signed-out no-request behavior, lifecycle non-restoration and no automatic
+save. Explicit save still truthfully reports persistence unavailable because
+T071 retains all persistence/CRUD/synchronization ownership.
+
+Backend and process-only Android log review found no sentinel note, token,
+Authorization header, UID/email, exact coordinate, request/response body,
+itinerary content, traceback or provider exception detail; no audio was
+uploaded and no itinerary was persisted. Validation used the deterministic
+no-model fallback. Live OpenAI model validation was not run, remains reported
+separately and is not a T062 completion blocker.
 
 # Required checks
 

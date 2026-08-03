@@ -982,7 +982,7 @@ def test_logs_exclude_private_input_output_and_exception(
     logs = caplog.text
     assert "operation=draft" in logs
     assert "path=deterministic" in logs
-    assert "city=hcmc" in logs
+    assert "city=hcmc" not in logs
     assert "items=3" in logs
     forbidden = (
         raw_exception,
@@ -1048,7 +1048,7 @@ def test_static_instructions_cover_t045_boundaries() -> None:
         assert phrase in normalized
 
 
-def test_fastapi_route_set_remains_unchanged() -> None:
+def test_fastapi_route_set_adds_only_structured_itinerary_generation() -> None:
     settings = Settings(
         database_url=SecretStr(
             "postgresql+asyncpg://unused:unused@invalid/unused"
@@ -1065,8 +1065,5 @@ def test_fastapi_route_set_remains_unchanged() -> None:
         "/preferences",
         "/pois/nearby",
         "/v1/assistant/query",
+        "/v1/itinerary-drafts/generate",
     }
-    assert not any(
-        "itinerary" in path
-        for path in paths
-    )

@@ -13,6 +13,14 @@
   and is not persisted by Android or backend. T061 analytics is a no-op boundary
   that receives only closed intent and outcome values; T090 owns any future
   analytics storage.
+- Structured itinerary form values and the optional current in-memory location
+  are used only by the foreground generation request. Android and backend do not
+  persist the request, draft or coordinates in T062; logs omit form values,
+  identity, token, coordinates, itinerary content and raw bodies. Completed
+  Emulator/nubia manual review confirmed the sentinel note, Authorization/token,
+  UID/email, exact coordinates, itinerary bodies/content and provider failure
+  details were absent from backend and process-only Android logs; no audio was
+  uploaded and no itinerary was persisted.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
 
 ## Security controls

@@ -99,10 +99,9 @@ class DiscoveryService:
             else "none"
         )
         logger.info(
-            "operation=discover path=%s city=%s candidates=%d "
+            "operation=discover path=%s candidates=%d "
             "completeness=%s failure=%s",
             path,
-            request.city.value,
             len(output.candidates),
             output.completeness.value,
             failure_code,
