@@ -41,7 +41,7 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
   thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
   thành với năm destination.
-- Room version-2 schema và core DAO layer đã có; một bundled HCMC demo seed được
+- Room version-3 schema và core DAO layer đã có; một bundled HCMC demo seed được
   import an toàn và idempotent. Explore dùng location context foreground một lần
   để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
   Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Itinerary nay có
@@ -51,8 +51,15 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   `POST /v1/itinerary-drafts/generate` bằng JSON typed, Firebase auth và
   same-origin OkHttp; backend tự dựng candidate/evidence từ curated data trong
   session read-only rồi gọi trực tiếp T045, không chuyển constraint thành prose.
-  Production save vẫn báo persistence unavailable và T071 vẫn sở hữu toàn bộ
-  persistence/CRUD/sync. Authenticated deterministic HCMC/Bangkok generation đã
+  T071 đã thay unavailable save bằng explicit atomic Room save, saved library
+  offline theo hashed account key, read-only saved timeline, local sync state và
+  tombstone delete. Sync dùng itinerary/item UUID ổn định, local/server integer
+  revision guard và unique network-constrained WorkManager tối đa năm attempt;
+  local save success luôn tách khỏi remote sync status. Two-account,
+  force-stop/offline, Emulator, nubia V60, conflict, anti-resurrection và
+  privacy-log validation đều đã qua trên deterministic no-model path.
+  Authenticated
+  deterministic HCMC/Bangkok generation đã
   render validated timeline trên Emulator và nubia V60/NX721J; privacy/lifecycle
   validation đã qua. Live OpenAI itinerary-model validation chưa chạy và không
   phải completion blocker của T062.
@@ -94,8 +101,13 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   `GET /preferences` và `PUT /preferences` đọc hoặc thay toàn bộ bounded generic
   schema-version-1 document theo authenticated Firebase UID. GET missing-row
   không ghi dữ liệu; PUT upsert user/preference trong một transaction với
-  server timestamp. Android-to-backend transport hiện có cho preferences và
-  confirmed-text Assistant; live Google Places chưa được triển khai. T041 đã
+  server timestamp. T071 đã bổ sung canonical private `GET /v1/itineraries`,
+  `GET/PUT/DELETE /v1/itineraries/{id}`. UID chỉ đến từ verified principal;
+  full-snapshot PUT và DELETE dùng `base_revision`, server increment revision
+  trong transaction, còn durable tombstone chặn stale upload resurrect delete.
+  Android-to-backend transport hiện có cho preferences, confirmed-text
+  Assistant, itinerary-draft generation và saved-itinerary sync; live Google
+  Places chưa được triển khai. T041 đã
   bổ sung Router Agent độc lập trả strict `RouterOutput`: một OpenAI Agents SDK
   run không tool/handoff/session khi cả key và model được cấu hình rõ ràng, hoặc
   deterministic fallback khi thiếu cấu hình hay model thất bại. T042 bổ sung

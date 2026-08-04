@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.db.models.trip import Itinerary, Trip
+    from app.db.models.trip import Itinerary, ItineraryTombstone, Trip
 
 
 class User(TimestampMixin, Base):
@@ -48,6 +48,11 @@ class User(TimestampMixin, Base):
         passive_deletes=True,
     )
     itineraries: Mapped[list[Itinerary]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    itinerary_tombstones: Mapped[list[ItineraryTombstone]] = relationship(
         back_populates="owner",
         cascade="all, delete-orphan",
         passive_deletes=True,

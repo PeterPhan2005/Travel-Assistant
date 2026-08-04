@@ -3,12 +3,17 @@ package com.kltn.travelassistant.feature.itinerary.presentation
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftFailure
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItinerary
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryLibraryState
 
 internal data class ItineraryUiState(
     val form: ItineraryFormState = ItineraryFormState(),
     val fieldErrors: ItineraryFieldErrors = ItineraryFieldErrors(),
     val generationState: ItineraryGenerationUiState = ItineraryGenerationUiState.Idle,
     val saveState: ItinerarySaveUiState = ItinerarySaveUiState.Idle,
+    val libraryState: SavedItineraryLibraryState = SavedItineraryLibraryState.Loading,
+    val openedSavedItinerary: SavedItinerary? = null,
+    val deleteState: ItineraryDeleteUiState = ItineraryDeleteUiState.Idle,
 )
 
 internal data class ItineraryFormState(
@@ -77,9 +82,17 @@ internal sealed interface ItinerarySaveUiState {
 
     data object Saving : ItinerarySaveUiState
 
-    data object Saved : ItinerarySaveUiState
+    data object SavedLocallyPendingSync : ItinerarySaveUiState
 
-    data object PersistenceUnavailable : ItinerarySaveUiState
+    data object AuthenticationRequired : ItinerarySaveUiState
 
     data object Failed : ItinerarySaveUiState
+}
+
+internal sealed interface ItineraryDeleteUiState {
+    data object Idle : ItineraryDeleteUiState
+
+    data object Deleting : ItineraryDeleteUiState
+
+    data object Failed : ItineraryDeleteUiState
 }

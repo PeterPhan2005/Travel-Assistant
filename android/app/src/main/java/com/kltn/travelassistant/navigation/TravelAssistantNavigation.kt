@@ -104,6 +104,9 @@ internal fun TravelAssistantNavHost(
     onCancelItineraryGeneration: () -> Unit = {},
     onRetryItineraryGeneration: () -> Unit = {},
     onSaveItinerary: () -> Unit = {},
+    onOpenSavedItinerary: (String) -> Unit = {},
+    onDeleteSavedItinerary: () -> Unit = {},
+    onReturnToItineraryGeneration: () -> Unit = {},
     onOpenMicrophoneSettings: () -> Unit = {},
     onAuthFormModeChanged: (AuthFormMode) -> Unit = {},
     onAuthEmailChanged: (String) -> Unit = {},
@@ -173,6 +176,9 @@ internal fun TravelAssistantNavHost(
                 onCancelGeneration = onCancelItineraryGeneration,
                 onRetry = onRetryItineraryGeneration,
                 onSave = onSaveItinerary,
+                onOpenSaved = onOpenSavedItinerary,
+                onDeleteSaved = onDeleteSavedItinerary,
+                onReturnToGeneration = onReturnToItineraryGeneration,
             )
         }
         composable(TopLevelDestination.DOWNLOADS.route) {

@@ -29,6 +29,9 @@ import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftFailure
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftItem
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftWarning
+import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySyncState
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItinerary
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryLibraryState
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 import java.time.LocalDate
 import java.time.LocalTime
@@ -290,17 +293,15 @@ class ItineraryScreenTest {
 
         composeRule.runOnUiThread {
             uiState = uiState.copy(
-                saveState = ItinerarySaveUiState.PersistenceUnavailable,
+                saveState = ItinerarySaveUiState.SavedLocallyPendingSync,
             )
         }
         composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
             .performScrollToNode(
-                hasText(getString(R.string.itinerary_persistence_unavailable)),
+                hasText(getString(R.string.itinerary_saved_locally)),
             )
-        composeRule.onNodeWithText(getString(R.string.itinerary_persistence_unavailable))
+        composeRule.onNodeWithText(getString(R.string.itinerary_saved_locally))
             .assertExists()
-        composeRule.onNodeWithText(getString(R.string.itinerary_saved))
-            .assertDoesNotExist()
     }
 
     @Test
@@ -310,8 +311,8 @@ class ItineraryScreenTest {
         val saveLabel = getString(R.string.itinerary_save)
 
         assertTrue(explanation.contains("một ngày"))
-        assertTrue(explanation.contains("xác nhận rõ ràng"))
-        assertTrue(explanation.contains("chưa hỗ trợ lưu"))
+        assertTrue(explanation.contains("thao tác lưu rõ ràng"))
+        assertTrue(explanation.contains("ghi bản nháp"))
         assertFalse(explanation.contains(saveLabel))
 
         composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
@@ -365,6 +366,68 @@ class ItineraryScreenTest {
         composeRule.onAllNodesWithText(getString(R.string.itinerary_save))
             .assertCountEquals(1)
         composeRule.onNodeWithTag(ITINERARY_SAVE_TEST_TAG).assertIsEnabled()
+    }
+
+    @Test
+    fun savedLibraryOpensReadOnlyOrderedTimelineShowsSyncAndReturnsOrDeletes() {
+        val saved = SavedItinerary(
+            id = "00000000-0000-4000-8000-000000000071",
+            title = "Một ngày đã lưu",
+            draft = draft(),
+            syncState = ItinerarySyncState.PENDING,
+        )
+        var uiState by mutableStateOf(
+            ItineraryUiState(
+                libraryState = SavedItineraryLibraryState.Content(listOf(saved)),
+            ),
+        )
+        var deleteCount = 0
+        composeRule.setContent {
+            TravelAssistantTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    uiState = uiState,
+                    onCitySelected = {},
+                    onLocalDateChanged = {},
+                    onStartTimeChanged = {},
+                    onEndTimeChanged = {},
+                    onMaximumStopsChanged = {},
+                    onNotesChanged = {},
+                    onGenerate = {},
+                    onCancelGeneration = {},
+                    onRetry = {},
+                    onSave = {},
+                    onOpenSaved = { uiState = uiState.copy(openedSavedItinerary = saved) },
+                    onDeleteSaved = { deleteCount += 1 },
+                    onReturnToGeneration = {
+                        uiState = uiState.copy(openedSavedItinerary = null)
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_open_saved)))
+        composeRule.onNodeWithText(getString(R.string.itinerary_open_saved))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(ITINERARY_TIMELINE_TEST_TAG)
+            .assert(hasContentDescription("Dòng thời gian lịch trình đã lưu"))
+        composeRule.onNodeWithText(getString(R.string.itinerary_saved_label)).assertExists()
+        composeRule.onNodeWithText(getString(R.string.itinerary_sync_pending)).assertExists()
+        composeRule.onNodeWithText("09:00–12:00").assertExists()
+        composeRule.onNodeWithText("12:00–17:00").assertExists()
+        composeRule.onNodeWithTag(ITINERARY_GENERATE_TEST_TAG).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(ITINERARY_BODY_TEST_TAG)
+            .performScrollToNode(hasText(getString(R.string.itinerary_delete)))
+        composeRule.onNodeWithText(getString(R.string.itinerary_delete))
+            .performScrollTo()
+            .performClick()
+        assertEquals(1, deleteCount)
+        composeRule.onNodeWithText(getString(R.string.itinerary_return_to_generation))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(ITINERARY_GENERATE_TEST_TAG).assertExists()
     }
 
     private fun setItineraryContent(uiState: ItineraryUiState) {

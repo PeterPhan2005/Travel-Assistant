@@ -5,9 +5,9 @@ internal interface ItinerarySaveBoundary {
 }
 
 internal sealed interface ItinerarySaveResult {
-    data object Saved : ItinerarySaveResult
+    data object SavedLocally : ItinerarySaveResult
 
-    data object PersistenceUnavailable : ItinerarySaveResult
+    data object AuthenticationRequired : ItinerarySaveResult
 
     data object Failed : ItinerarySaveResult
 }

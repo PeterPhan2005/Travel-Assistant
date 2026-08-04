@@ -15,6 +15,7 @@ from app.db.metadata import NAMING_CONVENTION
 from app.db.models import (
     Itinerary,
     ItineraryItem,
+    ItineraryTombstone,
     MenuItem,
     Narration,
     Poi,
@@ -28,6 +29,7 @@ from app.db.models import (
 EXPECTED_TABLES = {
     "itineraries",
     "itinerary_items",
+    "itinerary_tombstones",
     "menu_items",
     "narrations",
     "poi_sources",
@@ -50,6 +52,7 @@ def test_models_use_typed_relationships_without_mapper_errors() -> None:
     assert User.preferences.property.uselist is False
     assert User.trips.property.back_populates == "owner"
     assert User.itineraries.property.back_populates == "owner"
+    assert User.itinerary_tombstones.property.back_populates == "owner"
     assert Trip.itineraries.property.back_populates == "trip"
     assert Itinerary.items.property.back_populates == "itinerary"
     assert ItineraryItem.poi.property.back_populates == "itinerary_items"
@@ -71,6 +74,10 @@ def test_owner_columns_and_indexes_are_explicit() -> None:
         cast(Table, Trip.__table__): ("ix_trips_user_id", False),
         cast(Table, Itinerary.__table__): (
             "ix_itineraries_user_id",
+            False,
+        ),
+        cast(Table, ItineraryTombstone.__table__): (
+            "ix_itinerary_tombstones_user_id",
             False,
         ),
     }

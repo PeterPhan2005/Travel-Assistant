@@ -27,7 +27,7 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 Repository đã có Android architecture shell trong `android/`, với package hiện
 có được giữ nguyên. Hilt, ViewModel/StateFlow và repository boundaries đã được
 thiết lập trong T011. T012 đã bổ sung top-level Navigation Compose và Material 3
-theme tập trung với năm destination. Room version-2 schema và core DAO layer đã
+theme tập trung với năm destination. Room version-3 schema và core DAO layer đã
 có; một bundled HCMC demo seed được import an toàn và idempotent. Các destination
 vẫn tối giản; Explore đã có location context foreground một lần chỉ sau hành
 động người dùng và tìm kiếm POI offline trong Room theo tên, bí danh hoặc loại,
@@ -51,15 +51,20 @@ chưa có hosting và không cho cleartext. Android nearby transport và live Go
 Places vẫn chưa được triển khai. Assistant gửi duy nhất confirmed text foreground
 tới private `POST /v1/assistant/query`, hiển thị loading/cancel/retry cùng kết quả
 structured và không persist transcript/response; audio không được upload.
-Itinerary đã thay placeholder bằng biểu mẫu nháp một ngày cho HCMC/Bangkok,
-validation local và timeline/warning/save UI typed. Timeline chỉ nhận kết quả
-đã validate, không tự generate và không tự lưu. Production generator nay gửi
+Itinerary có biểu mẫu nháp một ngày cho HCMC/Bangkok, validation local và
+timeline/warning/save UI typed. Timeline chỉ nhận kết quả đã validate, không tự
+generate và không tự lưu. Production generator gửi
 đúng structured fields tới private `POST /v1/itinerary-drafts/generate`, dùng
 Firebase token ngay trước request, retry đúng một lần sau `401`, và không gửi
 audio/transcript/candidate/evidence. Backend tự resolve curated candidate/evidence
 trong request-scoped read-only session; khi không có location, thứ tự theo POI ID
-ổn định và distance vẫn absent. Save production tiếp tục báo chưa persistence
-cho đến T071. Authenticated deterministic validation đã render đúng timeline
+ổn định và distance vẫn absent. T071 đã hoàn thành explicit save vào Room v3,
+thư viện offline theo account key băm, timeline đã lưu chỉ đọc, trạng thái
+pending/synced/conflict/failed, local tombstone delete và unique WorkManager
+sync. Backend có private canonical `GET/PUT/DELETE /v1/itineraries` với verified
+UID ownership, full-snapshot optimistic integer revision và durable tombstone;
+local save success không được mô tả sai thành remote sync success. Authenticated
+deterministic validation đã render đúng timeline
 HCMC/Bangkok trên Emulator và nubia V60/NX721J; cancellation, explicit retry,
 offline/signed-out no-request, lifecycle non-restoration và privacy-safe logs đều
 qua. Live OpenAI itinerary-model validation chưa chạy và được báo riêng.
@@ -136,6 +141,15 @@ Backend
 cũng có builder offline, database-free để tạo và verify static travel-package
 schema version 1 với manifest SHA-256; HCMC artifact hai POI đã được commit và
 được Android T035 tải/kích hoạt mà không cần backend package endpoint.
+
+T071 giữ local saved rows trên thiết bị sau sign-out nhưng chúng chỉ được query
+bằng account key SHA-256 của verified current account; account B và signed-out
+state không thể thấy account A. Worker input chỉ có itinerary UUID, token được
+lấy ngay trước HTTP, một `401` được refresh tối đa một lần và WorkManager retry
+có exponential backoff cùng giới hạn năm attempt. T071 đã qua validation
+two-account, force-stop/offline, Emulator, nubia V60, conflict,
+anti-resurrection và privacy logs trên deterministic no-model path; local-save
+success vẫn được phân biệt rõ với remote sync state.
 
 T025 đã bổ sung private resource canonical `GET /preferences` và
 `PUT /preferences`. Backend chỉ dùng UID đã xác minh từ Firebase để đọc hoặc

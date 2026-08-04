@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -16,8 +16,12 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    Time,
     UniqueConstraint,
+    func,
+    text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -84,6 +88,25 @@ class Itinerary(TimestampMixin, Base):
             ondelete="RESTRICT",
         ),
         CheckConstraint("btrim(title) <> ''", name="title_nonblank"),
+        CheckConstraint("revision > 0", name="revision_positive"),
+        CheckConstraint("city IN ('hcmc', 'bkk')", name="city_supported"),
+        CheckConstraint(
+            "(city = 'hcmc' AND timezone = 'Asia/Ho_Chi_Minh') OR "
+            "(city = 'bkk' AND timezone = 'Asia/Bangkok')",
+            name="city_timezone_consistent",
+        ),
+        CheckConstraint(
+            "start_local_time < end_local_time",
+            name="local_time_order",
+        ),
+        CheckConstraint(
+            "jsonb_typeof(assumptions) = 'array'",
+            name="assumptions_array",
+        ),
+        CheckConstraint(
+            "jsonb_typeof(warnings) = 'array'",
+            name="warnings_array",
+        ),
         Index("ix_itineraries_user_id", "user_id"),
         Index("ix_itineraries_trip_id", "trip_id"),
     )
@@ -98,6 +121,54 @@ class Itinerary(TimestampMixin, Base):
     )
     trip_id: Mapped[UUID | None] = mapped_column(nullable=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
+    revision: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+        server_default=text("1"),
+    )
+    city: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="hcmc",
+        server_default=text("'hcmc'"),
+    )
+    local_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False,
+        default=date(1970, 1, 1),
+        server_default=text("DATE '1970-01-01'"),
+    )
+    timezone: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default="Asia/Ho_Chi_Minh",
+        server_default=text("'Asia/Ho_Chi_Minh'"),
+    )
+    start_local_time: Mapped[time] = mapped_column(
+        Time(timezone=False),
+        nullable=False,
+        default=time(0, 0),
+        server_default=text("TIME '00:00:00'"),
+    )
+    end_local_time: Mapped[time] = mapped_column(
+        Time(timezone=False),
+        nullable=False,
+        default=time(23, 59),
+        server_default=text("TIME '23:59:00'"),
+    )
+    assumptions: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
+    warnings: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
 
     owner: Mapped[User] = relationship(
         back_populates="itineraries",
@@ -169,3 +240,27 @@ class ItineraryItem(TimestampMixin, Base):
 
     itinerary: Mapped[Itinerary] = relationship(back_populates="items")
     poi: Mapped[Poi | None] = relationship(back_populates="itinerary_items")
+
+
+class ItineraryTombstone(Base):
+    """Ownership-scoped revision retained after itinerary content deletion."""
+
+    __tablename__ = "itinerary_tombstones"
+    __table_args__ = (
+        CheckConstraint("revision > 0", name="revision_positive"),
+        Index("ix_itinerary_tombstones_user_id", "user_id"),
+    )
+
+    itinerary_id: Mapped[UUID] = mapped_column(primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    deleted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    owner: Mapped[User] = relationship(back_populates="itinerary_tombstones")

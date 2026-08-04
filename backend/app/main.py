@@ -22,6 +22,7 @@ from app.api.routes.assistant import create_assistant_router
 from app.api.routes.auth import create_auth_router
 from app.api.routes.health import create_health_router
 from app.api.routes.itinerary_drafts import create_itinerary_drafts_router
+from app.api.routes.itineraries import create_itineraries_router
 from app.api.routes.pois import create_pois_router
 from app.api.routes.preferences import create_preferences_router
 from app.auth.dependencies import FirebaseAuthentication
@@ -42,6 +43,11 @@ from app.itinerary_generation.candidates import (
     DefaultItineraryCandidateResolver,
     SqlAlchemyCuratedCityCandidateReader,
 )
+from app.itineraries import (
+    ItineraryStore,
+    SavedItineraryService,
+    SqlAlchemyItineraryStore,
+)
 from app.preferences.service import PreferenceService
 from app.preferences.store import (
     PreferenceStore,
@@ -56,6 +62,7 @@ def create_app(
     preference_store: PreferenceStore | None = None,
     assistant_orchestrator: AgentOrchestrator | None = None,
     itinerary_generator: StructuredItineraryGenerator | None = None,
+    itinerary_store: ItineraryStore | None = None,
 ) -> FastAPI:
     """Build an independent application without starting external services."""
     resolved_settings = (
@@ -156,6 +163,16 @@ def create_app(
                 ItineraryService(),
             )
 
+    async def request_saved_itinerary_service() -> AsyncIterator[
+        SavedItineraryService
+    ]:
+        if itinerary_store is not None:
+            yield SavedItineraryService(itinerary_store)
+            return
+        runtime = await ensure_database_runtime()
+        async with runtime.session_factory() as session:
+            yield SavedItineraryService(SqlAlchemyItineraryStore(session))
+
     app = FastAPI(
         title=resolved_settings.application_name,
         version=resolved_settings.application_version,
@@ -181,6 +198,12 @@ def create_app(
     app.include_router(
         create_itinerary_drafts_router(
             request_itinerary_generator,
+            authentication,
+        )
+    )
+    app.include_router(
+        create_itineraries_router(
+            request_saved_itinerary_service,
             authentication,
         )
     )

@@ -11,6 +11,9 @@ import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftRequest
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryLocationSnapshot
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveBoundary
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveResult
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryDeleteResult
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryLibraryState
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryRepository
 import com.kltn.travelassistant.feature.itinerary.domain.isValidDraftForRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,6 +30,7 @@ import kotlinx.coroutines.launch
 class ItineraryViewModel @Inject internal constructor(
     private val generator: ItineraryDraftGenerator,
     private val saveBoundary: ItinerarySaveBoundary,
+    private val savedItineraryRepository: SavedItineraryRepository = EmptySavedItineraryRepository,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(ItineraryUiState())
     internal val uiState: StateFlow<ItineraryUiState> = mutableUiState.asStateFlow()
@@ -36,6 +41,27 @@ class ItineraryViewModel @Inject internal constructor(
     private var saveJob: Job? = null
     private var nextSaveAttemptId = 0L
     private var activeSaveAttemptId: Long? = null
+    private var selectedSavedItineraryId: String? = null
+    private var deleteJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            savedItineraryRepository.observeLibrary().collect { libraryState ->
+                mutableUiState.update { state ->
+                    val opened = (libraryState as? SavedItineraryLibraryState.Content)
+                        ?.itineraries
+                        ?.firstOrNull { it.id == selectedSavedItineraryId }
+                    if (selectedSavedItineraryId != null && opened == null) {
+                        selectedSavedItineraryId = null
+                    }
+                    state.copy(
+                        libraryState = libraryState,
+                        openedSavedItinerary = opened,
+                    )
+                }
+            }
+        }
+    }
 
     internal fun onCitySelected(city: ItineraryCity) {
         updateForm { copy(city = city) }
@@ -160,9 +186,10 @@ class ItineraryViewModel @Inject internal constructor(
             mutableUiState.update { state ->
                 state.copy(
                     saveState = when (result) {
-                        ItinerarySaveResult.Saved -> ItinerarySaveUiState.Saved
-                        ItinerarySaveResult.PersistenceUnavailable ->
-                            ItinerarySaveUiState.PersistenceUnavailable
+                        ItinerarySaveResult.SavedLocally ->
+                            ItinerarySaveUiState.SavedLocallyPendingSync
+                        ItinerarySaveResult.AuthenticationRequired ->
+                            ItinerarySaveUiState.AuthenticationRequired
                         ItinerarySaveResult.Failed -> ItinerarySaveUiState.Failed
                     },
                 )
@@ -170,9 +197,61 @@ class ItineraryViewModel @Inject internal constructor(
         }
     }
 
+    internal fun openSavedItinerary(itineraryId: String) {
+        val saved = (mutableUiState.value.libraryState as? SavedItineraryLibraryState.Content)
+            ?.itineraries
+            ?.firstOrNull { it.id == itineraryId }
+            ?: return
+        selectedSavedItineraryId = saved.id
+        mutableUiState.update { state ->
+            state.copy(
+                openedSavedItinerary = saved,
+                deleteState = ItineraryDeleteUiState.Idle,
+            )
+        }
+    }
+
+    internal fun returnToGeneration() {
+        selectedSavedItineraryId = null
+        mutableUiState.update { state ->
+            state.copy(
+                openedSavedItinerary = null,
+                deleteState = ItineraryDeleteUiState.Idle,
+            )
+        }
+    }
+
+    internal fun deleteOpenedSavedItinerary() {
+        if (deleteJob?.isActive == true) return
+        val itineraryId = mutableUiState.value.openedSavedItinerary?.id ?: return
+        mutableUiState.update { state ->
+            state.copy(deleteState = ItineraryDeleteUiState.Deleting)
+        }
+        deleteJob = viewModelScope.launch {
+            val result = try {
+                savedItineraryRepository.delete(itineraryId)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                SavedItineraryDeleteResult.Failed
+            }
+            deleteJob = null
+            when (result) {
+                SavedItineraryDeleteResult.DeletedLocally -> returnToGeneration()
+                SavedItineraryDeleteResult.AuthenticationRequired,
+                SavedItineraryDeleteResult.NotFound,
+                SavedItineraryDeleteResult.Failed,
+                -> mutableUiState.update { state ->
+                    state.copy(deleteState = ItineraryDeleteUiState.Failed)
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         cancelActiveGeneration(showCancelled = false)
         cancelActiveSave()
+        deleteJob?.cancel()
         super.onCleared()
     }
 
@@ -249,6 +328,12 @@ class ItineraryViewModel @Inject internal constructor(
             }
         }
     }
+}
+
+private object EmptySavedItineraryRepository : SavedItineraryRepository {
+    override fun observeLibrary() = emptyFlow<SavedItineraryLibraryState>()
+
+    override suspend fun delete(itineraryId: String) = SavedItineraryDeleteResult.NotFound
 }
 
 private fun ItineraryDraftGenerationResult.toUiState(

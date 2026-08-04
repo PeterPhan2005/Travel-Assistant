@@ -471,6 +471,8 @@ def test_route_is_registered_and_existing_routes_remain_available() -> None:
         "/pois/nearby",
         "/v1/assistant/query",
         "/v1/itinerary-drafts/generate",
+        "/v1/itineraries",
+        "/v1/itineraries/{itinerary_id}",
     }
 
 

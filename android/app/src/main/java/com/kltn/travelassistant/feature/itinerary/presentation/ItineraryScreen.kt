@@ -40,7 +40,10 @@ import com.kltn.travelassistant.R
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftFailure
+import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySyncState
 import com.kltn.travelassistant.feature.itinerary.domain.MAX_ITINERARY_NOTES_CODE_POINTS
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItinerary
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryLibraryState
 import com.kltn.travelassistant.ui.theme.AppSpacing
 
 internal const val ITINERARY_TIMELINE_TEST_TAG = "itinerary_timeline"
@@ -62,6 +65,9 @@ internal fun ItineraryScreen(
     onCancelGeneration: () -> Unit,
     onRetry: () -> Unit,
     onSave: () -> Unit,
+    onOpenSaved: (String) -> Unit = {},
+    onDeleteSaved: () -> Unit = {},
+    onReturnToGeneration: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,119 +90,166 @@ internal fun ItineraryScreen(
                 .testTag(ITINERARY_BODY_TEST_TAG),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.itinerary_explanation),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            item {
-                CitySelector(
-                    selectedCity = uiState.form.city,
-                    error = uiState.fieldErrors.city,
-                    onCitySelected = onCitySelected,
-                )
-            }
-            item {
-                ItineraryTextField(
-                    value = uiState.form.localDate,
-                    onValueChange = onLocalDateChanged,
-                    labelRes = R.string.itinerary_date_label,
-                    placeholderRes = R.string.itinerary_date_placeholder,
-                    error = uiState.fieldErrors.localDate,
-                    keyboardType = KeyboardType.Text,
-                )
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.content),
-                ) {
-                    ItineraryTextField(
-                        value = uiState.form.startLocalTime,
-                        onValueChange = onStartTimeChanged,
-                        labelRes = R.string.itinerary_start_time_label,
-                        placeholderRes = R.string.itinerary_time_placeholder,
-                        error = uiState.fieldErrors.startLocalTime,
-                        keyboardType = KeyboardType.Text,
-                        modifier = Modifier.weight(1f),
-                    )
-                    ItineraryTextField(
-                        value = uiState.form.endLocalTime,
-                        onValueChange = onEndTimeChanged,
-                        labelRes = R.string.itinerary_end_time_label,
-                        placeholderRes = R.string.itinerary_time_placeholder,
-                        error = uiState.fieldErrors.endLocalTime,
-                        keyboardType = KeyboardType.Text,
-                        modifier = Modifier.weight(1f),
+            val openedSaved = uiState.openedSavedItinerary
+            if (openedSaved != null) {
+                item {
+                    OutlinedButton(
+                        onClick = onReturnToGeneration,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.itinerary_return_to_generation))
+                    }
+                }
+                item {
+                    Text(
+                        text = openedSaved.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.semantics { heading() },
                     )
                 }
-            }
-            item {
-                ItineraryTextField(
-                    value = uiState.form.maximumStops,
-                    onValueChange = onMaximumStopsChanged,
-                    labelRes = R.string.itinerary_maximum_stops_label,
-                    placeholderRes = R.string.itinerary_maximum_stops_placeholder,
-                    error = uiState.fieldErrors.maximumStops,
-                    keyboardType = KeyboardType.Number,
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = uiState.form.notes,
-                    onValueChange = onNotesChanged,
-                    label = { Text(stringResource(R.string.itinerary_notes_label)) },
-                    placeholder = {
-                        Text(stringResource(R.string.itinerary_notes_placeholder))
-                    },
-                    minLines = 3,
-                    maxLines = 5,
-                    isError = uiState.fieldErrors.notes != null,
-                    supportingText = {
-                        val error = uiState.fieldErrors.notes
-                        if (error != null) {
-                            ValidationMessage(error)
-                        } else {
-                            Text(
-                                stringResource(
-                                    R.string.itinerary_notes_count,
-                                    uiState.form.notes.codePointCount(
-                                        0,
-                                        uiState.form.notes.length,
+                item { SyncStatePresentation(openedSaved.syncState) }
+                item { Timeline(openedSaved.draft, isSaved = true) }
+                item {
+                    OutlinedButton(
+                        onClick = onDeleteSaved,
+                        enabled = uiState.deleteState != ItineraryDeleteUiState.Deleting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (uiState.deleteState == ItineraryDeleteUiState.Deleting) {
+                                    R.string.itinerary_deleting
+                                } else {
+                                    R.string.itinerary_delete
+                                },
+                            ),
+                        )
+                    }
+                }
+                if (uiState.deleteState == ItineraryDeleteUiState.Failed) {
+                    item { StatusMessage(R.string.itinerary_delete_failed) }
+                }
+            } else {
+                item {
+                    Text(
+                        text = stringResource(R.string.itinerary_explanation),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                item {
+                    CitySelector(
+                        selectedCity = uiState.form.city,
+                        error = uiState.fieldErrors.city,
+                        onCitySelected = onCitySelected,
+                    )
+                }
+                item {
+                    ItineraryTextField(
+                        value = uiState.form.localDate,
+                        onValueChange = onLocalDateChanged,
+                        labelRes = R.string.itinerary_date_label,
+                        placeholderRes = R.string.itinerary_date_placeholder,
+                        error = uiState.fieldErrors.localDate,
+                        keyboardType = KeyboardType.Text,
+                    )
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.content),
+                    ) {
+                        ItineraryTextField(
+                            value = uiState.form.startLocalTime,
+                            onValueChange = onStartTimeChanged,
+                            labelRes = R.string.itinerary_start_time_label,
+                            placeholderRes = R.string.itinerary_time_placeholder,
+                            error = uiState.fieldErrors.startLocalTime,
+                            keyboardType = KeyboardType.Text,
+                            modifier = Modifier.weight(1f),
+                        )
+                        ItineraryTextField(
+                            value = uiState.form.endLocalTime,
+                            onValueChange = onEndTimeChanged,
+                            labelRes = R.string.itinerary_end_time_label,
+                            placeholderRes = R.string.itinerary_time_placeholder,
+                            error = uiState.fieldErrors.endLocalTime,
+                            keyboardType = KeyboardType.Text,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                item {
+                    ItineraryTextField(
+                        value = uiState.form.maximumStops,
+                        onValueChange = onMaximumStopsChanged,
+                        labelRes = R.string.itinerary_maximum_stops_label,
+                        placeholderRes = R.string.itinerary_maximum_stops_placeholder,
+                        error = uiState.fieldErrors.maximumStops,
+                        keyboardType = KeyboardType.Number,
+                    )
+                }
+                item {
+                    OutlinedTextField(
+                        value = uiState.form.notes,
+                        onValueChange = onNotesChanged,
+                        label = { Text(stringResource(R.string.itinerary_notes_label)) },
+                        placeholder = {
+                            Text(stringResource(R.string.itinerary_notes_placeholder))
+                        },
+                        minLines = 3,
+                        maxLines = 5,
+                        isError = uiState.fieldErrors.notes != null,
+                        supportingText = {
+                            val error = uiState.fieldErrors.notes
+                            if (error != null) {
+                                ValidationMessage(error)
+                            } else {
+                                Text(
+                                    stringResource(
+                                        R.string.itinerary_notes_count,
+                                        uiState.form.notes.codePointCount(
+                                            0,
+                                            uiState.form.notes.length,
+                                        ),
+                                        MAX_ITINERARY_NOTES_CODE_POINTS,
                                     ),
-                                    MAX_ITINERARY_NOTES_CODE_POINTS,
-                                ),
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                Button(
-                    onClick = onGenerate,
-                    enabled = uiState.generationState != ItineraryGenerationUiState.Loading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(ITINERARY_GENERATE_TEST_TAG),
-                ) {
-                    Text(stringResource(R.string.itinerary_generate))
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
-            }
-            item {
-                GenerationPresentation(
-                    state = uiState.generationState,
-                    onCancel = onCancelGeneration,
-                    onRetry = onRetry,
-                )
-            }
-            item {
-                SavePresentation(
-                    generationState = uiState.generationState,
-                    saveState = uiState.saveState,
-                    onSave = onSave,
-                )
+                item {
+                    Button(
+                        onClick = onGenerate,
+                        enabled = uiState.generationState != ItineraryGenerationUiState.Loading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(ITINERARY_GENERATE_TEST_TAG),
+                    ) {
+                        Text(stringResource(R.string.itinerary_generate))
+                    }
+                }
+                item {
+                    GenerationPresentation(
+                        state = uiState.generationState,
+                        onCancel = onCancelGeneration,
+                        onRetry = onRetry,
+                    )
+                }
+                item {
+                    SavePresentation(
+                        generationState = uiState.generationState,
+                        saveState = uiState.saveState,
+                        onSave = onSave,
+                    )
+                }
+                item {
+                    SavedLibraryPresentation(
+                        state = uiState.libraryState,
+                        onOpenSaved = onOpenSaved,
+                    )
+                }
             }
         }
     }
@@ -333,13 +386,20 @@ private fun GenerationPresentation(
 }
 
 @Composable
-private fun Timeline(draft: ItineraryDraft) {
+private fun Timeline(
+    draft: ItineraryDraft,
+    isSaved: Boolean = false,
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(ITINERARY_TIMELINE_TEST_TAG)
             .semantics {
-                contentDescription = "Dòng thời gian lịch trình nháp"
+                contentDescription = if (isSaved) {
+                    "Dòng thời gian lịch trình đã lưu"
+                } else {
+                    "Dòng thời gian lịch trình nháp"
+                }
             },
     ) {
         Column(
@@ -347,7 +407,9 @@ private fun Timeline(draft: ItineraryDraft) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = stringResource(R.string.itinerary_draft_only),
+                text = stringResource(
+                    if (isSaved) R.string.itinerary_saved_label else R.string.itinerary_draft_only,
+                ),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -429,12 +491,83 @@ private fun SavePresentation(
     when (saveState) {
         ItinerarySaveUiState.Idle -> Unit
         ItinerarySaveUiState.Saving -> StatusMessage(R.string.itinerary_saving)
-        ItinerarySaveUiState.Saved -> StatusMessage(R.string.itinerary_saved)
-        ItinerarySaveUiState.PersistenceUnavailable -> StatusMessage(
-            R.string.itinerary_persistence_unavailable,
-        )
+        ItinerarySaveUiState.SavedLocallyPendingSync ->
+            StatusMessage(R.string.itinerary_saved_locally)
+        ItinerarySaveUiState.AuthenticationRequired ->
+            StatusMessage(R.string.itinerary_save_authentication_required)
         ItinerarySaveUiState.Failed -> StatusMessage(R.string.itinerary_save_failed)
     }
+}
+
+@Composable
+private fun SavedLibraryPresentation(
+    state: SavedItineraryLibraryState,
+    onOpenSaved: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.itinerary_saved_library_title),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.semantics { heading() },
+        )
+        when (state) {
+            SavedItineraryLibraryState.Loading ->
+                Text(stringResource(R.string.itinerary_saved_library_loading))
+            SavedItineraryLibraryState.SignedOut ->
+                Text(stringResource(R.string.itinerary_saved_library_signed_out))
+            SavedItineraryLibraryState.Failed ->
+                Text(stringResource(R.string.itinerary_saved_library_failed))
+            is SavedItineraryLibraryState.Content -> {
+                if (state.itineraries.isEmpty()) {
+                    Text(stringResource(R.string.itinerary_saved_library_empty))
+                } else {
+                    state.itineraries.forEach { itinerary ->
+                        SavedItineraryCard(itinerary, onOpenSaved)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedItineraryCard(
+    itinerary: SavedItinerary,
+    onOpenSaved: (String) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(AppSpacing.content),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(itinerary.title, style = MaterialTheme.typography.titleMedium)
+            SyncStatePresentation(itinerary.syncState)
+            OutlinedButton(
+                onClick = { onOpenSaved(itinerary.id) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.itinerary_open_saved))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SyncStatePresentation(syncState: ItinerarySyncState) {
+    val textRes = when (syncState) {
+        ItinerarySyncState.PENDING -> R.string.itinerary_sync_pending
+        ItinerarySyncState.SYNCED -> R.string.itinerary_sync_synced
+        ItinerarySyncState.CONFLICT -> R.string.itinerary_sync_conflict
+        ItinerarySyncState.FAILED -> R.string.itinerary_sync_failed
+    }
+    Text(
+        text = stringResource(textRes),
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
 }
 
 @Composable

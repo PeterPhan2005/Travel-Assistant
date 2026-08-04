@@ -84,6 +84,18 @@ class RoomPackageActivatorTest {
             LocalItineraryEntity(
                 itineraryId = "trip-1",
                 title = "Ngày ở Sài Gòn",
+                accountKey = "account-a",
+                city = "hcmc",
+                localDate = "2026-08-01",
+                timezone = "Asia/Ho_Chi_Minh",
+                startLocalTime = "09:00",
+                endLocalTime = "17:00",
+                assumptionsJson = "[\"Giữ lịch trình cục bộ\"]",
+                warningsJson = "[]",
+                localRevision = 1,
+                serverRevision = 0,
+                syncState = "pending",
+                isDeleted = false,
                 createdAtEpochMillis = 1,
                 updatedAtEpochMillis = 1,
             ),
@@ -107,7 +119,7 @@ class RoomPackageActivatorTest {
         activator.activate(validatedPackage())
 
         assertNotNull(database.poiContentDao().getPoiById("bkk-poi-temple"))
-        val itinerary = database.itineraryDao().getItineraryWithItems("trip-1")
+        val itinerary = database.itineraryDao().getItineraryWithItems("account-a", "trip-1")
         assertNotNull(itinerary)
         assertEquals("Dinh Độc Lập", itinerary?.items?.single()?.title)
         assertNull(itinerary?.items?.single()?.poiId)

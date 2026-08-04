@@ -141,7 +141,10 @@ class TravelAssistantDatabaseTest {
         database.itineraryDao().upsertItinerary(itinerary)
         database.itineraryDao().upsertItineraryItems(items)
 
-        val aggregate = database.itineraryDao().getItineraryWithItems(itinerary.itineraryId)
+        val aggregate = database.itineraryDao().getItineraryWithItems(
+            itinerary.accountKey,
+            itinerary.itineraryId,
+        )
 
         assertEquals(itinerary, aggregate?.itinerary)
         assertEquals(listOf(0, 1, 2), aggregate?.items?.map { it.position })
@@ -245,7 +248,7 @@ class TravelAssistantDatabaseTest {
     @Test
     fun eachTestUsesAnIsolatedEmptyDatabase() = runTest {
         assertNull(database.poiContentDao().getPoiById("poi-1"))
-        assertNull(database.itineraryDao().getItineraryWithItems("itinerary-1"))
+        assertNull(database.itineraryDao().getItineraryWithItems("account-a", "itinerary-1"))
         assertEquals(emptyList<PendingSyncOperationEntity>(), database.pendingSyncDao().getOperationsByStatus("pending"))
     }
 
@@ -266,6 +269,18 @@ class TravelAssistantDatabaseTest {
     private fun sampleItinerary() = LocalItineraryEntity(
         itineraryId = "itinerary-1",
         title = "Một ngày ở Quận 1",
+        accountKey = "account-a",
+        city = "hcmc",
+        localDate = "2026-08-01",
+        timezone = "Asia/Ho_Chi_Minh",
+        startLocalTime = "09:00",
+        endLocalTime = "17:00",
+        assumptionsJson = "[\"Đi bộ giữa các điểm gần nhau\"]",
+        warningsJson = "[]",
+        localRevision = 1,
+        serverRevision = 0,
+        syncState = "pending",
+        isDeleted = false,
         createdAtEpochMillis = 100,
         updatedAtEpochMillis = 100,
     )

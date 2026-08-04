@@ -63,9 +63,16 @@ Show only fields with data:
 - Timeline chỉ hiển thị output đã validate theo đúng city/date/timezone/window:
   item không rỗng, chronological, positive interval, không overlap, không vượt
   số điểm dừng; mọi assumption và safe warning được giữ nguyên.
-- Draft luôn có nhãn chưa lưu. Chỉ tap `Lưu lịch trình` mới gọi save boundary;
-  T070 không ghi Room/backend và production báo persistence chưa khả dụng cho
-  đến T071.
+- Draft luôn có nhãn chưa lưu. Chỉ tap `Lưu lịch trình` mới ghi một validated
+  snapshot vào Room; generation success, tab return và process recreation không
+  auto-save. Local success hiển thị rõ là đã lưu trên thiết bị và có thể còn chờ
+  remote sync.
+- Cùng destination hiển thị saved library của verified current account cả khi
+  offline. Người dùng có thể mở read-only timeline, xem trạng thái
+  pending/synced/conflict/failed, xóa explicit và quay lại generation form.
+  Không có editing hoặc full-text search trong T071.
+- Sign-out/account switch ẩn ngay saved library cũ. Rows được giữ local nhưng
+  chỉ hiện lại khi đúng verified account quay lại.
 - Production generation chỉ chạy online sau explicit tap và verified Firebase
   session. Nó gửi structured form tới `/v1/itinerary-drafts/generate`; offline
   hoặc signed-out không bắt đầu request, không tự retry khi trạng thái thay đổi,

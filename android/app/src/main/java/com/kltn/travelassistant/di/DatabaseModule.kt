@@ -26,7 +26,10 @@ object DatabaseModule {
         context,
         TravelAssistantDatabase::class.java,
         TravelAssistantDatabase.DATABASE_NAME,
-    ).addMigrations(DatabaseMigrations.MIGRATION_1_2)
+    ).addMigrations(
+        DatabaseMigrations.MIGRATION_1_2,
+        DatabaseMigrations.MIGRATION_2_3,
+    )
         .build()
 
     @Provides

@@ -1601,8 +1601,9 @@ Ngay trước khi server ghi access log, query string được bỏ khỏi ASGI 
 tọa độ origin, query text và category không xuất hiện trong access-log request
 line; route vẫn nhận đủ query parameters để validation và discovery.
 
-Android app chưa gọi `/auth/me` hoặc `/pois/nearby`; transport private hiện chỉ
-phục vụ preference sync.
+Android app chưa gọi `/auth/me` hoặc `/pois/nearby`. Các transport private
+hiện phục vụ preference sync, Assistant, itinerary-draft generation và
+saved-itinerary synchronization.
 
 ### Truy vấn Assistant bằng confirmed text
 
@@ -1717,8 +1718,8 @@ Discovery dùng curated PostGIS distance ordering thật với radius policy hi�
 Không coordinates, city-only reader chỉ đọc canonical POI/source/menu theo city,
 bounded và order theo POI ID; distance để `null`. Service gọi trực tiếp typed
 T045 Itinerary request, validate response closure và không ghi/commit itinerary.
-Production save vẫn trả `PersistenceUnavailable`; T071 sở hữu Room/backend
-CRUD/sync.
+T071 production save ghi validated snapshot vào Room trước, báo local success
+riêng và để remote state ở `pending` khi chưa sync.
 
 Checklist manual production validation T062 (đã hoàn thành trên Emulator và
 nubia V60/NX721J):
@@ -1741,8 +1742,8 @@ Kết quả đã xác nhận: verified Firebase email/password auth thành công
 Bangkok đều trả HTTP 200 và render timeline validated đúng city/timezone,
 `2026-08-02`, `09:00`–`17:00` trên Emulator và nubia V60/NX721J (qua ADB
 reverse). Assumption, safe warning khi có, draft-only label, fixed heading và
-đúng một save action đều hiển thị. Save chỉ enable sau valid draft, explicit tap
-báo đúng persistence unavailable; không auto-save hoặc persist itinerary.
+đúng một save action đều hiển thị. Save chỉ enable sau valid draft và không
+auto-save.
 Cancellation, explicit retry sau backend recovery, offline/signed-out
 no-request, tab return và force-stop non-restoration đều qua; ADB reverse đã
 được gỡ sau physical-device validation.
@@ -1764,12 +1765,70 @@ curl --include \
   http://127.0.0.1:8000/v1/itinerary-drafts/generate
 ```
 
-Timeline chronological, loading/cancel/retry, warning, draft-only label, typed
-HTTP mapping và save unavailable được xác nhận trong deterministic JVM/Compose
+Timeline chronological, loading/cancel/retry, warning, draft-only label và typed
+HTTP mapping được xác nhận trong deterministic JVM/Compose
 tests. Live-model validation vẫn phải báo riêng với deterministic fallback.
 Public response serialize minute-aligned time theo canonical Pydantic
 `HH:mm:ss` (ví dụ `09:00:00`); Android request vẫn gửi `HH:mm` và response codec
 fail closed nếu server trả format khác hoặc giây khác `00`.
+
+### Lưu và đồng bộ lịch trình T071
+
+Migrate backend/PostGIS tới Alembic head trước khi gọi saved-itinerary API:
+
+```bash
+cd backend
+.venv/bin/alembic upgrade head
+```
+
+Canonical private resource:
+
+```text
+GET    /v1/itineraries
+GET    /v1/itineraries/{itinerary_uuid}
+PUT    /v1/itineraries/{itinerary_uuid}
+DELETE /v1/itineraries/{itinerary_uuid}
+```
+
+PUT là complete snapshot replacement và DELETE body chỉ có `base_revision`.
+Create dùng revision 0; accepted write tăng integer revision đúng một. `409`
+nghĩa là stale deterministic conflict. Delete tạo durable tombstone nên queued
+PUT cũ không thể recreate itinerary. UID luôn đến từ verified Firebase token,
+không từ body; account khác nhận cùng safe 404 như ID không tồn tại.
+
+Android Room v3 lưu snapshot approved theo SHA-256 account key, local/server
+revision, pending/synced/conflict/failed và deletion state. Explicit save phải
+commit Room trước khi UI báo **đã lưu trên thiết bị**. Sign-out không xóa row
+nhưng làm chúng inaccessible; account B không thấy account A. Unique work theo
+itinerary UUID có network constraint, exponential backoff và tối đa năm attempt.
+Worker reload latest Room row, lấy token ngay trước HTTP, refresh một lần sau
+401, không tự retry conflict/invalid data và chỉ complete khi local revision vẫn
+khớp.
+
+Manual checklist T071 đã hoàn thành ngày 2026-08-04:
+
+1. Dùng hai verified account kiểm tra create/list/get/update/delete ownership và
+   non-enumeration; stale update/delete phải trả conflict ổn định.
+2. Trên Emulator: generate không auto-save; tap save; tắt mạng; force-stop và
+   relaunch; mở saved timeline đúng thứ tự và thấy pending.
+3. Restore mạng để thấy synced; tạo stale revision để thấy conflict nhưng local
+   content còn đọc được; delete rồi chứng minh old queued upload không resurrect.
+4. Sign out, account B, rồi account A để kiểm tra retention/isolation.
+5. Lặp explicit save, offline force-stop/read, sync, isolation và delete trên
+   nubia V60.
+6. Scan backend/Android logs với sentinel content; token, Authorization,
+   UID/email, account key, coordinates, bodies/rows/content không được xuất hiện.
+
+Kết quả: backend ownership/CRUD, stale conflict, tombstone/idempotent delete
+và anti-resurrection đều qua với hai verified account. Emulator và nubia V60
+serial `320143952923` đều qua explicit save, offline force-stop/read đúng thứ
+tự, pending-to-synced, account isolation/retention và delete; ADB reverse đã
+được gỡ. Sentinel itinerary title, token/Authorization, UID/email/account key,
+coordinates, body, database-row content, traceback và provider exception text
+không xuất hiện trong backend hoặc process-only Android logs. Không cấu hình
+OpenAI model; live-model validation không phải completion gate của T071.
+
+Không đặt Firebase token thật trong lệnh, history hoặc tài liệu.
 
 ### Đồng bộ preference riêng tư
 

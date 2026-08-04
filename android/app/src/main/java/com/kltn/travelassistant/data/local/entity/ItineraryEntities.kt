@@ -6,13 +6,45 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "local_itineraries")
+@Entity(
+    tableName = "local_itineraries",
+    indices = [
+        Index(
+            value = ["account_key", "is_deleted", "local_date", "updated_at_epoch_millis"],
+            name = "index_local_itineraries_account_deleted_date_updated",
+        ),
+    ],
+)
 data class LocalItineraryEntity(
     @PrimaryKey
     @ColumnInfo(name = "itinerary_id")
     val itineraryId: String,
     @ColumnInfo(name = "title")
     val title: String,
+    @ColumnInfo(name = "account_key")
+    val accountKey: String,
+    @ColumnInfo(name = "city")
+    val city: String,
+    @ColumnInfo(name = "local_date")
+    val localDate: String,
+    @ColumnInfo(name = "timezone")
+    val timezone: String,
+    @ColumnInfo(name = "start_local_time")
+    val startLocalTime: String,
+    @ColumnInfo(name = "end_local_time")
+    val endLocalTime: String,
+    @ColumnInfo(name = "assumptions_json")
+    val assumptionsJson: String,
+    @ColumnInfo(name = "warnings_json")
+    val warningsJson: String,
+    @ColumnInfo(name = "local_revision")
+    val localRevision: Long,
+    @ColumnInfo(name = "server_revision")
+    val serverRevision: Long,
+    @ColumnInfo(name = "sync_state")
+    val syncState: String,
+    @ColumnInfo(name = "is_deleted")
+    val isDeleted: Boolean,
     @ColumnInfo(name = "created_at_epoch_millis")
     val createdAtEpochMillis: Long,
     @ColumnInfo(name = "updated_at_epoch_millis")

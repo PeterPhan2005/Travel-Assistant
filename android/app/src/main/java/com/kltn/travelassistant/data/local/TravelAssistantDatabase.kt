@@ -34,7 +34,7 @@ import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
         TravelPackageEntity::class,
         PendingSyncOperationEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class TravelAssistantDatabase : RoomDatabase() {

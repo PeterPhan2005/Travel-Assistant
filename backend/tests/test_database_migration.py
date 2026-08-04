@@ -18,6 +18,7 @@ from sqlalchemy.engine import URL, make_url
 EXPECTED_APPLICATION_TABLES = {
     "itineraries",
     "itinerary_items",
+    "itinerary_tombstones",
     "menu_items",
     "narrations",
     "poi_sources",
@@ -219,6 +220,7 @@ def test_initial_migration_round_trips_on_real_postgis(
         "ix_user_preferences_user_id",
         "ix_trips_user_id",
         "ix_itineraries_user_id",
+        "ix_itinerary_tombstones_user_id",
     ):
         assert index_name in indexes
     assert set(first_snapshot["row_counts"].values()) == {0}

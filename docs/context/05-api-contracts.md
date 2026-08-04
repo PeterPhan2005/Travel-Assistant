@@ -112,6 +112,32 @@ remain the strict form contract `HH:mm`; its response codec accepts only the
 canonical whole-minute response representation and rejects format drift or
 nonzero seconds.
 
+## Private saved itineraries under /v1/itineraries
+
+Every route requires a verified Firebase Bearer token. UID/owner is never
+accepted from path, query or body. Cross-owner IDs use the same non-enumerating
+`404 itinerary_not_found` result as absent IDs.
+
+- `GET /v1/itineraries` returns `{"itineraries": [...]}` in deterministic
+  local-date descending, update descending, UUID ascending order.
+- `GET /v1/itineraries/{itinerary_uuid}` returns one current owned snapshot.
+- `PUT /v1/itineraries/{itinerary_uuid}` creates or replaces one complete
+  snapshot. The strict body contains `base_revision`, `title`, `city`,
+  `local_date`, `timezone`, `start_local_time`, `end_local_time`, ordered
+  stable-ID `items`, `assumptions` and `warnings` only.
+- `DELETE /v1/itineraries/{itinerary_uuid}` accepts only
+  `{"base_revision": integer}` and returns
+  `{"id": uuid, "revision": integer, "deleted": true}`.
+
+Create requires `base_revision = 0`; every accepted PUT increments the server
+revision. Update/delete require the exact current revision. A stale revision
+returns stable `409 itinerary_conflict`. Delete stores an owner/revision-backed
+tombstone; repeated delete is idempotent, while every stale PUT remains a
+conflict and cannot recreate the row. Parent and ordered children are written in
+one explicit request-scoped transaction. Contracts reject unknown fields,
+identity, coordinates, notes, audio/transcript, prompt/model/trace metadata and
+arbitrary ORM values.
+
 ## GET /v1/travel-packages/{city}/manifest
 
 Returns package version, size, checksum and asset list.

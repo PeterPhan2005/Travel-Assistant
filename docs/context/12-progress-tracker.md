@@ -5,7 +5,7 @@
 Phase 3 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
-the Room version-2 schema and core DAO layer are complete, and a bundled HCMC
+the Room version-3 schema and core DAO layer are complete, and a bundled HCMC
 demo seed imports safely and idempotently. Explore now has user-triggered,
 one-shot foreground location context with explicit UI states plus offline Room
 search by canonical name, alias and category. Vietnamese text normalization and
@@ -165,11 +165,11 @@ case/aggregate metadata.
 
 ## Current goal
 
-T070 and T062 are complete. The transient form/timeline now uses the
-authenticated structured generation transport with request-scoped backend
-candidate/evidence resolution. T071 is exactly Next Up and has not started; it
-retains persistence, CRUD, offline saved-itinerary reading, synchronization and
-conflict handling.
+T071 is complete. Backend ownership, revision/tombstone behavior, Android Room
+offline persistence and bounded synchronization passed automated checks plus
+two-account, Emulator, nubia V60 and privacy-safe manual validation on the
+deterministic no-model path. Phase 3 continues with T080 as the sole Next Up
+task; it has not been started.
 
 ## Completed
 
@@ -219,6 +219,7 @@ conflict handling.
 - T061 Connect voice query to assistant API.
 - T062 Implement structured itinerary generation transport.
 - T070 Implement itinerary generation UI.
+- T071 Persist and sync itineraries.
 
 ## In progress
 
@@ -226,7 +227,7 @@ conflict handling.
 
 ## Next up
 
-- T071 Persist and sync itineraries.
+- T080 Implement Room full-text search.
 
 ## Open questions
 
@@ -250,6 +251,20 @@ conflict handling.
 - Room version 2 adds only nullable `source_label` to stored narrations through
   explicit migration 1→2. Version-1 rows remain valid, both schemas are tracked
   and no destructive migration fallback is enabled.
+- Room version 3 reuses the existing itinerary/item tables and adds hashed
+  account ownership, approved one-day snapshot fields, local/server integer
+  revisions, typed sync state and local deletion state through migration 2→3.
+  Legacy rows receive an inaccessible sentinel account key; there is no
+  destructive fallback.
+- Saved-itinerary server persistence reuses the T030 itinerary/item schema,
+  adds one integer revision plus approved snapshot columns, and records deletes
+  in an owner/revision tombstone. Full-snapshot PUT and DELETE compare explicit
+  revisions in one request-scoped transaction; timestamps never resolve a
+  conflict.
+- Android retains saved rows after sign-out but every read is filtered by the
+  SHA-256 account key derived from the verified current UID. Unique connected
+  WorkManager work reloads the latest UUID snapshot, obtains an ephemeral token,
+  retries at most five times, and completes only under the same local revision.
 - Nearby search loads HCMC POIs and aliases from Room in two deterministic
   queries, normalizes Vietnamese text in Kotlin and ranks valid coordinates by
   straight-line Haversine distance without a network fallback.
@@ -922,6 +937,16 @@ structured Itinerary draft now both have authenticated Android/backend HTTP
 transport. Itinerary generation is request-scoped and read-only, while saved
 itinerary persistence remains unimplemented and assigned to T071. Live Google
 Places remains unimplemented.
+
+T071 update to the implementation-state row: saved-itinerary persistence and
+synchronization are complete. The backend exposes private owned
+list/get/full-snapshot PUT/delete under `/v1/itineraries`, with explicit integer
+conflicts and durable deletion tombstones. Android Room v3 provides
+hashed-account offline saved reading, read-only timelines, pending/synced/
+conflict/failed status, explicit local deletion and bounded per-itinerary
+WorkManager synchronization. Generation remains read-only and never auto-saves;
+two-account, offline/relaunch, Emulator, nubia V60, conflict, anti-resurrection
+and privacy-log validation passed.
 
 ## Session notes
 
@@ -2550,3 +2575,80 @@ T050 passed 43/43; Pip check passed; Android passed 241 JVM and 124/124 connecte
 tests; `lintDebug`, `testDebugUnitTest` and `assembleDebug` passed. Repository
 diff checks passed. T062 is `done`; In progress is empty; exactly T071 is Next
 Up but remains unstarted. T071/T080/T090 and `tasks/index.json` remain untouched.
+
+T071 implementation began on 2026-08-03 after the clean-worktree, exact
+`HEAD`/`origin/main` SHA `b7cd7d6c6f9dfc821c602aebd11d4979e8a88b4d`, successful
+GitHub CI run 30786049963, T062/T070 completion and sole-Next-Up preconditions
+were verified. The schema audit found T030 already had UUID-owned
+itinerary/items with composite owner/trip protection, unique item position and
+cascade rules, while T013 Room already had stable string IDs, ordered child
+uniqueness and atomic-capable DAO primitives. Neither side had an explicit
+revision, complete saved draft fields, deletion tombstone or account-scoped
+local sync state, so the smallest compatible backend and Room migrations were
+required.
+
+Backend now keeps the existing T030 models and adds one-day city/date/timezone/
+window, assumptions/warnings and integer revision to `itineraries`, plus an
+owner-scoped `itinerary_tombstones` table. Private list/get/PUT/DELETE routes
+derive ownership only from verified Firebase UID. Complete parent/item replace
+and tombstone delete use advisory serialization plus one explicit transaction;
+stale revisions return a typed conflict and stale PUT can never cross a
+tombstone. Strict contracts accept no identity, coordinates, notes, generation
+metadata or unknown fields. Focused Ruff and strict Mypy passed; 25 focused API,
+PostGIS integration, metadata and migration tests passed against Alembic head.
+Final backend verification passed Ruff, strict Mypy over 180 source files,
+all 816 Pytest tests against healthy PostGIS with zero skips/failures, T050
+43/43 fixtures and Pip check with no broken requirements.
+
+Android now uses Room v3 over the existing itinerary/item tables. Explicit save
+validates and atomically writes one UUID snapshot under the SHA-256 account key,
+then reports only local success and schedules unique connected work. Saved rows
+remain on device after sign-out but are hidden from signed-out and other-account
+sessions. The existing Itinerary destination adds an offline library, read-only
+saved timeline, explicit sync state, delete and return-to-generation behavior;
+there is no editing, search, analytics or new top-level destination. Workers
+carry only itinerary UUID, reload the latest Room state, fetch the Firebase token
+immediately, refresh once after 401, retry only bounded connectivity/server or
+newer-local outcomes, and guard completion by local revision. Local tombstones
+delete children immediately and prevent old success from clearing/recreating a
+newer delete. Room migration, repository isolation/persistence, stale-success,
+transport, cancellation, WorkManager-input, Compose and source-policy coverage
+was added. The JVM suite passed 246 tests during implementation; connected,
+and required aggregate `./gradlew test` passed. The API-36 ARM64 Pixel Emulator
+passed 133/133 connected tests with zero skips/failures. `lintDebug`,
+`testDebugUnitTest` and `assembleDebug` passed. `git diff --check` passed and the
+T080/T090/T091 diffs are empty. Source/logging audit found only safe operation
+and result-category logging in T071; no content/body/identity/account/token/
+coordinate logging was added.
+
+T071 completed on 2026-08-04 after supplied manual validation closed every
+remaining gate. PostgreSQL/PostGIS was healthy at Alembic `20260803_0002`, with
+no OpenAI model configuration. Two verified Firebase development accounts
+proved owner-only create/list/get/full-snapshot update/delete and safe
+cross-owner `404` behavior. Valid writes incremented the integer revision;
+stale writes returned typed `409 itinerary_conflict`; delete produced the
+expected revision/tombstone, repeated delete was idempotent and stale PUT could
+not resurrect the itinerary.
+
+On the Emulator, T062 generation did not auto-save. Explicit save first
+reported local-device success, offline save remained pending,
+force-stop/relaunch read the Room timeline in its original order, and reconnect
+moved it to synced. Account B could not see account A rows; returning to account
+A restored its retained library. A live conflict retained readable local
+content, explicit delete removed it locally, and an older queued upload could
+not resurrect it. No automatic generation or save occurred. The same
+explicit-save, offline force-stop/read, online sync, account isolation and
+delete flow passed on nubia V60 serial `320143952923`; its ADB reverse rule was
+removed afterward.
+
+Backend and process-only Emulator/nubia log scans used a unique itinerary-title
+sentinel. The sentinel, token/Authorization, UID/email/account key, coordinates,
+request/response bodies, database-row content, tracebacks and provider exception
+text were absent. Final automated evidence passed Ruff, strict Mypy over 180
+source files, 816 Pytest tests with zero skips/failures, T050 43/43, Pip check,
+246 Android JVM tests, 133/133 connected tests, `lintDebug`,
+`testDebugUnitTest`, `assembleDebug` and migration to `20260803_0002`. This was
+deterministic no-model validation; live OpenAI model validation was not run and
+is not a T071 completion gate. T080 is the sole Next Up task because its T035
+dependency is complete and it is the earliest remaining indexed task. T080,
+T090 and T091 were not started or modified.

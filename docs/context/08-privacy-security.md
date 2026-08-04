@@ -14,13 +14,26 @@
   that receives only closed intent and outcome values; T090 owns any future
   analytics storage.
 - Structured itinerary form values and the optional current in-memory location
-  are used only by the foreground generation request. Android and backend do not
-  persist the request, draft or coordinates in T062; logs omit form values,
-  identity, token, coordinates, itinerary content and raw bodies. Completed
+  are used only by the foreground generation request. T062 does not persist its
+  request or coordinates. After explicit save, T071 persists only the approved
+  saved snapshot: title, city/date/timezone/window, ordered item IDs/titles/times,
+  assumptions, warnings, revisions and sync/deletion state. It persists no form
+  notes, coordinates, Firebase UID/token, transcript, source/claim/trace/model
+  metadata or generation prompt. Logs omit form values, identity, token,
+  coordinates, itinerary content, database rows and raw bodies. Completed
   Emulator/nubia manual review confirmed the sentinel note, Authorization/token,
   UID/email, exact coordinates, itinerary bodies/content and provider failure
   details were absent from backend and process-only Android logs; no audio was
-  uploaded and no itinerary was persisted.
+  uploaded and no itinerary was persisted during T062 validation. T071 then
+  completed separate two-account, Emulator and nubia V60 validation. A unique
+  itinerary-title sentinel, token/Authorization, UID/email/account key,
+  coordinates, request/response bodies, database-row content, tracebacks and
+  provider exception text were absent from backend and process-only Android
+  logs.
+- Android derives a SHA-256 account key from verified UID. Saved rows remain on
+  device after sign-out but are inaccessible until the same verified account
+  returns; another account cannot query them. Worker input contains only the
+  itinerary UUID, never UID/account key/token/content.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
 
 ## Security controls
@@ -33,6 +46,8 @@
 - HTTPS only outside local development.
 - Agent tools receive least privilege.
 - Logs redact authorization headers, exact coordinates and provider secrets.
+- Saved-itinerary CRUD logs only operation, safe result category and aggregate
+  count; they never log snapshot/tombstone content or owner identity.
 
 ## User permissions
 

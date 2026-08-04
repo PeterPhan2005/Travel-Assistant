@@ -54,6 +54,55 @@ class TravelAssistantMigrationTest {
         migrated.close()
     }
 
+    @Test
+    fun migrationTwoToThreePreservesLegacyRowsBehindAnInaccessibleAccountKey() {
+        migrationHelper.createDatabase(TEST_DATABASE_V2, 2).apply {
+            execSQL(
+                """
+                INSERT INTO local_itineraries (
+                    itinerary_id, title, created_at_epoch_millis, updated_at_epoch_millis
+                ) VALUES ('legacy-itinerary', 'Legacy title', 100, 200)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        val migrated = migrationHelper.runMigrationsAndValidate(
+            TEST_DATABASE_V2,
+            3,
+            true,
+            DatabaseMigrations.MIGRATION_2_3,
+        )
+
+        migrated.query(
+            """
+            SELECT account_key, city, local_date, timezone, local_revision,
+                   server_revision, sync_state, is_deleted
+            FROM local_itineraries WHERE itinerary_id = 'legacy-itinerary'
+            """.trimIndent(),
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("0".repeat(64), cursor.getString(0))
+            assertEquals("hcmc", cursor.getString(1))
+            assertEquals("1970-01-01", cursor.getString(2))
+            assertEquals("Asia/Ho_Chi_Minh", cursor.getString(3))
+            assertEquals(0L, cursor.getLong(4))
+            assertEquals(0L, cursor.getLong(5))
+            assertEquals("failed", cursor.getString(6))
+            assertEquals(0, cursor.getInt(7))
+        }
+        migrated.query("PRAGMA index_list(local_itineraries)").use { cursor ->
+            val nameIndex = cursor.getColumnIndexOrThrow("name")
+            var accountIndexExists = false
+            while (cursor.moveToNext()) {
+                accountIndexExists = accountIndexExists || cursor.getString(nameIndex) ==
+                    "index_local_itineraries_account_deleted_date_updated"
+            }
+            assertTrue(accountIndexExists)
+        }
+        migrated.close()
+    }
+
     private fun SupportSQLiteDatabase.insertVersionOnePoi() {
         execSQL(
             """
@@ -83,5 +132,6 @@ class TravelAssistantMigrationTest {
 
     private companion object {
         const val TEST_DATABASE = "t017-migration-test"
+        const val TEST_DATABASE_V2 = "t071-migration-test"
     }
 }

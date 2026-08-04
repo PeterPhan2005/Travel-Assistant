@@ -335,7 +335,7 @@ class ItineraryViewModelTest {
 
     @Test
     fun saveRequiresDraftAndOneExplicitTapInvokesBoundaryExactlyOnce() = runTest {
-        val save = FakeSaveBoundary(result = ItinerarySaveResult.PersistenceUnavailable)
+        val save = FakeSaveBoundary(result = ItinerarySaveResult.SavedLocally)
         val viewModel = viewModel(FakeGenerator(success()), save)
 
         viewModel.save()
@@ -350,7 +350,7 @@ class ItineraryViewModelTest {
 
         assertEquals(listOf(draft()), save.drafts)
         assertEquals(
-            ItinerarySaveUiState.PersistenceUnavailable,
+            ItinerarySaveUiState.SavedLocallyPendingSync,
             viewModel.uiState.value.saveState,
         )
     }
@@ -389,7 +389,7 @@ class ItineraryViewModelTest {
             viewModel.uiState.value.generationState,
         )
 
-        oldSaveGate.complete(ItinerarySaveResult.Saved)
+        oldSaveGate.complete(ItinerarySaveResult.SavedLocally)
         advanceUntilIdle()
 
         assertEquals(1, save.cancelledCalls)
@@ -434,7 +434,7 @@ class ItineraryViewModelTest {
         viewModel.save()
         dispatcher.scheduler.runCurrent()
         viewModel.onScreenLeft()
-        gate.complete(ItinerarySaveResult.Saved)
+        gate.complete(ItinerarySaveResult.SavedLocally)
         advanceUntilIdle()
 
         assertEquals(ItinerarySaveUiState.Idle, viewModel.uiState.value.saveState)
@@ -450,7 +450,7 @@ class ItineraryViewModelTest {
         viewModel.save()
         dispatcher.scheduler.runCurrent()
         viewModel.onAppBackgrounded()
-        gate.complete(ItinerarySaveResult.PersistenceUnavailable)
+        gate.complete(ItinerarySaveResult.AuthenticationRequired)
         advanceUntilIdle()
 
         assertEquals(ItinerarySaveUiState.Idle, viewModel.uiState.value.saveState)
@@ -489,17 +489,17 @@ class ItineraryViewModelTest {
         viewModel.save()
         dispatcher.scheduler.runCurrent()
 
-        newGate.complete(ItinerarySaveResult.PersistenceUnavailable)
+        newGate.complete(ItinerarySaveResult.SavedLocally)
         advanceUntilIdle()
         assertEquals(
-            ItinerarySaveUiState.PersistenceUnavailable,
+            ItinerarySaveUiState.SavedLocallyPendingSync,
             viewModel.uiState.value.saveState,
         )
 
-        oldGate.complete(ItinerarySaveResult.Saved)
+        oldGate.complete(ItinerarySaveResult.SavedLocally)
         advanceUntilIdle()
         assertEquals(
-            ItinerarySaveUiState.PersistenceUnavailable,
+            ItinerarySaveUiState.SavedLocallyPendingSync,
             viewModel.uiState.value.saveState,
         )
     }
@@ -526,7 +526,7 @@ class ItineraryViewModelTest {
         viewModel.save()
         dispatcher.scheduler.runCurrent()
         store.clear()
-        gate.complete(ItinerarySaveResult.Saved)
+        gate.complete(ItinerarySaveResult.SavedLocally)
         advanceUntilIdle()
 
         assertEquals(1, save.cancelledCalls)
@@ -552,7 +552,7 @@ class ItineraryViewModelTest {
         assertEquals(ItineraryUiState(), recreated.uiState.value)
 
         first.onScreenLeft()
-        gate.complete(ItinerarySaveResult.PersistenceUnavailable)
+        gate.complete(ItinerarySaveResult.AuthenticationRequired)
         advanceUntilIdle()
         assertEquals(ItinerarySaveUiState.Idle, first.uiState.value.saveState)
     }
@@ -629,7 +629,7 @@ class ItineraryViewModelTest {
     }
 
     private class FakeSaveBoundary(
-        private val result: ItinerarySaveResult = ItinerarySaveResult.PersistenceUnavailable,
+        private val result: ItinerarySaveResult = ItinerarySaveResult.SavedLocally,
         private val gate: CompletableDeferred<ItinerarySaveResult>? = null,
     ) : ItinerarySaveBoundary {
         val drafts = mutableListOf<ItineraryDraft>()

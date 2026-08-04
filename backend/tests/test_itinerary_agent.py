@@ -1066,4 +1066,6 @@ def test_fastapi_route_set_adds_only_structured_itinerary_generation() -> None:
         "/pois/nearby",
         "/v1/assistant/query",
         "/v1/itinerary-drafts/generate",
+        "/v1/itineraries",
+        "/v1/itineraries/{itinerary_id}",
     }

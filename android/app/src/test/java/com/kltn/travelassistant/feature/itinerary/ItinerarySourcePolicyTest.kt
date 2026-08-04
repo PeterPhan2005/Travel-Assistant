@@ -20,7 +20,7 @@ class ItinerarySourcePolicyTest {
 
     @Test
     fun t070SourceUsesNoPersistenceBackgroundAnalyticsAudioOrLoggingApi() {
-        val source = itinerarySource()
+        val source = t070Source()
         listOf(
             "ItineraryDao",
             "RoomDatabase",
@@ -39,6 +39,48 @@ class ItinerarySourcePolicyTest {
                 source.contains(forbiddenToken),
             )
         }
+    }
+
+    @Test
+    fun t071PersistenceAddsNoSensitiveStorageSearchAnalyticsAudioOrGenerationExecution() {
+        val appProjectDirectory = findAppProjectDirectory()
+        val entitySource = appProjectDirectory
+            .resolve("src/main/java/com/kltn/travelassistant/data/local/entity/ItineraryEntities.kt")
+            .readText()
+        val persistenceSource = appProjectDirectory
+            .resolve("src/main/java/com/kltn/travelassistant/feature/itinerary/data")
+            .walkTopDown()
+            .filter(File::isFile)
+            .filter { it.name.startsWith("SavedItinerary") || it.name ==
+                "RoomSavedItineraryRepository.kt" }
+            .joinToString(separator = "\n", transform = File::readText)
+
+        listOf(
+            "MediaRecorder",
+            "AudioRecord",
+            "FirebaseAnalytics",
+            "FTS4",
+            "FTS5",
+            "MATCH",
+            "AssistantQueryRepository",
+            "ItineraryDraftGenerator",
+            "latitude",
+            "longitude",
+            "Authorization",
+            "token",
+            "firebase_uid",
+            "email",
+        ).forEach { forbiddenToken ->
+            assertFalse(
+                "Room itinerary entities must not persist $forbiddenToken",
+                entitySource.contains(forbiddenToken, ignoreCase = true),
+            )
+        }
+        assertFalse(persistenceSource.contains("FirebaseAnalytics"))
+        assertFalse(persistenceSource.contains("androidx.room.Fts"))
+        assertFalse(persistenceSource.contains("AssistantQueryRepository"))
+        assertFalse(persistenceSource.contains("/v1/itinerary-drafts/generate"))
+        assertTrue(persistenceSource.contains("MAX_ATTEMPTS = 5"))
     }
 
     @Test
@@ -82,6 +124,16 @@ class ItinerarySourcePolicyTest {
             featureDirectory.resolve("domain/ItineraryDraftGenerator.kt"),
             featureDirectory.resolve("domain/ItinerarySaveBoundary.kt"),
             featureDirectory.resolve("presentation/ItineraryUiState.kt"),
+        ).joinToString(separator = "\n", transform = File::readText)
+    }
+
+    private fun t070Source(): String {
+        val featureDirectory = findAppProjectDirectory()
+            .resolve("src/main/java/com/kltn/travelassistant/feature/itinerary")
+        return listOf(
+            featureDirectory.resolve("domain/ItineraryDraftModels.kt"),
+            featureDirectory.resolve("domain/ItineraryDraftGenerator.kt"),
+            featureDirectory.resolve("presentation/ItineraryFormValidator.kt"),
         ).joinToString(separator = "\n", transform = File::readText)
     }
 
