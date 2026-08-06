@@ -47,6 +47,11 @@ Show only fields with data:
 - Persistent but non-blocking offline indicator.
 - Clearly mark “Dữ liệu đã tải ngày…”.
 - Disable unsupported actions with explanation.
+- Khi có location foreground, ô tìm kiếm trong Khám phá tìm hoàn toàn local
+  trong active downloaded HCMC package theo tên, bí danh, món ăn và loại bằng
+  tiếng Việt có hoặc không dấu. Blank query hiển thị toàn bộ POI active; query
+  không có token chữ/số hiển thị no-result an toàn. Kết quả giữ xếp hạng khoảng
+  cách/tên/POI ID và tap tiếp tục mở POI detail canonical bằng stable ID.
 
 ## Itinerary draft UX
 

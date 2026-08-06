@@ -34,6 +34,11 @@
   device after sign-out but are inaccessible until the same verified account
   returns; another account cannot query them. Worker input contains only the
   itinerary UUID, never UID/account key/token/content.
+- Offline POI search keeps both raw and normalized queries transient. They are
+  compiled only into parameterized local Room/FTS operations and are never
+  persisted, logged, uploaded, included in analytics or used to request a
+  Firebase token. Result titles/content, coordinates, database rows and SQL
+  containing user text are likewise excluded from logs.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
 
 ## Security controls

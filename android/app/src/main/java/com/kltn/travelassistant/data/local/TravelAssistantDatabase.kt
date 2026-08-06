@@ -13,6 +13,7 @@ import com.kltn.travelassistant.data.local.entity.LocalMenuItemEntity
 import com.kltn.travelassistant.data.local.entity.LocalNarrationEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiAliasEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiEntity
+import com.kltn.travelassistant.data.local.entity.LocalPoiSearchFtsEntity
 import com.kltn.travelassistant.data.local.entity.PendingSyncOperationEntity
 import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
 
@@ -26,6 +27,7 @@ import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
     entities = [
         LocalPoiEntity::class,
         LocalPoiAliasEntity::class,
+        LocalPoiSearchFtsEntity::class,
         LocalMenuItemEntity::class,
         LocalNarrationEntity::class,
         LocalCultureEntity::class,
@@ -34,7 +36,7 @@ import com.kltn.travelassistant.data.local.entity.TravelPackageEntity
         TravelPackageEntity::class,
         PendingSyncOperationEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class TravelAssistantDatabase : RoomDatabase() {

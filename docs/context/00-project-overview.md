@@ -41,10 +41,14 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
   có được giữ nguyên; Hilt, ViewModel/StateFlow và repository boundaries đã được
   thiết lập. Top-level Navigation Compose và Material 3 theme tập trung đã hoàn
   thành với năm destination.
-- Room version-3 schema và core DAO layer đã có; một bundled HCMC demo seed được
+- Room version-4 schema và core DAO layer đã có; một bundled HCMC demo seed được
   import an toàn và idempotent. Explore dùng location context foreground một lần
-  để tìm POI offline trong Room theo tên, bí danh và loại, chuẩn hóa dấu tiếng
-  Việt, rồi xếp hạng bằng khoảng cách đường thẳng Haversine. Itinerary nay có
+  để tìm POI hoàn toàn offline trong active HCMC package qua contentless FTS4
+  index dẫn xuất từ tên canonical, bí danh, món ăn, loại raw và nhãn loại tiếng
+  Việt. Query được chuẩn hóa dấu/case tiếng Việt, compile thành prefix token an
+  toàn rồi xếp hạng bằng khoảng cách đường thẳng Haversine, tên chuẩn hóa và POI
+  ID ổn định. Migration 3→4 backfill index mà không thay đổi canonical package
+  data hay trạng thái itinerary/account của T071. Itinerary nay có
   biểu mẫu tạo bản nháp một ngày cho HCMC/Bangkok, validation local, state
   loading/cancel/retry typed, timeline draft được kiểm tra fail-closed, warning
   hiển thị đầy đủ và nút lưu explicit. T062 nối form này với private

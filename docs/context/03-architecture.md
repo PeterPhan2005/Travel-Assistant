@@ -51,6 +51,24 @@ Specialists run through separate agent executions with scoped structured input. 
 - Saved-itinerary full-snapshot synchronization uses explicit integer revisions;
   timestamp-only last-write-wins and semantic merge are forbidden.
 
+## Offline full-text search
+
+- Canonical POI, alias, menu and package-metadata tables remain the source of
+  truth. Room v4 adds one contentless FTS4 row per POI with `unicode61` token
+  handling and separately normalized name, aliases, dishes and raw/localized
+  category text.
+- Migration 3→4 creates and backfills the derived index while preserving all
+  package and T071 itinerary/account state. POI, alias and menu writes rebuild
+  only affected POI rows in the same Room transaction; POI/package deletion
+  removes corresponding FTS rows before replacement data is inserted.
+- Search compiles Unicode letter/number tokens into parameterized quoted-prefix
+  MATCH data. Raw query punctuation, quotes, wildcard characters and
+  operator-like text are never executable FTS syntax.
+- Results are limited to the HCMC package with complete active metadata, are
+  independent of Firebase authentication, and have no network fallback. Valid
+  coordinates are ranked by distance, normalized display name and stable POI
+  ID; duplicate field matches still yield one result.
+
 ## Saved-itinerary persistence
 
 - Existing PostgreSQL `itineraries`/`itinerary_items` remain canonical. T071

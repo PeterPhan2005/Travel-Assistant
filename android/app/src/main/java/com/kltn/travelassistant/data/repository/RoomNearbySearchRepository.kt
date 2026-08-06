@@ -7,8 +7,9 @@ import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
 import com.kltn.travelassistant.feature.nearby.domain.NearbyPoiRanking
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
+import com.kltn.travelassistant.feature.nearby.domain.CompiledOfflineSearchQuery
+import com.kltn.travelassistant.feature.nearby.domain.OfflineSearchQueryCompiler
 import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabels
-import com.kltn.travelassistant.feature.nearby.domain.VietnameseTextNormalizer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -28,32 +29,17 @@ class RoomNearbySearchRepository @Inject constructor(
         if (!origin.isValid) return@withContext NearbySearchResult.InvalidLocation
 
         try {
-            val pois = poiContentDao.getPoisByCity(HO_CHI_MINH_CITY)
-            val aliasesByPoiId = if (pois.isEmpty()) {
-                emptyMap()
-            } else {
-                poiContentDao.getAliasesForPois(pois.map { poi -> poi.poiId })
-                    .groupBy { alias -> alias.poiId }
+            val pois = when (val compiledQuery = OfflineSearchQueryCompiler.compile(query)) {
+                CompiledOfflineSearchQuery.Blank ->
+                    poiContentDao.getActivePackagePoisByCity(HO_CHI_MINH_CITY)
+                CompiledOfflineSearchQuery.NoSearchableTerms -> emptyList()
+                is CompiledOfflineSearchQuery.Match -> poiContentDao.searchActivePackagePois(
+                    city = HO_CHI_MINH_CITY,
+                    matchExpression = compiledQuery.expression,
+                )
             }
-            val normalizedQuery = VietnameseTextNormalizer.normalize(query)
             val nearbyPois = pois.mapNotNull { poi ->
                 val categoryLabel = PoiCategoryLabels.labelFor(poi.category)
-                val searchableValues = buildList {
-                    add(poi.name)
-                    add(poi.category)
-                    add(PoiCategoryLabels.searchTextFor(categoryLabel))
-                    aliasesByPoiId[poi.poiId].orEmpty().forEach { alias ->
-                        add(alias.alias)
-                        add(alias.normalizedAlias)
-                    }
-                }
-                if (normalizedQuery.isNotEmpty() && searchableValues.none { value ->
-                        VietnameseTextNormalizer.normalize(value).contains(normalizedQuery)
-                    }
-                ) {
-                    return@mapNotNull null
-                }
-
                 val distance = GeographicDistance.metresBetween(
                     origin = origin,
                     destination = GeographicCoordinate(poi.latitude, poi.longitude),

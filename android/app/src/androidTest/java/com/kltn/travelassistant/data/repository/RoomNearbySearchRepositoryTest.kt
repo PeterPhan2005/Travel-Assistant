@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kltn.travelassistant.data.local.TravelAssistantDatabase
+import com.kltn.travelassistant.data.local.entity.LocalMenuItemEntity
+import com.kltn.travelassistant.data.local.entity.LocalPoiAliasEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiEntity
 import com.kltn.travelassistant.data.seed.BundledHcmcSeedSource
 import com.kltn.travelassistant.data.seed.RoomCuratedSeedImporter
@@ -82,6 +84,156 @@ class RoomNearbySearchRepositoryTest {
             listOf("hcmc-poi-war-remnants-museum"),
             searchIds("bao tang"),
         )
+    }
+
+    @Test
+    fun dishQueriesUseVietnameseNormalizationAndReturnOneStablePoi() = runTest {
+        val poiId = "hcmc-poi-ben-thanh-market"
+        database.poiContentDao().upsertMenuItems(
+            listOf(
+                LocalMenuItemEntity(
+                    menuItemId = "menu-pho-bo",
+                    poiId = poiId,
+                    dishName = "Phở bò đặc biệt",
+                    priceMinorUnits = 75_000,
+                    currencyCode = "VND",
+                    sourceType = "official_operator",
+                    updatedAtEpochMillis = 1,
+                ),
+                LocalMenuItemEntity(
+                    menuItemId = "menu-pho-bo-second",
+                    poiId = poiId,
+                    dishName = "Phở bò",
+                    priceMinorUnits = 65_000,
+                    currencyCode = "VND",
+                    sourceType = "official_operator",
+                    updatedAtEpochMillis = 1,
+                ),
+            ),
+        )
+
+        assertEquals(listOf(poiId), searchIds("PHO BO DAC BIET"))
+        assertEquals(listOf(poiId), searchIds("phở bò đặc biệt"))
+    }
+
+    @Test
+    fun canonicalUpdatesAndDeletesCannotLeaveSearchableStaleRows() = runTest {
+        val poiId = "hcmc-poi-ben-thanh-market"
+        database.poiContentDao().upsertAliases(
+            listOf(
+                LocalPoiAliasEntity(
+                    aliasId = "mutable-alias",
+                    poiId = poiId,
+                    alias = "Tên cũ độc nhất",
+                    normalizedAlias = "ten cu doc nhat",
+                    languageCode = "vi",
+                ),
+            ),
+        )
+        assertEquals(listOf(poiId), searchIds("ten cu doc nhat"))
+
+        database.poiContentDao().upsertAliases(
+            listOf(
+                LocalPoiAliasEntity(
+                    aliasId = "mutable-alias",
+                    poiId = poiId,
+                    alias = "Tên mới độc nhất",
+                    normalizedAlias = "ten moi doc nhat",
+                    languageCode = "vi",
+                ),
+            ),
+        )
+        assertEquals(emptyList<String>(), searchIds("ten cu doc nhat"))
+        assertEquals(listOf(poiId), searchIds("ten moi doc nhat"))
+
+        val oldMenu = LocalMenuItemEntity(
+            menuItemId = "mutable-menu",
+            poiId = poiId,
+            dishName = "Món cũ độc nhất",
+            priceMinorUnits = 1,
+            currencyCode = "VND",
+            sourceType = "official_operator",
+            updatedAtEpochMillis = 1,
+        )
+        database.poiContentDao().upsertMenuItems(listOf(oldMenu))
+        assertEquals(listOf(poiId), searchIds("mon cu doc nhat"))
+        database.poiContentDao().upsertMenuItems(
+            listOf(oldMenu.copy(dishName = "Món mới độc nhất")),
+        )
+        assertEquals(emptyList<String>(), searchIds("mon cu doc nhat"))
+        assertEquals(listOf(poiId), searchIds("mon moi doc nhat"))
+
+        assertEquals(1, database.poiContentDao().deletePoi(poiId))
+        assertEquals(emptyList<String>(), searchIds("ten moi doc nhat"))
+        database.openHelper.writableDatabase.query(
+            "SELECT COUNT(*) FROM local_poi_search_fts WHERE poi_id = ?",
+            arrayOf(poiId),
+        ).use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun indexContainsOnlyAcceptedNormalizedFields() = runTest {
+        val poiId = "hcmc-poi-war-remnants-museum"
+        database.poiContentDao().upsertMenuItems(
+            listOf(
+                LocalMenuItemEntity(
+                    menuItemId = "menu-coffee",
+                    poiId = poiId,
+                    dishName = "Cà phê sữa",
+                    priceMinorUnits = 50_000,
+                    currencyCode = "VND",
+                    sourceType = "official_operator",
+                    updatedAtEpochMillis = 1,
+                ),
+            ),
+        )
+
+        database.openHelper.writableDatabase.query(
+            """
+            SELECT normalized_name, normalized_aliases, normalized_dishes,
+                   normalized_categories
+            FROM local_poi_search_fts WHERE poi_id = ?
+            """.trimIndent(),
+            arrayOf(poiId),
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("bao tang chung tich chien tranh", cursor.getString(0))
+            assertEquals("war remnants museum", cursor.getString(1))
+            assertEquals("ca phe sua", cursor.getString(2))
+            assertEquals("museum bao tang", cursor.getString(3))
+        }
+    }
+
+    @Test
+    fun noValidActivePackageReturnsNoRows() = runTest {
+        val active = database.travelPackageDao().getLatestPackage(
+            RoomNearbySearchRepository.HO_CHI_MINH_CITY,
+        )!!
+        database.travelPackageDao().deletePackagesByCity(
+            RoomNearbySearchRepository.HO_CHI_MINH_CITY,
+        )
+
+        assertEquals(emptyList<String>(), searchIds(""))
+        assertEquals(emptyList<String>(), searchIds("ben thanh"))
+
+        database.travelPackageDao().upsertPackage(active)
+        assertEquals(5, searchIds("").size)
+    }
+
+    @Test
+    fun punctuationQuotesWildcardsAndOperatorLikeTextAreControlledData() = runTest {
+        listOf(
+            "'\"%_-*",
+            "OR",
+            "NEAR",
+            "MATCH",
+            "museum OR market",
+        ).forEach { query ->
+            assertTrue(repository.search(BEN_THANH_LATITUDE, BEN_THANH_LONGITUDE, query) is NearbySearchResult.Success)
+        }
     }
 
     @Test

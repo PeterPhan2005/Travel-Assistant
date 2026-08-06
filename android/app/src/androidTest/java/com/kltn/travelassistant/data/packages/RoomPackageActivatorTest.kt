@@ -7,13 +7,18 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kltn.travelassistant.data.local.TravelAssistantDatabase
 import com.kltn.travelassistant.data.local.entity.LocalItineraryEntity
 import com.kltn.travelassistant.data.local.entity.LocalItineraryItemEntity
+import com.kltn.travelassistant.data.local.entity.LocalMenuItemEntity
+import com.kltn.travelassistant.data.local.entity.LocalPoiAliasEntity
 import com.kltn.travelassistant.data.local.entity.LocalPoiEntity
+import com.kltn.travelassistant.data.repository.RoomNearbySearchRepository
 import com.kltn.travelassistant.data.seed.BundledHcmcSeedSource
 import com.kltn.travelassistant.data.seed.RoomCuratedSeedImporter
 import com.kltn.travelassistant.data.seed.SeedDocumentParser
 import com.kltn.travelassistant.data.seed.SeedImportResult
 import com.kltn.travelassistant.data.seed.SeedValidator
 import com.kltn.travelassistant.feature.downloads.domain.PackageCity
+import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
+import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -73,6 +78,41 @@ class RoomPackageActivatorTest {
         assertEquals(2, hcmcPois().size)
         assertEquals("hcmc-starter-v1", database.travelPackageDao()
             .getLatestPackage(PackageCity.HCMC.displayName)?.packageId)
+    }
+
+    @Test
+    fun replacementAtomicallyRemovesOldIndexAndSearchesNewAliasAndDish() = runTest {
+        seedImporter().importSeed()
+        val postOfficeId = "hcmc-poi-central-post-office"
+        val replacement = validatedPackage().copy(
+            aliases = listOf(
+                LocalPoiAliasEntity(
+                    aliasId = "hcmc-alias-new-post-office",
+                    poiId = postOfficeId,
+                    alias = "Bưu điện mới",
+                    normalizedAlias = "buu dien moi",
+                    languageCode = "vi",
+                ),
+            ),
+            menuItems = listOf(
+                LocalMenuItemEntity(
+                    menuItemId = "hcmc-menu-new-coffee",
+                    poiId = postOfficeId,
+                    dishName = "Cà phê sữa đá",
+                    priceMinorUnits = 45_000,
+                    currencyCode = "VND",
+                    sourceType = "official_operator",
+                    updatedAtEpochMillis = 1_785_085_200_000,
+                ),
+            ),
+        )
+
+        assertEquals(PackageActivationResult.ACTIVATED, activator.activate(replacement))
+
+        val repository = RoomNearbySearchRepository(database.poiContentDao())
+        assertEquals(listOf(postOfficeId), searchIds(repository, "buu dien moi"))
+        assertEquals(listOf(postOfficeId), searchIds(repository, "ca phe sua da"))
+        assertEquals(emptyList<String>(), searchIds(repository, "Independence Palace"))
     }
 
     @Test
@@ -248,6 +288,17 @@ class RoomPackageActivatorTest {
 
     private suspend fun hcmcPois(): List<LocalPoiEntity> =
         database.poiContentDao().getPoisByCity(PackageCity.HCMC.displayName)
+
+    private suspend fun searchIds(
+        repository: RoomNearbySearchRepository,
+        query: String,
+    ): List<String> = (
+        repository.search(
+            latitude = 10.7799,
+            longitude = 106.7,
+            query = query,
+        ) as NearbySearchResult.Success
+        ).pois.map(NearbyPoi::poiId)
 
     private fun bangkokPoi() = LocalPoiEntity(
         poiId = "bkk-poi-temple",

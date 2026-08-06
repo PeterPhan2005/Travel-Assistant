@@ -5,11 +5,13 @@
 Phase 3 is in progress. The Android architecture shell is present, with Hilt,
 ViewModel/StateFlow and repository boundaries established. The top-level
 Navigation Compose shell and centralized Material 3 theme are complete;
-the Room version-3 schema and core DAO layer are complete, and a bundled HCMC
+the Room version-4 schema and core DAO layer are complete, and a bundled HCMC
 demo seed imports safely and idempotently. Explore now has user-triggered,
 one-shot foreground location context with explicit UI states plus offline Room
-search by canonical name, alias and category. Vietnamese text normalization and
-deterministic straight-line Haversine ranking run locally. Nearby rows open a
+FTS4 search over canonical name, aliases, dishes and raw/localized category,
+limited to the active HCMC package. Vietnamese text normalization, safely
+compiled prefix terms and deterministic straight-line Haversine/name/ID ranking
+run locally without authentication or network fallback. Nearby rows open a
 Room-backed local detail screen while preserving Explore state. Optional fields,
 menus and sourced narration are omitted when absent; stored menu prices show
 currency-safe formatting and an update date. The bundled seed still contains no
@@ -165,11 +167,8 @@ case/aggregate metadata.
 
 ## Current goal
 
-T071 is complete. Backend ownership, revision/tombstone behavior, Android Room
-offline persistence and bounded synchronization passed automated checks plus
-two-account, Emulator, nubia V60 and privacy-safe manual validation on the
-deterministic no-model path. Phase 3 continues with T080 as the sole Next Up
-task; it has not been started.
+T080 is complete. No task is in progress. T090 is the sole Next Up task because
+its T018, T061 and T070 dependencies are complete; it has not been started.
 
 ## Completed
 
@@ -220,6 +219,7 @@ task; it has not been started.
 - T062 Implement structured itinerary generation transport.
 - T070 Implement itinerary generation UI.
 - T071 Persist and sync itineraries.
+- T080 Implement Room full-text search.
 
 ## In progress
 
@@ -227,7 +227,7 @@ task; it has not been started.
 
 ## Next up
 
-- T080 Implement Room full-text search.
+- T090 Instrument MVP KPIs.
 
 ## Open questions
 
@@ -256,6 +256,15 @@ task; it has not been started.
   revisions, typed sync state and local deletion state through migration 2→3.
   Legacy rows receive an inaccessible sentinel account key; there is no
   destructive fallback.
+- Room version 4 adds a contentless `unicode61` FTS4 index derived from
+  canonical POI names, aliases, menu dishes and raw/localized categories.
+  Explicit migration 3→4 backfills one normalized row per POI without changing
+  package or T071 itinerary/account rows. Transactional DAO writes rebuild only
+  affected POIs and package replacement deletes old graph/index rows before
+  inserting the new graph. Search requires complete active-package metadata,
+  compiles Unicode letter/number input into parameterized quoted prefix terms,
+  suppresses duplicate matches and ranks by distance, normalized name and
+  stable POI ID. It is independent of Firebase and has no network fallback.
 - Saved-itinerary server persistence reuses the T030 itinerary/item schema,
   adds one integer revision plus approved snapshot columns, and records deletes
   in an owner/revision tombstone. Full-snapshot PUT and DELETE compare explicit
@@ -265,9 +274,10 @@ task; it has not been started.
   SHA-256 account key derived from the verified current UID. Unique connected
   WorkManager work reloads the latest UUID snapshot, obtains an ephemeral token,
   retries at most five times, and completes only under the same local revision.
-- Nearby search loads HCMC POIs and aliases from Room in two deterministic
-  queries, normalizes Vietnamese text in Kotlin and ranks valid coordinates by
-  straight-line Haversine distance without a network fallback.
+- Nearby search queries the Room v4 FTS index only for the active HCMC package,
+  maps canonical POIs to typed domain rows, then ranks valid coordinates by
+  straight-line Haversine distance, normalized name and stable POI ID without a
+  network fallback.
 - POI detail navigation passes only the stable POI ID through `poi/{poiId}`.
   A Hilt-created detail ViewModel loads one transaction-safe POI/menu/Vietnamese
   narration snapshot from Room, exposes Loading, Content, NotFound and Error,
@@ -947,6 +957,13 @@ conflict/failed status, explicit local deletion and bounded per-itinerary
 WorkManager synchronization. Generation remains read-only and never auto-saves;
 two-account, offline/relaunch, Emulator, nubia V60, conflict, anti-resurrection
 and privacy-log validation passed.
+
+T080 completion update to the implementation-state row: Android Room v4 adds
+active-package, authentication-independent FTS4 search over normalized POI
+names, aliases, dishes and raw/localized categories. Migration 3→4 and every
+canonical package mutation keep the derived index consistent; raw queries are
+never accepted as MATCH syntax. Automated, offline Emulator, Network Inspector,
+nubia V60 and privacy validation are complete.
 
 ## Session notes
 
@@ -2652,3 +2669,82 @@ deterministic no-model validation; live OpenAI model validation was not run and
 is not a T071 completion gate. T080 is the sole Next Up task because its T035
 dependency is complete and it is the earliest remaining indexed task. T080,
 T090 and T091 were not started or modified.
+
+T080 implementation reached automated-validation complete on 2026-08-04 while
+remaining `in_progress` for manual validation. Room moved exactly once from v3
+to v4 with an exported contentless `unicode61` FTS4 schema. Explicit migration
+3→4 creates and backfills normalized name, alias, dish and raw/localized
+category columns from canonical POI graph rows. It preserves the verified T071
+account key, one-day snapshot fields, warnings/assumptions, local/server
+revisions, conflict/deletion state and ordered item link; runtime schema
+validation and `PRAGMA foreign_key_check` pass. POI/alias/menu upserts rebuild
+only affected IDs in their Room transaction, while POI/city deletion and
+package replacement remove stale FTS rows before reinsertion.
+
+Explore now sends blank input to an active-package-only canonical POI query and
+nonblank Unicode letter/number tokens to a parameterized, application-compiled
+quoted-prefix MATCH query. Punctuation, quotes, `%`, `_` and operator-like text
+cannot become FTS syntax; punctuation-only nonblank input returns a controlled
+empty result. Existing Vietnamese case/diacritic normalization is reused.
+Canonical typed results retain T016 location validation, invalid-coordinate
+exclusion, Haversine distance and localized category mapping, with deterministic
+distance, normalized-name and stable-POI-ID ranking. Multiple indexed fields or
+duplicate dishes still return one POI. Search has no accepted query-length or
+result-count cap, so none was invented; a 1,000-code-point Unicode term is
+covered without truncation.
+
+Final automated evidence passed 253/253 JVM tests and 140/140 connected tests on
+the API-36 ARM64 Pixel 7 Emulator with zero skips/failures. The focused v3→v4
+migration, repository and package-replacement run passed 18/18. Exact aggregate
+`./gradlew test --no-daemon --stacktrace` passed; `./gradlew lintDebug
+testDebugUnitTest assembleDebug --no-daemon --stacktrace` passed with lint and
+debug APK output. `git diff --check`, task-index JSON validation, exported-schema
+runtime validation and all boundary diffs passed. Backend, T090 and T091 diffs
+are empty; no secret/local configuration is present. Source-policy and direct
+source scans found no offline-search transport, Firebase/OpenAI/token request,
+analytics, telemetry, logging or destructive-migration boundary.
+
+T080 completed on 2026-08-06 after supplied manual validation closed every
+remaining gate. On the Emulator, active-package blank search, airplane mode with
+Wi-Fi disabled, offline cold start, force-stop/relaunch, accented/unaccented
+Vietnamese names, aliases and dishes, raw/localized categories, punctuation and
+FTS-operator-like input, localized no-result state, deterministic ordering and
+canonical stable-ID detail navigation all passed. Controlled production package
+replacement removed stale terms, and replacement alias/dish terms remained
+searchable offline after relaunch. T016, T019 and T071 regression observations
+passed; search triggered no itinerary operation or analytics event.
+
+Android Studio Network Inspector observed explicit Emulator search actions only
+for the selected application process and action timestamps. It found no HTTP,
+Firebase-token, backend or provider request. The nonempty Emulator process-only
+privacy scan passed.
+
+The same offline flow passed on nubia NX721J serial `320143952923`: active-
+package blank/nonblank search, accented/unaccented name, alias, dish and category
+input, punctuation/operator safety, no-result behavior, canonical detail
+navigation, airplane-mode/Wi-Fi-disabled cold start and relaunch, stale-index
+removal and deterministic ordering. The search-generated network-request check
+and process privacy gate passed. Stable PID/UID-scoped capture emitted zero app
+log records; independent source-policy and nonempty Emulator scans confirmed
+absence of sensitive logging. Network Inspector independently confirmed the
+absence of search-generated application requests; no production logging was
+added to manufacture nonempty evidence.
+
+Cleanup restored airplane mode off and Wi-Fi on, removed the temporary HTTP
+proxy and all ADB reverse mappings, and removed temporary package hosting and
+artifacts. Manual validation changed no repository file, added no secret and
+required no OpenAI model, endpoint or API key.
+
+The accepted automated evidence remains 253/253 JVM tests and 140/140 connected
+tests with zero failures, errors or skips; the focused migration/search/package
+run passed 18/18. `./gradlew test`, `lintDebug`, `testDebugUnitTest`,
+`assembleDebug`, exported-schema validation, source-policy checks and repository
+diff checks passed. Room moved exactly once from version 3 to version 4, the
+contentless FTS4 index uses `unicode61`, migration 3→4 preserved all T071
+account/snapshot/order/revision/sync/conflict/deletion and foreign-key state, and
+no destructive fallback was added. Backend, T090 and T091 remained untouched.
+
+Completed now includes T080; In progress is empty. T090 is the sole Next Up task
+by index order because T018, T061 and T070 are complete. T090 was selected only
+in documentation and was not edited or started; T091 remains blocked on T090.
+No commit or push was made.

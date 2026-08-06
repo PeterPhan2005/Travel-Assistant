@@ -12,6 +12,7 @@ import java.util.ArrayDeque
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -262,6 +264,35 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun cancelledStaleSearchCannotReplaceTheLatestResults() = runTest(dispatcher) {
+        val staleResult = CompletableDeferred<NearbySearchResult>()
+        val latestResult = CompletableDeferred<NearbySearchResult>()
+        val repository = StaleResultNearbySearchRepository(staleResult, latestResult)
+        val viewModel = createViewModel(nearbySearchRepository = repository)
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        viewModel.onNearbyQueryChanged("old")
+        runCurrent()
+        viewModel.onNearbyQueryChanged("new")
+        runCurrent()
+        latestResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.last())))
+        runCurrent()
+
+        assertEquals(
+            NearbySearchUiState.Content(listOf(defaultNearbyPois.last())),
+            viewModel.uiState.value.nearbySearchState,
+        )
+
+        staleResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.first())))
+        advanceUntilIdle()
+        assertEquals(
+            NearbySearchUiState.Content(listOf(defaultNearbyPois.last())),
+            viewModel.uiState.value.nearbySearchState,
+        )
+    }
+
+    @Test
     fun refreshedLocationRecomputesNearbyOrderingAndDistance() = runTest(dispatcher) {
         val refreshedLocation = testLocation.copy(latitude = 10.7000)
         val repository = FakeNearbySearchRepository { request ->
@@ -356,6 +387,22 @@ class HomeViewModelTest {
         override suspend fun getCurrentLocation(): LocationAcquisitionResult {
             requestCount += 1
             return result.await()
+        }
+    }
+
+    private class StaleResultNearbySearchRepository(
+        private val staleResult: CompletableDeferred<NearbySearchResult>,
+        private val latestResult: CompletableDeferred<NearbySearchResult>,
+    ) : NearbySearchRepository {
+        override suspend fun search(
+            latitude: Double,
+            longitude: Double,
+            query: String,
+        ): NearbySearchResult = when (query) {
+            "" -> NearbySearchResult.Success(defaultNearbyPois)
+            "old" -> withContext(NonCancellable) { staleResult.await() }
+            "new" -> latestResult.await()
+            else -> error("Unexpected query")
         }
     }
 

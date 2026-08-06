@@ -164,7 +164,7 @@
     <string name="nearby_section_title">Địa điểm gần đây</string>
     <string name="nearby_location_required">Hãy dùng vị trí hiện tại để xem các địa điểm gần bạn.</string>
     <string name="nearby_search_label">Tìm địa điểm gần đây</string>
-    <string name="nearby_search_placeholder">Tên, loại hoặc bí danh</string>
+    <string name="nearby_search_placeholder">Tên, loại, bí danh hoặc món ăn</string>
     <string name="nearby_straight_line_notice">Khoảng cách đường thẳng ước tính từ vị trí hiện tại.</string>
     <string name="nearby_loading">Đang tìm trong dữ liệu có sẵn trên thiết bị…</string>
     <string name="nearby_empty">Không tìm thấy địa điểm phù hợp trong dữ liệu trên thiết bị.</string>
