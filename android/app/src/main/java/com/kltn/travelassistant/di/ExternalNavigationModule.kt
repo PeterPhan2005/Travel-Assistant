@@ -5,7 +5,7 @@ import com.kltn.travelassistant.navigation.external.AndroidExternalMapActivityGa
 import com.kltn.travelassistant.navigation.external.ExternalNavigationAnalytics
 import com.kltn.travelassistant.navigation.external.ExternalNavigationLauncher
 import com.kltn.travelassistant.navigation.external.ExternalMapActivityGateway
-import com.kltn.travelassistant.navigation.external.NoOpExternalNavigationAnalytics
+import com.kltn.travelassistant.navigation.external.ProductExternalNavigationAnalytics
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -30,6 +30,6 @@ abstract class ExternalNavigationModule {
     @Binds
     @Singleton
     abstract fun bindExternalNavigationAnalytics(
-        implementation: NoOpExternalNavigationAnalytics,
+        implementation: ProductExternalNavigationAnalytics,
     ): ExternalNavigationAnalytics
 }

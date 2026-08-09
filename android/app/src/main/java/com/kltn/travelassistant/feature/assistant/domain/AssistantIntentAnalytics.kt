@@ -6,9 +6,15 @@ enum class AssistantIntentOutcome {
     FAILED,
 }
 
+enum class AssistantIntentInputMode {
+    MANUAL,
+    VOICE,
+}
+
 interface AssistantIntentAnalytics {
     fun record(
         intent: AssistantIntent,
         outcome: AssistantIntentOutcome,
+        inputMode: AssistantIntentInputMode,
     )
 }

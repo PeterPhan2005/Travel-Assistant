@@ -2,6 +2,12 @@ package com.kltn.travelassistant.feature.itinerary.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kltn.travelassistant.analytics.ItineraryCreationOutcome
+import com.kltn.travelassistant.analytics.ItineraryFailureCategory
+import com.kltn.travelassistant.analytics.NoOpProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalyticsEvent
+import com.kltn.travelassistant.analytics.trackSafely
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftFailure
@@ -31,6 +37,7 @@ class ItineraryViewModel @Inject internal constructor(
     private val generator: ItineraryDraftGenerator,
     private val saveBoundary: ItinerarySaveBoundary,
     private val savedItineraryRepository: SavedItineraryRepository = EmptySavedItineraryRepository,
+    private val productAnalytics: ProductAnalytics = NoOpProductAnalytics,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(ItineraryUiState())
     internal val uiState: StateFlow<ItineraryUiState> = mutableUiState.asStateFlow()
@@ -202,7 +209,9 @@ class ItineraryViewModel @Inject internal constructor(
             ?.itineraries
             ?.firstOrNull { it.id == itineraryId }
             ?: return
+        if (selectedSavedItineraryId == saved.id) return
         selectedSavedItineraryId = saved.id
+        productAnalytics.trackSafely(ProductAnalyticsEvent.TripReturn)
         mutableUiState.update { state ->
             state.copy(
                 openedSavedItinerary = saved,
@@ -258,6 +267,11 @@ class ItineraryViewModel @Inject internal constructor(
     private fun execute(request: ItineraryDraftRequest) {
         cancelActiveSave()
         val requestId = ++generationId
+        productAnalytics.trackSafely(
+            ProductAnalyticsEvent.ItineraryCreation(
+                outcome = ItineraryCreationOutcome.ATTEMPTED,
+            ),
+        )
         mutableUiState.update { state ->
             state.copy(
                 generationState = ItineraryGenerationUiState.Loading,
@@ -276,8 +290,10 @@ class ItineraryViewModel @Inject internal constructor(
             }
             if (requestId != generationId) return@launch
             generationJob = null
+            val generationState = result.toUiState(request)
+            productAnalytics.trackSafely(result.toAnalyticsEvent(generationState))
             mutableUiState.update { state ->
-                state.copy(generationState = result.toUiState(request))
+                state.copy(generationState = generationState)
             }
         }
     }
@@ -307,6 +323,11 @@ class ItineraryViewModel @Inject internal constructor(
         val active = generationJob?.isActive == true
         if (!active) return
         generationId += 1
+        productAnalytics.trackSafely(
+            ProductAnalyticsEvent.ItineraryCreation(
+                outcome = ItineraryCreationOutcome.CANCELLED,
+            ),
+        )
         generationJob?.cancel()
         generationJob = null
         if (showCancelled) {
@@ -329,6 +350,41 @@ class ItineraryViewModel @Inject internal constructor(
         }
     }
 }
+
+private fun ItineraryDraftGenerationResult.toAnalyticsEvent(
+    generationState: ItineraryGenerationUiState,
+): ProductAnalyticsEvent.ItineraryCreation = when (this) {
+    is ItineraryDraftGenerationResult.Success -> if (
+        generationState is ItineraryGenerationUiState.Content
+    ) {
+        ProductAnalyticsEvent.ItineraryCreation(
+            outcome = ItineraryCreationOutcome.SUCCEEDED,
+        )
+    } else {
+        ProductAnalyticsEvent.ItineraryCreation(
+            outcome = ItineraryCreationOutcome.FAILED,
+            failureCategory = ItineraryFailureCategory.INVALID_RESPONSE,
+        )
+    }
+    is ItineraryDraftGenerationResult.Failure -> ProductAnalyticsEvent.ItineraryCreation(
+        outcome = ItineraryCreationOutcome.FAILED,
+        failureCategory = reason.toAnalyticsFailureCategory(),
+    )
+}
+
+private fun ItineraryDraftFailure.toAnalyticsFailureCategory(): ItineraryFailureCategory =
+    when (this) {
+        ItineraryDraftFailure.OFFLINE -> ItineraryFailureCategory.OFFLINE
+        ItineraryDraftFailure.AUTHENTICATION_REQUIRED ->
+            ItineraryFailureCategory.AUTHENTICATION_REQUIRED
+        ItineraryDraftFailure.INVALID_REQUEST -> ItineraryFailureCategory.INVALID_REQUEST
+        ItineraryDraftFailure.TIMEOUT -> ItineraryFailureCategory.TIMEOUT
+        ItineraryDraftFailure.RATE_LIMITED -> ItineraryFailureCategory.RATE_LIMITED
+        ItineraryDraftFailure.UNAVAILABLE -> ItineraryFailureCategory.UNAVAILABLE
+        ItineraryDraftFailure.INVALID_RESPONSE -> ItineraryFailureCategory.INVALID_RESPONSE
+        ItineraryDraftFailure.UNSUPPORTED_TRANSPORT ->
+            ItineraryFailureCategory.UNSUPPORTED_TRANSPORT
+    }
 
 private object EmptySavedItineraryRepository : SavedItineraryRepository {
     override fun observeLibrary() = emptyFlow<SavedItineraryLibraryState>()

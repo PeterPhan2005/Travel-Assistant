@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import com.kltn.travelassistant.analytics.ItineraryCreationOutcome
+import com.kltn.travelassistant.analytics.ItineraryFailureCategory
+import com.kltn.travelassistant.analytics.ProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalyticsEvent
 import com.kltn.travelassistant.feature.itinerary.data.ItineraryJsonCodec
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryCity
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraft
@@ -16,6 +20,11 @@ import com.kltn.travelassistant.feature.itinerary.domain.ItineraryDraftWarning
 import com.kltn.travelassistant.feature.itinerary.domain.ItineraryLocationSnapshot
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveBoundary
 import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySaveResult
+import com.kltn.travelassistant.feature.itinerary.domain.ItinerarySyncState
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItinerary
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryDeleteResult
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryLibraryState
+import com.kltn.travelassistant.feature.itinerary.domain.SavedItineraryRepository
 import com.kltn.travelassistant.feature.itinerary.readItineraryContractFixture
 import java.time.LocalDate
 import java.time.LocalTime
@@ -27,6 +36,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -115,7 +126,8 @@ class ItineraryViewModelTest {
     fun loadingIsVisibleAndDuplicateGenerateIsIgnored() = runTest {
         val gate = CompletableDeferred<ItineraryDraftGenerationResult>()
         val generator = FakeGenerator(gate = gate)
-        val viewModel = viewModel(generator)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = viewModel(generator, analytics = analytics)
         enterValidForm(viewModel)
 
         viewModel.generate(null)
@@ -124,6 +136,14 @@ class ItineraryViewModelTest {
 
         assertEquals(ItineraryGenerationUiState.Loading, viewModel.uiState.value.generationState)
         assertEquals(1, generator.requests.size)
+        assertEquals(
+            listOf(
+                ProductAnalyticsEvent.ItineraryCreation(
+                    ItineraryCreationOutcome.ATTEMPTED,
+                ),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -135,7 +155,8 @@ class ItineraryViewModelTest {
                 ItineraryDraftWarning("Hãy kiểm tra giờ mở cửa."),
             ),
         )
-        val viewModel = viewModel(FakeGenerator(success(expected)), save)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = viewModel(FakeGenerator(success(expected)), save, analytics = analytics)
         enterValidForm(viewModel)
 
         viewModel.generate(null)
@@ -146,6 +167,13 @@ class ItineraryViewModelTest {
             viewModel.uiState.value.generationState,
         )
         assertTrue(save.drafts.isEmpty())
+        assertEquals(
+            listOf(
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.ATTEMPTED),
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.SUCCEEDED),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -172,7 +200,8 @@ class ItineraryViewModelTest {
     @Test
     fun mismatchedTimelineMapsToNonRetryableInvalidResponse() = runTest {
         val mismatched = draft().copy(localDate = LocalDate.of(2026, 8, 2))
-        val viewModel = viewModel(FakeGenerator(success(mismatched)))
+        val analytics = RecordingProductAnalytics()
+        val viewModel = viewModel(FakeGenerator(success(mismatched)), analytics = analytics)
         enterValidForm(viewModel)
 
         viewModel.generate(null)
@@ -181,6 +210,13 @@ class ItineraryViewModelTest {
         assertEquals(
             ItineraryGenerationUiState.Error(ItineraryDraftFailure.INVALID_RESPONSE),
             viewModel.uiState.value.generationState,
+        )
+        assertEquals(
+            ProductAnalyticsEvent.ItineraryCreation(
+                ItineraryCreationOutcome.FAILED,
+                ItineraryFailureCategory.INVALID_RESPONSE,
+            ),
+            analytics.events.last(),
         )
     }
 
@@ -192,7 +228,8 @@ class ItineraryViewModelTest {
                 success(),
             ),
         )
-        val viewModel = viewModel(generator)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = viewModel(generator, analytics = analytics)
         enterValidForm(viewModel)
 
         viewModel.generate(null)
@@ -211,6 +248,18 @@ class ItineraryViewModelTest {
 
         assertEquals(2, generator.requests.size)
         assertEquals(generator.requests[0], generator.requests[1])
+        assertEquals(
+            listOf(
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.ATTEMPTED),
+                ProductAnalyticsEvent.ItineraryCreation(
+                    ItineraryCreationOutcome.FAILED,
+                    ItineraryFailureCategory.TIMEOUT,
+                ),
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.ATTEMPTED),
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.SUCCEEDED),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -242,7 +291,8 @@ class ItineraryViewModelTest {
     fun explicitCancellationPreservesFormAndLateResultIsIgnored() = runTest {
         val gate = CompletableDeferred<ItineraryDraftGenerationResult>()
         val generator = FakeGenerator(gate = gate, ignoreCancellation = true)
-        val viewModel = viewModel(generator)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = viewModel(generator, analytics = analytics)
         enterValidForm(viewModel)
         viewModel.generate(null)
         dispatcher.scheduler.runCurrent()
@@ -256,6 +306,51 @@ class ItineraryViewModelTest {
             viewModel.uiState.value.generationState,
         )
         assertEquals("2026-08-01", viewModel.uiState.value.form.localDate)
+        assertEquals(
+            listOf(
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.ATTEMPTED),
+                ProductAnalyticsEvent.ItineraryCreation(ItineraryCreationOutcome.CANCELLED),
+            ),
+            analytics.events,
+        )
+    }
+
+    @Test
+    fun openingSavedTripEmitsOncePerExplicitReturnAndSignedOutStateEmitsNothing() = runTest {
+        val analytics = RecordingProductAnalytics()
+        val saved = SavedItinerary(
+            id = "itinerary-1",
+            title = "Một ngày ở TP.HCM",
+            draft = draft(),
+            syncState = ItinerarySyncState.PENDING,
+        )
+        val viewModel = viewModel(
+            generator = FakeGenerator(success()),
+            savedRepository = FakeSavedRepository(
+                SavedItineraryLibraryState.Content(listOf(saved)),
+            ),
+            analytics = analytics,
+        )
+        advanceUntilIdle()
+
+        viewModel.openSavedItinerary(saved.id)
+        viewModel.openSavedItinerary(saved.id)
+        viewModel.returnToGeneration()
+        viewModel.openSavedItinerary(saved.id)
+
+        assertEquals(
+            listOf(ProductAnalyticsEvent.TripReturn, ProductAnalyticsEvent.TripReturn),
+            analytics.events,
+        )
+
+        val signedOut = viewModel(
+            generator = FakeGenerator(success()),
+            savedRepository = FakeSavedRepository(SavedItineraryLibraryState.SignedOut),
+            analytics = analytics,
+        )
+        advanceUntilIdle()
+        signedOut.openSavedItinerary(saved.id)
+        assertEquals(2, analytics.events.size)
     }
 
     @Test
@@ -560,7 +655,11 @@ class ItineraryViewModelTest {
     private fun viewModel(
         generator: ItineraryDraftGenerator,
         save: ItinerarySaveBoundary = FakeSaveBoundary(),
-    ) = ItineraryViewModel(generator, save)
+        savedRepository: SavedItineraryRepository = FakeSavedRepository(
+            SavedItineraryLibraryState.Loading,
+        ),
+        analytics: ProductAnalytics = RecordingProductAnalytics(),
+    ) = ItineraryViewModel(generator, save, savedRepository, analytics)
 
     private fun enterValidForm(viewModel: ItineraryViewModel) {
         viewModel.onCitySelected(ItineraryCity.HO_CHI_MINH_CITY)
@@ -661,6 +760,23 @@ class ItineraryViewModelTest {
             } catch (_: CancellationException) {
                 requireNotNull(completedResult)
             }
+        }
+    }
+
+    private class FakeSavedRepository(
+        private val state: SavedItineraryLibraryState,
+    ) : SavedItineraryRepository {
+        override fun observeLibrary(): Flow<SavedItineraryLibraryState> = flowOf(state)
+
+        override suspend fun delete(itineraryId: String): SavedItineraryDeleteResult =
+            SavedItineraryDeleteResult.NotFound
+    }
+
+    private class RecordingProductAnalytics : ProductAnalytics {
+        val events = mutableListOf<ProductAnalyticsEvent>()
+
+        override fun track(event: ProductAnalyticsEvent) {
+            events += event
         }
     }
 

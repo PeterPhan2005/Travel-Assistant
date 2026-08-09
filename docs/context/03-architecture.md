@@ -86,6 +86,25 @@ Specialists run through separate agent executions with scoped structured input. 
   fetches an ephemeral Firebase token, and uses local-revision-guarded completion
   so an old response cannot clear a newer mutation.
 
+## Product analytics
+
+- Android owns the schema-version-1 product event boundary because it owns each
+  accepted explicit action and validated presentation outcome. Event names,
+  property keys and values are closed Kotlin types; feature and Compose
+  contracts contain no vendor type.
+- Debug uses a bounded process-memory FIFO plus a debug-only inspector guarded
+  by Android's signature-level `DUMP` permission. Release is no-op until a vendor, consent/enablement policy,
+  retention and delivery policy are explicitly approved. There is no event
+  persistence, background upload, retry or backend analytics endpoint.
+- Events are emitted from ViewModels or an existing navigation coordinator, not
+  from composition or Flow collection. Attempt/session state prevents duplicate
+  recomposition, tab-return, configuration-change, stale-callback and duplicate-
+  tap emission. Process death causes no replay.
+- Analytics contains only closed outcomes plus the T018-approved stable POI ID.
+  It excludes queries, transcripts, content, coordinates, identity, credentials,
+  raw bodies and exception detail and cannot initiate Firebase, provider,
+  backend or OpenAI work.
+
 ## Invariants
 
 1. Mobile never contains private provider or OpenAI keys.

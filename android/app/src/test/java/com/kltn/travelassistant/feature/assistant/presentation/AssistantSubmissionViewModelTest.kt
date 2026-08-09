@@ -2,6 +2,7 @@ package com.kltn.travelassistant.feature.assistant.presentation
 
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntent
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentInputMode
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentOutcome
 import com.kltn.travelassistant.feature.assistant.domain.AssistantLocationSnapshot
 import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
@@ -11,6 +12,7 @@ import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryResult
 import com.kltn.travelassistant.feature.assistant.domain.AssistantRepositoryResult
 import com.kltn.travelassistant.feature.assistant.domain.AssistantResultStatus
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionEngine
+import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionEvent
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionListener
 import com.kltn.travelassistant.feature.assistant.domain.SpeechRecognitionStartResult
 import kotlinx.coroutines.CompletableDeferred
@@ -116,7 +118,7 @@ class AssistantSubmissionViewModelTest {
     }
 
     @Test
-    fun successPartialAndFailedRecordOnlyIntentOutcomeOnce() = runTest {
+    fun manualSuccessPartialAndFailedRecordOnlyIntentOutcomeOnce() = runTest {
         for (status in AssistantResultStatus.entries) {
             val analytics = RecordingAnalytics()
             val repository = FakeRepository(
@@ -130,16 +132,55 @@ class AssistantSubmissionViewModelTest {
 
             assertEquals(
                 listOf(
-                    AssistantIntent.GENERAL_TRAVEL_HELP to when (status) {
-                        AssistantResultStatus.SUCCESS -> AssistantIntentOutcome.SUCCESS
-                        AssistantResultStatus.PARTIAL -> AssistantIntentOutcome.PARTIAL
-                        AssistantResultStatus.FAILED -> AssistantIntentOutcome.FAILED
-                    },
+                    RecordedIntent(
+                        intent = AssistantIntent.GENERAL_TRAVEL_HELP,
+                        outcome = when (status) {
+                            AssistantResultStatus.SUCCESS -> AssistantIntentOutcome.SUCCESS
+                            AssistantResultStatus.PARTIAL -> AssistantIntentOutcome.PARTIAL
+                            AssistantResultStatus.FAILED -> AssistantIntentOutcome.FAILED
+                        },
+                        inputMode = AssistantIntentInputMode.MANUAL,
+                    ),
                 ),
                 analytics.events,
             )
             assertTrue(viewModel.uiState.value.querySubmissionState !is AssistantSubmissionUiState.Error)
         }
+    }
+
+    @Test
+    fun recognizedVoiceResultIsLabeledVoiceOnceAndManualEditChangesTheLabel() = runTest {
+        val analytics = RecordingAnalytics()
+        val engine = FakeSpeechEngine()
+        val repository = QueueRepository(
+            mutableListOf(structured(), structured()),
+        )
+        val viewModel = viewModel(repository, analytics, engine)
+        val attemptId = requireNotNull(viewModel.beginVoiceInputAttempt())
+        viewModel.onMicrophonePermissionGranted(attemptId)
+        engine.emit(SpeechRecognitionEvent.FinalTranscript("Tôi muốn ăn phở gần đây"))
+
+        viewModel.submitQuery(isOnline = true, location = null)
+        advanceUntilIdle()
+        viewModel.onQueryChanged("Tôi muốn ăn bún bò gần đây")
+        viewModel.submitQuery(isOnline = true, location = null)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                RecordedIntent(
+                    AssistantIntent.GENERAL_TRAVEL_HELP,
+                    AssistantIntentOutcome.SUCCESS,
+                    AssistantIntentInputMode.VOICE,
+                ),
+                RecordedIntent(
+                    AssistantIntent.GENERAL_TRAVEL_HELP,
+                    AssistantIntentOutcome.SUCCESS,
+                    AssistantIntentInputMode.MANUAL,
+                ),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -248,8 +289,9 @@ class AssistantSubmissionViewModelTest {
     private fun viewModel(
         repository: AssistantQueryRepository,
         analytics: AssistantIntentAnalytics = RecordingAnalytics(),
+        speechEngine: FakeSpeechEngine = FakeSpeechEngine(),
     ) = AssistantViewModel(
-        speechRecognitionEngine = FakeSpeechEngine(),
+        speechRecognitionEngine = speechEngine,
         queryRepository = repository,
         intentAnalytics = analytics,
     )
@@ -291,23 +333,39 @@ class AssistantSubmissionViewModelTest {
     }
 
     private class RecordingAnalytics : AssistantIntentAnalytics {
-        val events = mutableListOf<Pair<AssistantIntent, AssistantIntentOutcome>>()
+        val events = mutableListOf<RecordedIntent>()
 
         override fun record(
             intent: AssistantIntent,
             outcome: AssistantIntentOutcome,
+            inputMode: AssistantIntentInputMode,
         ) {
-            events += intent to outcome
+            events += RecordedIntent(intent, outcome, inputMode)
         }
     }
 
+    private data class RecordedIntent(
+        val intent: AssistantIntent,
+        val outcome: AssistantIntentOutcome,
+        val inputMode: AssistantIntentInputMode,
+    )
+
     private class FakeSpeechEngine : SpeechRecognitionEngine {
+        private var listener: SpeechRecognitionListener? = null
+
         override fun isAvailable() = true
 
         override fun start(
             languageTag: String,
             listener: SpeechRecognitionListener,
-        ) = SpeechRecognitionStartResult.Started
+        ): SpeechRecognitionStartResult {
+            this.listener = listener
+            return SpeechRecognitionStartResult.Started
+        }
+
+        fun emit(event: SpeechRecognitionEvent) {
+            requireNotNull(listener).onEvent(event)
+        }
 
         override fun cancel() = Unit
 

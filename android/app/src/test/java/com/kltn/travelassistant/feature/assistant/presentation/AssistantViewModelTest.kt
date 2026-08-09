@@ -2,6 +2,7 @@ package com.kltn.travelassistant.feature.assistant.presentation
 
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntent
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentInputMode
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentOutcome
 import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
 import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRepository
@@ -35,6 +36,7 @@ private fun createAssistantViewModel(
         override fun record(
             intent: AssistantIntent,
             outcome: AssistantIntentOutcome,
+            inputMode: AssistantIntentInputMode,
         ) = Unit
     },
 )

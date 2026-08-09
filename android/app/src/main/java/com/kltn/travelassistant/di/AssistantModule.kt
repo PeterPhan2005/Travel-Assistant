@@ -1,9 +1,9 @@
 package com.kltn.travelassistant.di
 
 import com.kltn.travelassistant.feature.assistant.data.DefaultAssistantQueryRepository
-import com.kltn.travelassistant.feature.assistant.data.NoOpAssistantIntentAnalytics
 import com.kltn.travelassistant.feature.assistant.data.OkHttpAssistantApi
 import com.kltn.travelassistant.feature.assistant.data.AssistantHttpApi
+import com.kltn.travelassistant.feature.assistant.data.ProductAssistantIntentAnalytics
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
 import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryRepository
 import dagger.Binds
@@ -30,6 +30,6 @@ internal abstract class AssistantModule {
     @Binds
     @Singleton
     abstract fun bindAssistantIntentAnalytics(
-        implementation: NoOpAssistantIntentAnalytics,
+        implementation: ProductAssistantIntentAnalytics,
     ): AssistantIntentAnalytics
 }

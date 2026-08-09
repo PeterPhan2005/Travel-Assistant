@@ -18,8 +18,13 @@ currency-safe formatting and an update date. The bundled seed still contains no
 menu or narration records. There is no background tracking or exact-location
 persistence. Loaded POI details now offer explicit external navigation through
 any compatible `geo:` handler, with validated stored POI coordinates, localized
-recoverable errors and a no-op analytics boundary that never receives
-coordinates. The app shell now observes validated Internet connectivity without
+recoverable errors and a typed product-analytics boundary that never receives
+coordinates. Android now owns a closed schema-version-1 KPI event model for
+navigation, itinerary generation, voice intent results, saved-trip returns and
+geocontext opens. Release collection is disabled; debug builds retain a bounded
+process-local inspection buffer without upload or durable storage. The app shell
+has passed the complete T090 lifecycle, deduplication, privacy and isolation
+manual matrix. It now observes validated Internet connectivity without
 making a network request and presents Checking, Online and Offline explicitly.
 Offline Room search and POI detail remain usable. Local package version and
 publication metadata are observed by the app-shell state owner and displayed
@@ -167,8 +172,8 @@ case/aggregate metadata.
 
 ## Current goal
 
-T080 is complete. No task is in progress. T090 is the sole Next Up task because
-its T018, T061 and T070 dependencies are complete; it has not been started.
+T090 is complete. T091 is the sole Next Up task by index order; all four of its
+dependencies, T061, T071, T080 and T090, are complete. T091 has not started.
 
 ## Completed
 
@@ -220,6 +225,7 @@ its T018, T061 and T070 dependencies are complete; it has not been started.
 - T070 Implement itinerary generation UI.
 - T071 Persist and sync itineraries.
 - T080 Implement Room full-text search.
+- T090 Instrument MVP KPIs.
 
 ## In progress
 
@@ -227,7 +233,7 @@ its T018, T061 and T070 dependencies are complete; it has not been started.
 
 ## Next up
 
-- T090 Instrument MVP KPIs.
+- T091 Add end-to-end demo tests.
 
 ## Open questions
 
@@ -287,7 +293,17 @@ its T018, T061 and T070 dependencies are complete; it has not been started.
   Hilt-bound Android launcher. It validates the stored POI identity and
   coordinates, checks for a compatible activity, handles resolution/launch
   races without crashing and returns typed outcomes to transient detail UI.
-  The replaceable no-op analytics hook receives only POI ID and outcome.
+  Its product-analytics adapter receives only the stable POI ID and requested
+  outcome; coordinates and the generated URI never cross the boundary.
+- Product analytics schema version 1 has exactly five event names:
+  `navigation_conversion`, `itinerary_creation`, `voice_intent_result`,
+  `trip_return` and `geocontext_opened`. Properties use closed enum values and
+  stable POI IDs only. No query, transcript, itinerary content, exact location,
+  address, identity, token, body, exception text or device identifier is
+  accepted. The release sink is a no-op. The debug sink is a synchronized
+  200-event FIFO exposed through a debug-only provider protected by the
+  platform signature-level `android.permission.DUMP`; it has no vendor SDK,
+  network, persistence, worker, upload, retry or logging path.
 - App-shell connectivity is observed through a replaceable boundary backed by
   `ConnectivityManager`. Online requires both `NET_CAPABILITY_INTERNET` and
   `NET_CAPABILITY_VALIDATED`; callback registration is cancelled with the
@@ -314,9 +330,10 @@ its T018, T061 and T070 dependencies are complete; it has not been started.
   request. Edit, explicit cancel, destination departure, Activity background
   and ViewModel clear cancel the active job and OkHttp call. Retry is explicit;
   only a 401 may force-refresh the Firebase token once. No request/response,
-  coordinate, token or identity is logged or persisted. The Hilt-bound no-op
-  analytics boundary receives only a closed Router intent and terminal
-  success/partial/failed outcome.
+  coordinate, token or identity is logged or persisted. The Hilt-bound product
+  analytics adapter receives only the closed Router intent, terminal
+  success/partial/failed outcome and transient manual/voice origin; only voice
+  submissions emit the KPI event.
 - Itinerary draft UI owns only transient Android form, validation, generation
   state and preview rendering. Supported cities/timezones are exact HCMC →
   `Asia/Ho_Chi_Minh` and Bangkok → `Asia/Bangkok`; date/time/max-stop/500-code-
@@ -2748,3 +2765,65 @@ Completed now includes T080; In progress is empty. T090 is the sole Next Up task
 by index order because T018, T061 and T070 are complete. T090 was selected only
 in documentation and was not edited or started; T091 remains blocked on T090.
 No commit or push was made.
+
+T090 implementation reached automated-validation complete on 2026-08-06 and
+remained `in_progress` until the full manual matrix was supplied. The Android-
+owned, closed schema-version-1 boundary emits exactly `navigation_conversion`,
+`itinerary_creation`, `voice_intent_result`, `trip_return` and
+`geocontext_opened`. Typed properties contain only a stable POI ID or closed
+stage/outcome/failure/intent/result-state values. No query, transcript,
+itinerary content, exact coordinate, address, identity, token, request/response
+body, exception text or device identifier can be encoded.
+
+POI detail emits one detail-open stage per loaded detail session and external
+navigation emits the requested stage once for its first tap. Itinerary
+generation emits one valid online attempt and exactly one in-process terminal
+result; retry is a new attempt, while invalid/offline preflight and duplicate
+active submissions do not fabricate a conversion. Voice intent results use the
+existing closed Router intent and terminal outcome only when the transient input
+origin is voice. A successful location-backed nearby result emits one content or
+empty geocontext open per Home ViewModel, and a cancelled request cannot emit
+from a stale result. Opening an owned saved itinerary emits `trip_return` once
+while that item remains open; this is explicitly a return-action proxy, not a
+persisted unique-user or multi-day cohort measure.
+
+Release collection is disabled through the no-op sink. Debug collection is a
+synchronized 200-event FIFO in process memory. A debug-only content provider,
+protected for reads and clears by the platform signature-level
+`android.permission.DUMP`, exposes only sequence, schema version, event name and
+encoded safe properties to ADB shell. There is no analytics SDK, Firebase
+Analytics request, backend endpoint, network export, Room/DataStore/file store,
+worker, retry, device/account identifier or analytics log. Existing T049 agent
+observability remains independent and unchanged.
+
+Final Android evidence passed 270/270 JVM tests and 141/141 connected tests on
+the API-36 ARM64 Pixel 7 Emulator, with zero skips/failures. Exact aggregate
+`./gradlew test --no-daemon --stacktrace` and `./gradlew lintDebug
+testDebugUnitTest assembleDebug --no-daemon --stacktrace` passed. Backend
+`pytest` passed 816/816 with the healthy local PostGIS service and zero skips.
+Live production-path Emulator inspection emitted one
+`geocontext_opened(result_state=content)` row after an explicit foreground
+location action; the row contained no location, query, content or identity and
+the ADB clear operation removed it. That was the implementation-day live
+observation; the complete supplied matrix followed at closure.
+
+T090 completed on 2026-08-09 after user-supplied manual validation closed every
+remaining gate. Navigation detail/request emission, lifecycle and duplicate-tap
+suppression, and explicit reopened sessions passed. Itinerary attempt/success,
+cancellation without stale terminal output, typed failure/retry, offline and
+invalid-form exclusion passed. Voice success/partial/failure, manual and
+manual-after-voice exclusion, cancellation and stale-result suppression passed.
+Anonymous saved-trip return, duplicate suppression, explicit reopen, signed-out
+isolation and two-account behavior passed. Geocontext content/empty,
+deduplication and cancellation/stale suppression passed. Force-stop cleared the
+process-local buffer and relaunch replayed nothing.
+
+Provider-row privacy inspection found no prohibited sentinel, query,
+transcript, content, coordinate, address, identity or token data. Analytics
+generated no network, Firebase-token, provider, backend or OpenAI request;
+T071/T080 regressions were absent, and manual validation changed no repository
+file. No raw sentinel or private account detail is retained in this record.
+
+T090 is `done` and Completed now includes it. In progress is empty. T091 is the
+sole Next Up task by index order because T061, T071, T080 and T090 are complete;
+T091 remains `todo`, untouched and unstarted. No commit or push was made.

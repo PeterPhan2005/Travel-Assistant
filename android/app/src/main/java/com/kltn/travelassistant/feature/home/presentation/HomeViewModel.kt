@@ -2,6 +2,11 @@ package com.kltn.travelassistant.feature.home.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kltn.travelassistant.analytics.GeocontextResultState
+import com.kltn.travelassistant.analytics.NoOpProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalyticsEvent
+import com.kltn.travelassistant.analytics.trackSafely
 import com.kltn.travelassistant.data.location.LocationAcquisitionResult
 import com.kltn.travelassistant.data.location.LocationClient
 import com.kltn.travelassistant.data.repository.AppInfoRepository
@@ -22,6 +27,7 @@ class HomeViewModel @Inject constructor(
     repository: AppInfoRepository,
     private val locationClient: LocationClient,
     private val nearbySearchRepository: NearbySearchRepository,
+    private val productAnalytics: ProductAnalytics = NoOpProductAnalytics,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(
         HomeUiState(appName = repository.appName.value),
@@ -31,6 +37,8 @@ class HomeViewModel @Inject constructor(
     private var locationRequestJob: Job? = null
     private var nearbySearchJob: Job? = null
     private var nearbySearchGeneration = 0L
+    private var pendingGeocontextOpen = false
+    private var geocontextOpenRecorded = false
 
     init {
         viewModelScope.launch {
@@ -70,6 +78,7 @@ class HomeViewModel @Inject constructor(
             }
             updateLocationState(state)
             if (state is LocationUiState.Available) {
+                if (!geocontextOpenRecorded) pendingGeocontextOpen = true
                 runNearbySearch(state.location.latitude, state.location.longitude)
             }
         }
@@ -85,6 +94,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onLocationRequestCancelled() {
+        pendingGeocontextOpen = false
         val activeRequest = locationRequestJob?.takeIf { job -> job.isActive } ?: return
         activeRequest.cancel()
         locationRequestJob = null
@@ -129,6 +139,23 @@ class HomeViewModel @Inject constructor(
                 -> NearbySearchUiState.Error
             }
             updateNearbySearchState(searchState)
+            if (pendingGeocontextOpen) {
+                val analyticsState = when (searchState) {
+                    is NearbySearchUiState.Content -> GeocontextResultState.CONTENT
+                    NearbySearchUiState.Empty -> GeocontextResultState.EMPTY
+                    NearbySearchUiState.WaitingForLocation,
+                    NearbySearchUiState.Loading,
+                    NearbySearchUiState.Error,
+                    -> null
+                }
+                analyticsState?.let { resultState ->
+                    productAnalytics.trackSafely(
+                        ProductAnalyticsEvent.GeocontextOpened(resultState),
+                    )
+                    pendingGeocontextOpen = false
+                    geocontextOpenRecorded = true
+                }
+            }
         }
     }
 

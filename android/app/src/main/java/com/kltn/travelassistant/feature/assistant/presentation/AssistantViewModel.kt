@@ -3,6 +3,7 @@ package com.kltn.travelassistant.feature.assistant.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentAnalytics
+import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentInputMode
 import com.kltn.travelassistant.feature.assistant.domain.AssistantIntentOutcome
 import com.kltn.travelassistant.feature.assistant.domain.AssistantLocationSnapshot
 import com.kltn.travelassistant.feature.assistant.domain.AssistantQueryFailure
@@ -53,6 +54,8 @@ class AssistantViewModel @Inject constructor(
     private var submissionJob: Job? = null
     private var submissionGeneration = 0L
     private var retrySnapshot: AssistantQueryRequest? = null
+    private var queryInputMode = AssistantIntentInputMode.MANUAL
+    private var retryInputMode = AssistantIntentInputMode.MANUAL
 
     fun onQueryChanged(query: String) {
         val wasRecognitionActive = mutableUiState.value.speechInputState.isRecognitionActive
@@ -61,6 +64,7 @@ class AssistantViewModel @Inject constructor(
         }
         cancelActiveSubmission(showCancelled = false)
         retrySnapshot = null
+        queryInputMode = AssistantIntentInputMode.MANUAL
         mutableUiState.update { state ->
             state.copy(
                 queryText = boundAssistantQueryText(query),
@@ -201,6 +205,7 @@ class AssistantViewModel @Inject constructor(
             location = location,
         )
         retrySnapshot = snapshot
+        retryInputMode = queryInputMode
         mutableUiState.update { state ->
             state.copy(
                 queryText = confirmed,
@@ -211,7 +216,7 @@ class AssistantViewModel @Inject constructor(
             updateSubmissionState(AssistantSubmissionUiState.Offline)
             return
         }
-        execute(snapshot)
+        execute(snapshot, retryInputMode)
     }
 
     fun retryQuery(isOnline: Boolean) {
@@ -222,7 +227,7 @@ class AssistantViewModel @Inject constructor(
             updateSubmissionState(AssistantSubmissionUiState.Offline)
             return
         }
-        execute(snapshot)
+        execute(snapshot, retryInputMode)
     }
 
     fun cancelQuery() {
@@ -240,7 +245,10 @@ class AssistantViewModel @Inject constructor(
         super.onCleared()
     }
 
-    private fun execute(snapshot: AssistantQueryRequest) {
+    private fun execute(
+        snapshot: AssistantQueryRequest,
+        inputMode: AssistantIntentInputMode,
+    ) {
         val generation = ++submissionGeneration
         updateSubmissionState(AssistantSubmissionUiState.Loading)
         submissionJob = viewModelScope.launch {
@@ -278,6 +286,7 @@ class AssistantViewModel @Inject constructor(
                                 AssistantResultStatus.FAILED ->
                                     AssistantIntentOutcome.FAILED
                             },
+                            inputMode = inputMode,
                         )
                     }
                 }
@@ -314,6 +323,7 @@ class AssistantViewModel @Inject constructor(
             is SpeechRecognitionEvent.PartialTranscript -> {
                 val transcript = normalizeRecognizedAssistantQuery(event.text)
                 if (transcript.isBlank()) return
+                queryInputMode = AssistantIntentInputMode.VOICE
                 mutableUiState.update { state ->
                     state.copy(
                         queryText = transcript,
@@ -331,6 +341,7 @@ class AssistantViewModel @Inject constructor(
                 if (transcript.isBlank()) {
                     applyFailure(SpeechRecognitionFailure.NO_MATCH)
                 } else {
+                    queryInputMode = AssistantIntentInputMode.VOICE
                     mutableUiState.update { state ->
                         state.copy(
                             queryText = transcript,

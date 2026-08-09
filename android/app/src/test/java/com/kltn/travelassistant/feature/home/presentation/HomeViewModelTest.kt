@@ -1,5 +1,8 @@
 package com.kltn.travelassistant.feature.home.presentation
 
+import com.kltn.travelassistant.analytics.GeocontextResultState
+import com.kltn.travelassistant.analytics.ProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalyticsEvent
 import com.kltn.travelassistant.data.location.DeviceLocation
 import com.kltn.travelassistant.data.location.LocationAcquisitionResult
 import com.kltn.travelassistant.data.location.LocationClient
@@ -26,6 +29,7 @@ import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -90,6 +94,80 @@ class HomeViewModelTest {
             NearbySearchUiState.Content(defaultNearbyPois),
             viewModel.uiState.value.nearbySearchState,
         )
+    }
+
+    @Test
+    fun firstSuccessfulLocationBackedSearchEmitsOneGeocontextOpenPerViewModel() =
+        runTest(dispatcher) {
+            val analytics = RecordingProductAnalytics()
+            val viewModel = createViewModel(productAnalytics = analytics)
+
+            viewModel.onLocationPermissionGranted()
+            advanceUntilIdle()
+            viewModel.onNearbyQueryChanged("ben thanh")
+            advanceUntilIdle()
+            viewModel.onLocationPermissionGranted()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    ProductAnalyticsEvent.GeocontextOpened(
+                        GeocontextResultState.CONTENT,
+                    ),
+                ),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun emptyGeocontextIsTypedAndFailuresOrCancellationEmitNothing() = runTest(dispatcher) {
+        val analytics = RecordingProductAnalytics()
+        val failing = createViewModel(
+            locationClient = FakeLocationClient(LocationAcquisitionResult.Failure),
+            productAnalytics = analytics,
+        )
+        failing.onLocationPermissionGranted()
+        advanceUntilIdle()
+        assertTrue(analytics.events.isEmpty())
+
+        val empty = createViewModel(
+            nearbySearchRepository = FakeNearbySearchRepository {
+                NearbySearchResult.Success(emptyList())
+            },
+            productAnalytics = analytics,
+        )
+        empty.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(ProductAnalyticsEvent.GeocontextOpened(GeocontextResultState.EMPTY)),
+            analytics.events,
+        )
+    }
+
+    @Test
+    fun backgroundedPendingNearbyResultCannotEmitGeocontextOpen() = runTest(dispatcher) {
+        val analytics = RecordingProductAnalytics()
+        val pending = CompletableDeferred<NearbySearchResult>()
+        val repository = object : NearbySearchRepository {
+            override suspend fun search(
+                latitude: Double,
+                longitude: Double,
+                query: String,
+            ): NearbySearchResult = withContext(NonCancellable) { pending.await() }
+        }
+        val viewModel = createViewModel(
+            nearbySearchRepository = repository,
+            productAnalytics = analytics,
+        )
+
+        viewModel.onLocationPermissionGranted()
+        runCurrent()
+        viewModel.onLocationRequestCancelled()
+        pending.complete(NearbySearchResult.Success(defaultNearbyPois))
+        advanceUntilIdle()
+
+        assertTrue(analytics.events.isEmpty())
     }
 
     @Test
@@ -349,11 +427,21 @@ class HomeViewModelTest {
     private fun createViewModel(
         locationClient: LocationClient = FakeLocationClient(successResult),
         nearbySearchRepository: NearbySearchRepository = FakeNearbySearchRepository(),
+        productAnalytics: ProductAnalytics = RecordingProductAnalytics(),
     ): HomeViewModel = HomeViewModel(
         repository = FakeAppInfoRepository("Initial name"),
         locationClient = locationClient,
         nearbySearchRepository = nearbySearchRepository,
+        productAnalytics = productAnalytics,
     )
+
+    private class RecordingProductAnalytics : ProductAnalytics {
+        val events = mutableListOf<ProductAnalyticsEvent>()
+
+        override fun track(event: ProductAnalyticsEvent) {
+            events += event
+        }
+    }
 
     private class FakeAppInfoRepository(initialAppName: String) : AppInfoRepository {
         private val mutableAppName = MutableStateFlow(initialAppName)

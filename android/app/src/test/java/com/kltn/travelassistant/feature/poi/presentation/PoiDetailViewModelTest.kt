@@ -1,6 +1,9 @@
 package com.kltn.travelassistant.feature.poi.presentation
 
 import androidx.lifecycle.SavedStateHandle
+import com.kltn.travelassistant.analytics.NavigationConversionStage
+import com.kltn.travelassistant.analytics.ProductAnalytics
+import com.kltn.travelassistant.analytics.ProductAnalyticsEvent
 import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabel
 import com.kltn.travelassistant.feature.poi.domain.PoiDetail
 import com.kltn.travelassistant.feature.poi.domain.PoiDetailRepository
@@ -38,13 +41,23 @@ class PoiDetailViewModelTest {
     @Test
     fun startsLoadingThenShowsContent() = runTest(dispatcher) {
         val repository = FakeRepository(PoiDetailResult.Success(detail))
-        val viewModel = createViewModel(repository)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = createViewModel(repository, analytics)
 
         assertEquals(PoiDetailUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
 
         assertEquals(PoiDetailUiState.Content(detail), viewModel.uiState.value)
         assertEquals(listOf("poi-1" to "vi"), repository.requests)
+        assertEquals(
+            listOf(
+                ProductAnalyticsEvent.NavigationConversion(
+                    NavigationConversionStage.DETAIL_OPENED,
+                    "poi-1",
+                ),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -71,7 +84,8 @@ class PoiDetailViewModelTest {
             PoiDetailResult.DatabaseError,
             PoiDetailResult.Success(detail),
         )
-        val viewModel = createViewModel(repository)
+        val analytics = RecordingProductAnalytics()
+        val viewModel = createViewModel(repository, analytics)
         advanceUntilIdle()
 
         viewModel.retry()
@@ -80,6 +94,7 @@ class PoiDetailViewModelTest {
 
         assertEquals(PoiDetailUiState.Content(detail), viewModel.uiState.value)
         assertEquals(2, repository.requests.size)
+        assertEquals(1, analytics.events.size)
     }
 
     @Test
@@ -100,10 +115,22 @@ class PoiDetailViewModelTest {
         assertFalse(viewModel.uiState is MutableStateFlow<*>)
     }
 
-    private fun createViewModel(repository: PoiDetailRepository) = PoiDetailViewModel(
+    private fun createViewModel(
+        repository: PoiDetailRepository,
+        analytics: ProductAnalytics = RecordingProductAnalytics(),
+    ) = PoiDetailViewModel(
         SavedStateHandle(mapOf(PoiDetailDestination.POI_ID_ARGUMENT to "poi-1")),
         repository,
+        analytics,
     )
+
+    private class RecordingProductAnalytics : ProductAnalytics {
+        val events = mutableListOf<ProductAnalyticsEvent>()
+
+        override fun track(event: ProductAnalyticsEvent) {
+            events += event
+        }
+    }
 
     private class FakeRepository(
         vararg results: PoiDetailResult,

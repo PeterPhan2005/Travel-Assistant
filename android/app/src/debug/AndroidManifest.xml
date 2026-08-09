@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:networkSecurityConfig="@xml/debug_network_security_config" />
+        android:networkSecurityConfig="@xml/debug_network_security_config">
+        <provider
+            android:name=".analytics.DebugProductAnalyticsProvider"
+            android:authorities="${applicationId}.analytics"
+            android:exported="true"
+            android:readPermission="android.permission.DUMP"
+            android:writePermission="android.permission.DUMP" />
+    </application>
 </manifest>

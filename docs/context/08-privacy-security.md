@@ -10,9 +10,10 @@
 - Preferences: retained until user deletes them/account.
 - Voice audio: not stored or uploaded by TravelAssistant.
 - Transcript: confirmed text is sent only in the foreground assistant request
-  and is not persisted by Android or backend. T061 analytics is a no-op boundary
-  that receives only closed intent and outcome values; T090 owns any future
-  analytics storage.
+  and is not persisted by Android or backend. The T090 product-analytics adapter
+  receives only closed intent/outcome values plus transient manual/voice origin;
+  only a terminal voice-origin result emits, and debug inspection retains no
+  transcript.
 - Structured itinerary form values and the optional current in-memory location
   are used only by the foreground generation request. T062 does not persist its
   request or coordinates. After explicit save, T071 persists only the approved
@@ -39,6 +40,14 @@
   persisted, logged, uploaded, included in analytics or used to request a
   Firebase token. Result titles/content, coordinates, database rows and SQL
   containing user text are likewise excluded from logs.
+- T090 product analytics is Android-local and schema-versioned. Debug retains a
+  bounded process-memory record only; release is no-op. It has no vendor SDK,
+  persistence, upload, background work or backend route. Events contain only
+  closed stages/outcomes/result states/intents and the T018-approved stable POI
+  ID. Raw or normalized queries, Assistant transcript, model prompt/response,
+  POI/itinerary/narration content, coordinates, address, UID/email/account key,
+  token/header, raw bodies, database rows, exception detail, device/advertising
+  identifiers, secrets and hashes of those values are forbidden.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
 
 ## Security controls
