@@ -323,8 +323,18 @@ pytest
 Pipeline chỉ đọc nội dung repository, không fetch web/runtime, không sinh nội
 dung bằng AI, không chứa user/preferences/trip/itinerary, không lưu vị trí người
 dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ giữ fact
-có nguồn review được; mục tiêu 30–50 POI thuộc T092/T093, chưa hoàn thành ở
-T031.
+có nguồn review được. Target đã khóa là đúng 42 curated POI: T092 hoàn thiện 30
+HCMC và T093 hoàn thiện 12 Bangkok. Hai target này chưa hoàn thành ở T031; 42
+POI là trust anchor/downloadable offline dataset chứ không phải toàn bộ universe
+online.
+
+Khi thực hiện T092/T093, price/menu ưu tiên direct venue/restaurant/operator và
+phải có freshness metadata; historical/cultural claim ưu tiên official venue,
+museum, government/tourism authority rồi university/institutional source;
+reputable editorial source chỉ bổ sung. Identity/address ưu tiên official
+venue/government/tourism. User review/social post không được là sole source cho
+price, historical/cultural claim hoặc important opening-hours fact. Missing fact
+giữ missing và LLM không bao giờ là factual source.
 
 ### Static travel-package artifact
 
@@ -507,11 +517,29 @@ controlled auth error, không bị coi là anonymous. Kết quả không persona
 theo UID và không trả UID. `/auth/me` vẫn bắt buộc authentication, còn
 `/health` vẫn public và database-free.
 
-Chưa có live Google Places adapter, HTTP call, SDK hoặc Google Places API-key
-setting, nên T033 không cần Google API key.
-`google_places` mới chỉ là provider namespace dành cho adapter tương lai; field
-mask, Google type/price/hour và lỗi provider phải được normalize bên trong
-adapter đó thay vì lộ payload Google.
+Google Places là live POI provider đầu tiên dự kiến cho online breadth, nhưng
+hiện chưa có live adapter, HTTP call, SDK hoặc Google Places API-key setting, nên
+T033 không cần Google API key. `google_places` mới chỉ là provider namespace
+dành cho adapter tương lai; field mask, Google type/price/hour và lỗi provider
+phải được normalize bên trong adapter đó thay vì lộ payload Google. Credential
+tương lai phải ở server-side environment/secret manager và không bao giờ nằm
+trong Android.
+
+Roadmap đã chấp nhận một Travel Discovery Core dùng chung cho Explore và
+Assistant: deterministic `AreaResolver`, curated provider, intended Google
+Places provider, normalized hybrid discovery, deterministic dedup/ranking và
+request-scoped evidence registry. Online có thể thêm approved live provider và
+fresh web evidence khi application retrieval policy yêu cầu; offline chỉ dùng
+active downloaded curated package. Không bulk mirror external provider content,
+không insert Google-only POI vào canonical Room chỉ để mở detail và không tạo
+persistent web knowledge mirror.
+
+Fresh research tương lai giữ provider-neutral
+`WebSearchProvider`/`SourceFetcher`/`WebEvidenceService` boundaries và bảy agent
+identity hiện tại. Webpage là untrusted data, không phải instruction; bounded
+evidence phải được extract/validate rồi qua Grounding Reviewer. T102 và
+T104–T107 sở hữu implementation tương lai; không có command hoặc credential
+live nào để cấu hình trong setup hiện tại.
 
 Trước khi gọi nearby API local, database phải healthy, đã migration đến head và
 đã seed cả hai city bằng các lệnh ở phần trên. Provider deadline vẫn được bound;

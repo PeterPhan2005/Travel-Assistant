@@ -6,7 +6,17 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 
 - Thị trường demo chính: Thành phố Hồ Chí Minh.
 - Case quốc tế: Bangkok.
-- Dữ liệu curated ban đầu: 30–50 POI.
+- Dữ liệu curated cố định: đúng 42 POI, gồm 30 HCMC và 12 Bangkok. Đây là trust
+  anchor/high-confidence evidence set và downloadable offline dataset, không
+  phải toàn bộ universe online.
+- Nguyên tắc discovery: **online breadth, offline trusted depth**. Product hỗ
+  trợ travel discovery rộng, không chỉ food, khi có evidence/provider coverage.
+- Explore và Assistant dùng chung Travel Discovery Core với `AreaResolver`,
+  provider normalization, deterministic merge/dedup/ranking và request-scoped
+  evidence registry.
+- Google Places là live POI provider đầu tiên dự kiến nhưng chưa được triển
+  khai. External POI/web content mặc định transient; không có external bulk
+  mirror hoặc persistent web knowledge mirror.
 - Team: 2 người.
 - Hạn hoàn thành: 25/01/2027.
 - Nền tảng demo: Android native.
@@ -16,9 +26,16 @@ Bộ tài liệu khởi tạo cho ứng dụng Android trợ lý du lịch cá n
 - Luồng runtime cốt lõi: Router → Discovery → deterministic ranking → Grounding
   Reviewer → Response Composer; Narration, Local Culture và Itinerary là các
   specialist agent tùy chọn theo intent.
+- Giữ đúng bảy model-executed agent identity hiện tại. Fresh-web research dùng
+  application-controlled `WebSearchProvider`/`SourceFetcher`/evidence extraction,
+  không thêm unrestricted browsing agent mặc định.
 - Auth: email/password và Google qua Firebase Authentication.
 - Offline: itinerary, POI, narration và local-life content đã tải trước; tìm kiếm chỉ trong dữ liệu local.
 - Giá: ưu tiên menu do quán cung cấp; luôn ghi thời điểm cập nhật.
+- Source policy: price/menu ưu tiên direct venue/operator; historical/cultural
+  claim ưu tiên official venue, museum, government/tourism và institutional
+  source; review/social không bao giờ là sole source cho restricted facts;
+  missing fact giữ missing và LLM không phải factual source.
 - Narration: 100–200 từ, ưu tiên key points và nguồn.
 - Ưu đãi, dị ứng/chế độ ăn, ảnh/ghi chú: ngoài MVP trừ khi truy vấn đề cập trực tiếp.
 
@@ -48,7 +65,8 @@ kích hoạt nguyên tử trong Room. Gói cũ và itinerary được giữ an t
 validation hoặc transaction thất bại; bundled seed chỉ chạy khi HCMC chưa có
 active package hợp lệ. Debug dùng endpoint emulator localhost riêng, còn release
 chưa có hosting và không cho cleartext. Android nearby transport và live Google
-Places vẫn chưa được triển khai. Assistant gửi duy nhất confirmed text foreground
+Places, hybrid online discovery, canonical area resolution và fresh-web
+evidence vẫn chưa được triển khai. Assistant gửi duy nhất confirmed text foreground
 tới private `POST /v1/assistant/query`, hiển thị loading/cancel/retry cùng kết quả
 structured và không persist transcript/response; audio không được upload.
 Itinerary có biểu mẫu nháp một ngày cho HCMC/Bangkok, validation local và

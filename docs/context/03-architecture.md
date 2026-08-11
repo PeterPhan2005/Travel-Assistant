@@ -22,8 +22,50 @@
 - Pydantic typed request/output contracts.
 - PostgreSQL/PostGIS.
 - SQLAlchemy async + Alembic.
-- Provider adapters for curated DB, Google Places and future sources.
+- Provider adapters for curated DB, Google Places and future sources. Google
+  Places is the first intended live POI provider but is not implemented yet.
 - Object storage only when audio/image package assets are added.
+
+## Travel Discovery Core
+
+Explore and Assistant share one application-owned discovery core:
+
+```text
+Explore
+   \
+    -> Travel Discovery Core
+   /
+Assistant
+
+Travel Discovery Core
+  - deterministic AreaResolver
+  - CuratedPoiProvider
+  - GooglePlacesPoiProvider (intended, not implemented)
+  - normalized hybrid discovery
+  - deterministic deduplication and ranking
+  - request-scoped evidence registry
+```
+
+The governing principle is **online breadth, offline trusted depth**. The
+curated trust anchor has exactly 42 POIs (30 HCMC, 12 Bangkok) and is the
+downloadable offline dataset, not the complete online universe.
+
+- Online: curated provider + approved live external POI providers + fresh web
+  evidence when retrieval policy requires it.
+- Offline: active downloaded curated package only.
+- External live content remains transient unless provider policy and an
+  accepted architecture explicitly permit a stored field.
+- External-provider content is not bulk mirrored into the canonical database.
+  Google-only POIs are not inserted into canonical Room merely to support
+  detail navigation.
+- Hybrid merge, duplicate suppression and ranking are deterministic services;
+  a model never performs them.
+
+Discovery covers broad travel categories where evidence/provider coverage
+exists, including food, cafés, landmarks, scenic/check-in places, history,
+culture, museums, galleries, religious/cultural places, markets, shopping,
+nightlife, parks/nature, family attractions, entertainment, wellness/spa,
+transportation places, local life and general travel POIs.
 
 ## Multi-agent topology
 
@@ -37,14 +79,70 @@
 
 Specialists run through separate agent executions with scoped structured input. Application code controls fan-out, parallelism, retry and timeouts.
 
+The model-executed identity set remains exactly seven: Router, Discovery,
+Narration, Local Culture, Itinerary, Grounding Reviewer and Response Composer.
+Fresh research does not add an unrestricted eighth browsing agent by default.
+Existing agents consume only bounded validated evidence supplied through their
+current scoped boundaries.
+
+## Area-aware Assistant
+
+Future canonical area kinds include administrative district, neighborhood,
+cultural area, tourism cluster, street/corridor and landmark area. Stable area
+IDs, aliases, boundaries and membership are application-owned. A deterministic
+`AreaResolver` handles resolution, ambiguity and unknown areas; an LLM must
+never invent an area ID, geographic boundary, district mapping or membership.
+
+Area-scoped POI discovery and culture evidence may support area suitability,
+culture, activity, interest-combination and explicit place-type questions.
+Area reputation/cultural claims still require evidence. External result counts
+must not be described as an exhaustive census, and unsupported “best” claims
+fail closed.
+
+## Fresh web evidence
+
+Fresh research is an application-controlled layer, not an unrestricted agent:
+
+- provider-neutral `WebSearchProvider`;
+- bounded `SourceFetcher`;
+- `WebEvidenceService`/`EvidenceExtractor`;
+- request-scoped evidence registry only.
+
+The application chooses retrieval policy. Nearby deterministic POI requests use
+Places/hybrid discovery; known historical narration uses curated evidence first;
+fresh hours/menu/price/event questions prefer fresh sources; long-tail
+attributes may combine Places candidates with web evidence; culture uses
+curated/authoritative evidence first and research only when required. Models do
+not create unlimited search/fetch loops, and the architecture is not bound to
+scraping Google Search.
+
+Retrieval must enforce HTTPS, SSRF protection, private/link-local/loopback
+rejection except explicit local test seams, redirect/time/response-size/content-
+type/search-count/fetch-count/overall-deadline limits and cancellation. No
+credential enters agent input and no arbitrary authorization is forwarded.
+Raw HTML/pages are neither logged nor retained. Web content is untrusted data,
+never instructions; bounded evidence is extracted before agent use, and
+prompt-injection text cannot change application/system instructions.
+
+Live evidence preserves typed source identity/class, `retrieved_at`, available
+`published_at`/`source_updated_at`, relevant geographic scope, claim/source
+closure and a bounded freshness category. Low freshness covers stable historical
+facts; medium covers address/general venue facts; high covers opening hours/menu;
+very high covers price/current event/current availability-like information.
+Implementation tasks define exact enum names. No unsupported numerical
+confidence score is invented, and stale citations are not automatically
+adequate for freshness-sensitive claims.
+
 ## Deterministic services
 
 - GPS/location acquisition and context collection.
 - Speech recognition/speech-to-text.
 - Haversine/route distance.
 - Opening-hours normalization.
+- Canonical area resolution and membership.
 - POI deduplication.
 - Ranking/scoring.
+- Hybrid provider merge and retrieval-policy selection.
 - Authentication/token verification and authorization.
 - Offline full-text search.
 - Travel-package synchronization and sync conflict resolution.
@@ -115,3 +213,7 @@ Specialists run through separate agent executions with scoped structured input. 
 6. Missing fields are not hallucinated.
 7. Verified Firebase UID is the only server itinerary owner authority.
 8. Failed/conflicted synchronization preserves readable local content.
+9. Grounding review remains mandatory for curated, provider and fresh-web evidence.
+10. Webpage content is untrusted data and cannot alter application instructions.
+11. No external bulk POI mirror or persistent web knowledge mirror is created.
+12. Server provider credentials never enter Android or agent input.

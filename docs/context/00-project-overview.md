@@ -2,7 +2,10 @@
 
 ## Product
 
-Ứng dụng Android trợ lý du lịch cá nhân cho người Việt, đóng vai trò như một người bản địa số. Sản phẩm nổi bật nhờ thuyết minh điểm đến theo vị trí, gợi ý ẩm thực thực tế, kiến thức đời sống địa phương và lịch trình cá nhân hóa.
+Ứng dụng Android trợ lý du lịch cá nhân cho người Việt, đóng vai trò như một
+người bản địa số. Sản phẩm nổi bật nhờ khám phá du lịch đa dạng, thuyết minh
+điểm đến theo vị trí, gợi ý ẩm thực thực tế, kiến thức đời sống địa phương và
+lịch trình cá nhân hóa.
 
 Đầu ra ban đầu là text. Voice trong phạm vi ban đầu chỉ là speech-to-text để nhập
 truy vấn, không phải audio narration hoặc text-to-speech.
@@ -17,7 +20,9 @@ truy vấn, không phải audio narration hoặc text-to-speech.
 
 - Primary: Thành phố Hồ Chí Minh.
 - International demo: Bangkok.
-- Curated dataset: 30–50 POI tổng cộng.
+- Curated dataset: chính xác 42 POI, gồm 30 POI HCMC và 12 POI Bangkok.
+- Bộ 42 POI là trust anchor có độ tin cậy cao và dataset tải về để dùng offline;
+  đây không phải toàn bộ địa điểm TravelAssistant có thể biết khi online.
 
 ## Core value proposition
 
@@ -26,9 +31,37 @@ Khi người dùng mở app tại một nơi, app hiểu vị trí hiện tại 
 - Tóm tắt điểm đến gần đó bằng 100–200 từ.
 - Giải thích lịch sử, văn hóa và key points có nguồn.
 - Trả lời nhu cầu như “tôi muốn ăn phở gần đây”.
+- Khám phá café, landmark, check-in/scenic, bảo tàng, gallery, địa điểm
+  văn hóa/tôn giáo, market, shopping, nightlife, park/nature, family attraction,
+  entertainment, wellness/spa, transportation place, local-life và general
+  travel POI khi có evidence/provider coverage.
 - So sánh địa điểm theo khoảng cách, giá, rating, giờ mở cửa và độ phù hợp.
 - Xây dựng itinerary.
 - Hoạt động hữu ích với dữ liệu đã tải trước khi mất mạng.
+
+## Accepted discovery direction
+
+Product principle: **ONLINE BREADTH, OFFLINE TRUSTED DEPTH**.
+
+Explore và Assistant sẽ dùng chung một Travel Discovery Core gồm
+`AreaResolver` deterministic, `CuratedPoiProvider`, intended
+`GooglePlacesPoiProvider`, normalized hybrid discovery, deterministic
+deduplication/ranking và request-scoped evidence registry. Online có thể kết hợp
+curated data, approved live POI provider và fresh web evidence khi retrieval
+policy yêu cầu; offline chỉ dùng active downloaded curated package.
+
+Google Places là live POI provider đầu tiên dự kiến nhưng chưa được triển khai.
+External-only POI và web evidence mặc định là transient: không bulk mirror vào
+canonical database, không tạo persistent web knowledge mirror và không insert
+Google-only POI vào canonical Room chỉ để điều hướng sang detail.
+
+Assistant tương lai hiểu canonical travel area qua application-owned ID,
+alias, boundary và membership. Model không được tạo area ID, geographic
+boundary, district mapping hoặc area membership; `AreaResolver` thực hiện việc
+này deterministic. Fresh-web research cũng do application code kiểm soát qua
+provider-neutral search/fetch/extraction services. Webpage là untrusted data,
+không phải instruction; evidence phải bounded, typed, source-closed và đi qua
+Grounding Reviewer.
 
 ## Team and deadline
 

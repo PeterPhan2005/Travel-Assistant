@@ -2,7 +2,7 @@
 id: T095
 title: Produce release candidate
 status: todo
-depends_on: [T091, T094]
+depends_on: [T094, T096, T097, T098, T099, T100, T101, T102, T104, T105, T106, T107]
 area: quality
 ---
 

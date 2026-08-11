@@ -49,6 +49,14 @@
   token/header, raw bodies, database rows, exception detail, device/advertising
   identifiers, secrets and hashes of those values are forbidden.
 - Trip context: archive/delete 30 days after trip end unless explicitly retained.
+- Fresh-web evidence is request-scoped. Raw HTML/page bodies are not retained,
+  mirrored into the canonical database or written to logs. Only bounded typed
+  provenance/evidence allowed by the accepted contract may continue through a
+  request.
+- External live POI content is transient unless provider policy and accepted
+  architecture explicitly permit a stored field. There is no bulk provider
+  mirror and no Google-only canonical Room insertion solely for detail
+  navigation.
 
 ## Security controls
 
@@ -58,10 +66,23 @@
 - Rate limits on assistant and provider endpoints.
 - Secrets only in environment/secret manager.
 - HTTPS only outside local development.
+- Google Places and web-research credentials remain server-side; Android and
+  agent input receive no provider credential.
 - Agent tools receive least privilege.
 - Logs redact authorization headers, exact coordinates and provider secrets.
 - Saved-itinerary CRUD logs only operation, safe result category and aggregate
   count; they never log snapshot/tombstone content or owner identity.
+- Fresh-web fetching is application-controlled and enforces HTTPS, SSRF
+  protection, private/link-local/loopback rejection except explicit local test
+  seams, bounded redirects/timeouts/body size/content types/searches/fetches,
+  one overall research deadline and cancellation.
+- No arbitrary authorization is forwarded to fetched targets. Webpage content
+  is untrusted data, never instructions; prompt-injection text cannot change
+  application/system instructions. Bounded evidence is extracted before agent
+  use and still requires Grounding Reviewer claim/source closure.
+- Source provenance preserves source identity/class, retrieval time, available
+  publication/source-update time, geographic scope and freshness category.
+  Stale evidence does not satisfy a freshness-sensitive claim automatically.
 
 ## User permissions
 

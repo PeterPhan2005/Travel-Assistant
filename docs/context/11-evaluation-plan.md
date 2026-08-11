@@ -105,9 +105,14 @@ retained in this evidence.
 ### Discovery
 
 - Recall of valid candidate POIs.
+- Broad non-food category coverage.
+- HCMC/Bangkok and explicit canonical-area coverage.
 - Evidence that requested dish exists.
 - Correct handling of missing fields.
 - Ranking input completeness.
+- Deterministic curated/external merge, deduplication and ranking.
+- External provider failure preserves safe curated partial results.
+- Provider result counts are never treated as an exhaustive area census.
 
 ### Narration/local culture
 
@@ -131,6 +136,28 @@ retained in this evidence.
 - Final response preserves specialist facts.
 - Partial failures are disclosed.
 
+### Area resolution
+
+- Deterministic canonical resolution, aliases, ambiguity and unknown areas.
+- No model-authored area ID, boundary, district mapping or membership.
+- Area reputation/cultural claims require source closure.
+- Unsupported “best” claims fail closed.
+
+### Fresh evidence retrieval
+
+- Retrieval policy avoids web research when curated/Places evidence is enough.
+- Freshness-sensitive hours, menu, price and event claims use suitable current
+  evidence; stale citations fail closed where required.
+- Search count, source-fetch count, timeouts, body/type/redirect limits and
+  overall deadline are enforced with cancellation.
+- HTTPS/SSRF/private-network protections reject unsafe targets except explicit
+  local test seams.
+- Webpage prompt injection remains untrusted data and cannot modify system or
+  application instructions.
+- Raw HTML/pages, credentials, arbitrary authorization and sensitive request
+  content do not enter logs or retained evidence.
+- Grounding Reviewer preserves exact claim/source closure and typed provenance.
+
 ## Initial eval dataset
 
 Create at least:
@@ -140,3 +167,13 @@ Create at least:
 - 20 itinerary requests.
 - 20 local-culture queries.
 - 20 adversarial/missing-data cases.
+- Broad non-food discovery across HCMC and Bangkok.
+- Canonical area resolution/comparison, ambiguous and unknown-area cases.
+- Freshness-sensitive and long-tail research cases using deterministic fake
+  search/fetch providers.
+- SSRF, prompt-injection, redirect, timeout, response-size/content-type,
+  cancellation and research-budget adversarial cases.
+
+Ordinary CI remains deterministic, keyless and network-free. Separately run
+live Google Places, fresh-research and OpenAI validation must be reported as
+live evidence rather than inferred from fakes or deterministic fallbacks.

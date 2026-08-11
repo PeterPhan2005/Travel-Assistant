@@ -176,10 +176,33 @@ strict committed thresholds and byte-deterministic JSON/Markdown reports run
 without model/key/network/database/Firebase configuration and retain only safe
 case/aggregate metadata.
 
+The accepted post-T091 roadmap now fixes the curated trust anchor at exactly 42
+POIs: 30 HCMC and 12 Bangkok. The governing product principle is **online
+breadth, offline trusted depth**. The curated set is the high-confidence evidence
+and downloadable offline dataset, not the full online POI universe; travel scope
+is broad rather than food-only. Explore and Assistant will share a Travel
+Discovery Core with deterministic `AreaResolver`, curated and approved external
+providers, deterministic hybrid merge/dedup/ranking and a request-scoped
+evidence registry. Google Places is the first intended live POI provider but is
+not implemented. External POI/web content stays transient by default: no bulk
+provider mirror, Google-only canonical Room insertion for detail navigation or
+persistent web knowledge mirror.
+
+Fresh research will use application-controlled, provider-neutral
+`WebSearchProvider`, bounded `SourceFetcher` and
+`WebEvidenceService`/`EvidenceExtractor` boundaries. The current model-executed
+identity set remains exactly Router, Discovery, Narration, Local Culture,
+Itinerary, Grounding Reviewer and Response Composer; no unrestricted eighth
+browsing agent is accepted by default. Webpage content is untrusted data, not
+instructions. HTTPS/SSRF/private-network/redirect/timeout/body/content-type/
+search/fetch/deadline/cancellation bounds, credential isolation, prompt-
+injection resistance, typed provenance/freshness and mandatory Grounding
+closure are roadmap requirements.
+
 ## Current goal
 
 T091 is complete. T092 is the earliest later ready task in `tasks/index.json`;
-it is selected as Next Up but remains `todo`, unmodified and unstarted.
+it is selected as Next Up but remains `todo`, unimplemented and unstarted.
 
 ## Completed
 
@@ -246,11 +269,11 @@ it is selected as Next Up but remains `todo`, unmodified and unstarted.
 
 - Final visual identity/project name.
 - Cloud deployment provider.
-- Split of 30–50 curated POIs between HCMC and Bangkok.
-- Exact list of source publishers accepted for narration.
 - Exact production retention duration for rounded or redacted operational
   location-request logs within the accepted 7–30 day range.
 - Final user-facing preference taxonomy and editing UI.
+- Exact provider/API selection for the provider-neutral `WebSearchProvider`.
+- Exact bounded freshness enum names and thresholds to be finalized in T107.
 
 ## Architecture decisions
 
@@ -259,6 +282,37 @@ it is selected as Next Up but remains `todo`, unmodified and unstarted.
 - Code-orchestrated independent specialist runs.
 - Curated-first POI and narration data.
 - Room travel packages for offline mode.
+- The curated trust anchor contains exactly 42 POIs: 30 HCMC and 12 Bangkok.
+  It is the high-confidence evidence/downloadable offline set, not the complete
+  online universe. Accepted source policy prefers direct venue/operator sources
+  for price/menu with freshness metadata; authoritative venue/museum/
+  government/tourism/institutional sources for historical/cultural claims;
+  official venue/government/tourism for identity/address; and never permits a
+  review/social post as the sole source for restricted facts. Missing facts
+  remain missing and an LLM is never a factual source.
+- Travel discovery is broad, not food-only. The product may cover food, cafés,
+  landmarks, scenic/check-in places, history/culture, museums/galleries,
+  religious/cultural places, markets/shopping, nightlife, parks/nature, family
+  attractions, entertainment, wellness/spa, transportation, local life and
+  general travel POIs where evidence/provider coverage exists.
+- Explore and Assistant share one Travel Discovery Core. Online uses curated +
+  approved live POI providers + fresh evidence when policy requires it;
+  offline uses only the active downloaded curated package. Hybrid merge,
+  duplicate suppression and ranking are deterministic. Google Places is the
+  first intended external provider but remains unimplemented.
+- Canonical travel-area IDs, aliases, boundaries and membership are
+  application-owned. Deterministic `AreaResolver` handles administrative
+  district, neighborhood, cultural area, tourism cluster, street/corridor and
+  landmark-area concepts; a model cannot invent area geography or describe
+  external-provider counts as an exhaustive census.
+- Fresh-web evidence is request-scoped through provider-neutral search, bounded
+  fetch and evidence extraction. No external bulk POI mirror or persistent web
+  knowledge mirror is accepted. Web content is untrusted data, never
+  instructions; research is application-budgeted and mandatory Grounding
+  closure remains in force.
+- The seven model-executed identities remain Router, Discovery, Narration,
+  Local Culture, Itinerary, Grounding Reviewer and Response Composer. Fresh
+  research adds no unrestricted browsing agent by default.
 - Room version 1 uses stable string identifiers, Unix epoch milliseconds,
   SQLite REAL-backed `Double` coordinates and integer currency minor units.
 - Room version 2 adds only nullable `source_label` to stored narrations through
@@ -948,9 +1002,9 @@ it is selected as Next Up but remains `todo`, unmodified and unstarted.
 | --- | --- |
 | Product scope | Vietnamese-first native Android travel assistant; text output initially, with voice limited to speech-to-text input. |
 | Target users | Vietnamese domestic travelers plus selected outbound demo cases. |
-| Supported cities | Ho Chi Minh City is primary and Bangkok is the international demo; 30–50 curated POIs total, with the city split unresolved. |
-| Online/offline | Online mode may use approved provider adapters; offline mode uses only downloaded, versioned travel-package data and offers no new AI generation. |
-| Curated data | Curated POI, menu, narration and local-culture records are the trust anchor; external sources may enrich them with provenance and freshness. |
+| Supported cities | Ho Chi Minh City is primary and Bangkok is the international demo; the curated trust anchor is exactly 42 POIs: 30 HCMC and 12 Bangkok. |
+| Online/offline | Online breadth may combine curated data, approved live POI providers and bounded fresh evidence; offline trusted depth uses only the active downloaded curated package and offers no new AI generation. |
+| Curated data | Curated POI, menu, narration and local-culture records are the high-confidence trust anchor/downloadable set, not the complete online universe; external sources may enrich online results with typed provenance and freshness but are not bulk mirrored. |
 | Grounding | Unavailable facts are never invented; unsupported claims are removed, missing fields stay missing and historical/cultural claims need sources or an explicit fallback label. |
 | Stack | Kotlin/Jetpack Compose native Android; Python 3.12/FastAPI backend; PostgreSQL/PostGIS database; OpenAI Agents SDK runtime. |
 | Authentication | Firebase Authentication with email/password and Google; token verification and authorization are deterministic services, not agents. |
@@ -1327,8 +1381,8 @@ for structural, identifier, reference, city, timestamp, URL, coordinate,
 provenance, narration and integer-money failures before database access. Stable
 city codes are `hcmc` and `bkk`. Starter packages are `hcmc-starter-v1` with two
 POIs/two sources and `bkk-starter-v1` with one POI/one source. They deliberately
-contain no unverified menus or AI-authored narrations and do not claim the
-future 30–50 POI target.
+contain no unverified menus or AI-authored narrations and do not claim the later
+dataset target, now fixed at exactly 42 POIs.
 
 The async SQLAlchemy seed command uses only `DATABASE_URL`, refuses targets not
 visibly local/development/test, converts validated longitude-first coordinates
@@ -1421,7 +1475,7 @@ clock. The committed artifact is
 `hcmc-starter-v1-1.0.0.data.json` and
 `hcmc-starter-v1-1.0.0.manifest.json`. It contains the two approved HCMC POIs
 and zero aliases, menu items or narrations; no records were added to approach
-the future 30–50 target.
+the later dataset target, now fixed at exactly 42 POIs.
 
 The manifest allowlist is exactly `schemaVersion`, `artifactSchemaVersion`,
 `packageId`, `city`, `contentVersion`, `publishedAt`, `dataFilename`,
@@ -2890,3 +2944,35 @@ T091 is `done`; Completed includes T091 and In progress is empty. T092 is the
 earliest later ready task in index order because T031, T043 and T044 are done;
 it is selected only as Next Up and remains `todo`, unmodified and unstarted. No
 commit or push was made.
+
+Roadmap architecture maintenance completed on 2026-08-11 without starting or
+implementing T092. The precondition was a clean worktree at exact
+`HEAD`/`origin/main` SHA `1eeca4d313da286181dd5d4057f60c065f1b3d04`, with
+GitHub Actions CI run 31466249211 complete/success, T091 done under Completed,
+In progress empty, T092 the sole Next Up and T092–T095 todo.
+
+The accepted dataset target is now exact: 30 HCMC + 12 Bangkok = 42 curated
+POIs. T092/T093 task specifications record broad category/area diversity,
+non-food-dominated coverage and the approved source hierarchy/freshness rules.
+No dataset row was added or changed. ADR 0005 records online breadth/offline
+trusted depth, the shared Explore/Assistant Travel Discovery Core,
+deterministic `AreaResolver` and hybrid merge/dedup/ranking, transient external
+content, the intended-but-unimplemented Google Places provider, bounded
+request-scoped fresh evidence, webpage-as-untrusted-data handling, mandatory
+Grounding and preservation of the existing seven agent identities.
+
+T096–T107 were added as todo roadmap tasks. Their graph is: T096 depends on
+T025/T090/T092/T093; T097 on T049/T061/T062; T098 on
+T021/T022/T025/T071; T099 on T035/T071/T094/T096/T097/T098/T105/T107; T100 on
+T050/T061/T062/T099/T106/T107; T101 on T090/T099/T100; T102 on
+T032/T033/T092/T093/T097; nonblocking T103 on T049/T099/T100; T104 on
+T042/T102/T097; T105 on T019/T080/T104; T106 on
+T044/T048/T092/T093/T104; and T107 on T046/T047/T049/T097/T106. T095 now has
+direct blockers T094, T096, T097, T098, T099, T100, T101, T102, T104, T105,
+T106 and T107; T103 remains nonblocking. T091 remains transitively required by
+T094 and is already complete.
+
+Tracker state remains: T091 done and Completed; In progress empty; T092 todo,
+unimplemented and the sole Next Up; T093/T094/T095 todo and unstarted. This pass
+changed only documentation/task metadata. It changed no Android/backend
+production code, data package or test, and made no commit or push.

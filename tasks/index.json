@@ -499,8 +499,166 @@
     "title": "Produce release candidate",
     "area": "quality",
     "depends_on": [
-      "T091",
-      "T094"
+      "T094",
+      "T096",
+      "T097",
+      "T098",
+      "T099",
+      "T100",
+      "T101",
+      "T102",
+      "T104",
+      "T105",
+      "T106",
+      "T107"
+    ]
+  },
+  {
+    "id": "T096",
+    "file": "T096-finalize-preference-profile-and-personalization.md",
+    "title": "Finalize preference profile and personalization",
+    "area": "fullstack",
+    "depends_on": [
+      "T025",
+      "T090",
+      "T092",
+      "T093"
+    ]
+  },
+  {
+    "id": "T097",
+    "file": "T097-api-rate-limits-and-ai-cost-guards.md",
+    "title": "Add API rate limits and AI cost guards",
+    "area": "backend",
+    "depends_on": [
+      "T049",
+      "T061",
+      "T062"
+    ]
+  },
+  {
+    "id": "T098",
+    "file": "T098-account-deletion-and-data-lifecycle.md",
+    "title": "Implement account deletion and data lifecycle",
+    "area": "fullstack",
+    "depends_on": [
+      "T021",
+      "T022",
+      "T025",
+      "T071"
+    ]
+  },
+  {
+    "id": "T099",
+    "file": "T099-staging-and-release-environment.md",
+    "title": "Configure staging and release environment",
+    "area": "fullstack",
+    "depends_on": [
+      "T035",
+      "T071",
+      "T094",
+      "T096",
+      "T097",
+      "T098",
+      "T105",
+      "T107"
+    ]
+  },
+  {
+    "id": "T100",
+    "file": "T100-live-openai-multi-agent-validation.md",
+    "title": "Validate live OpenAI multi-agent integration",
+    "area": "ai",
+    "depends_on": [
+      "T050",
+      "T061",
+      "T062",
+      "T099",
+      "T106",
+      "T107"
+    ]
+  },
+  {
+    "id": "T101",
+    "file": "T101-release-privacy-backup-and-ci.md",
+    "title": "Harden release privacy backup and CI",
+    "area": "quality",
+    "depends_on": [
+      "T090",
+      "T099",
+      "T100"
+    ]
+  },
+  {
+    "id": "T102",
+    "file": "T102-google-places-live-provider.md",
+    "title": "Implement Google Places live provider",
+    "area": "backend",
+    "depends_on": [
+      "T032",
+      "T033",
+      "T092",
+      "T093",
+      "T097"
+    ]
+  },
+  {
+    "id": "T103",
+    "file": "T103-production-operations-monitoring.md",
+    "title": "Add production operations monitoring",
+    "area": "quality",
+    "depends_on": [
+      "T049",
+      "T099",
+      "T100"
+    ]
+  },
+  {
+    "id": "T104",
+    "file": "T104-hybrid-online-poi-discovery.md",
+    "title": "Implement hybrid online POI discovery",
+    "area": "backend",
+    "depends_on": [
+      "T042",
+      "T102",
+      "T097"
+    ]
+  },
+  {
+    "id": "T105",
+    "file": "T105-online-live-discovery-explore.md",
+    "title": "Add online live discovery to Explore",
+    "area": "fullstack",
+    "depends_on": [
+      "T019",
+      "T080",
+      "T104"
+    ]
+  },
+  {
+    "id": "T106",
+    "file": "T106-area-aware-assistant-neighborhood-intelligence.md",
+    "title": "Add area-aware Assistant and neighborhood intelligence",
+    "area": "fullstack",
+    "depends_on": [
+      "T044",
+      "T048",
+      "T092",
+      "T093",
+      "T104"
+    ]
+  },
+  {
+    "id": "T107",
+    "file": "T107-live-web-evidence-retrieval.md",
+    "title": "Add live web evidence retrieval",
+    "area": "ai",
+    "depends_on": [
+      "T046",
+      "T047",
+      "T049",
+      "T097",
+      "T106"
     ]
   }
 ]
