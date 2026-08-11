@@ -24,8 +24,14 @@ navigation, itinerary generation, voice intent results, saved-trip returns and
 geocontext opens. Release collection is disabled; debug builds retain a bounded
 process-local inspection buffer without upload or durable storage. The app shell
 has passed the complete T090 lifecycle, deduplication, privacy and isolation
-manual matrix. It now observes validated Internet connectivity without
-making a network request and presents Checking, Online and Offline explicitly.
+manual matrix. T091 now adds a deterministic Android demo harness over the
+existing Explore food-query, Room v4, POI-detail, sourced-narration and external-
+navigation boundaries, plus an observable Online-to-Offline local-search case.
+T091 physical-device validation now passes foreground GPS, microphone/voice
+lifecycle, actual network isolation with offline cold relaunch, external-map
+handling and connectivity cleanup/restoration. It now observes validated Internet
+connectivity without making a network request and presents Checking, Online and
+Offline explicitly.
 Offline Room search and POI detail remain usable. Local package version and
 publication metadata are observed by the app-shell state owner and displayed
 in Downloads. Assistant now provides a Vietnamese-first transient query
@@ -172,8 +178,8 @@ case/aggregate metadata.
 
 ## Current goal
 
-T090 is complete. T091 is the sole Next Up task by index order; all four of its
-dependencies, T061, T071, T080 and T090, are complete. T091 has not started.
+T091 is complete. T092 is the earliest later ready task in `tasks/index.json`;
+it is selected as Next Up but remains `todo`, unmodified and unstarted.
 
 ## Completed
 
@@ -226,6 +232,7 @@ dependencies, T061, T071, T080 and T090, are complete. T091 has not started.
 - T071 Persist and sync itineraries.
 - T080 Implement Room full-text search.
 - T090 Instrument MVP KPIs.
+- T091 Add end-to-end demo tests.
 
 ## In progress
 
@@ -233,7 +240,7 @@ dependencies, T061, T071, T080 and T090, are complete. T091 has not started.
 
 ## Next up
 
-- T091 Add end-to-end demo tests.
+- T092 Complete HCMC curated dataset.
 
 ## Open questions
 
@@ -2827,3 +2834,59 @@ file. No raw sentinel or private account detail is retained in this record.
 T090 is `done` and Completed now includes it. In progress is empty. T091 is the
 sole Next Up task by index order because T061, T071, T080 and T090 are complete;
 T091 remains `todo`, untouched and unstarted. No commit or push was made.
+
+T091 automated implementation and required checks completed on 2026-08-11. The
+scope audit resolved the acceptance wording conservatively: the existing navigable
+food path is Explore query → HomeViewModel → active-package Room FTS → Compose
+POI route → Room detail → external-navigation boundary. Assistant result cards
+currently have no navigation action; adding one in a quality-only task would be
+new product behavior and was not done. The accepted T091 scenarios are therefore
+Android-local and require no authentication, backend, PostgreSQL/PostGIS or
+OpenAI model. Backend pytest remains a regression gate only.
+
+`DemoEndToEndTest` imports the real bundled HCMC package into a fresh in-memory
+Room v4 database, adds deterministic synthetic phở and source-labeled narration
+rows, then uses the real HomeViewModel, Room search/detail repositories, Compose
+navigation and POI detail UI. The online case enters `phở bò`, opens the
+distance-ranked Chợ Bến Thành result, displays narration plus its source and
+passes the exact stored POI to the external-navigation boundary. The offline
+case observes Online → Offline through the existing connectivity seam before an
+unaccented `pho bo` query and keeps the active-package result visible. The test
+database is closed per case; no credential, identity, coordinate history,
+query, transcript, request/response body or provider/model payload is logged or
+persisted.
+
+Focused T091 instrumentation passed 2/2. The full API-36 ARM64 Pixel Emulator
+suite passed 143/143 with zero failures or skips, and the Android JVM aggregate
+plus `lintDebug`, `testDebugUnitTest` and `assembleDebug` passed. Backend
+`pytest` passed 816/816 against healthy local PostGIS. A first literal `pytest`
+attempt failed because the executable was absent from the shell PATH; the same
+command passed after placing the repository virtualenv on PATH and loading the
+local environment. A first full connected attempt selected a stale incomplete
+VS Code JRE without `jlink`; stopping that Gradle daemon and rerunning with the
+required Android Studio JDK 21 passed.
+
+`docs/testing/T091-demo-validation.md` records the accepted coverage matrix and
+an exact privacy-safe foreground-GPS, microphone, actual-network-isolation and
+external-map runbook. None of those device-owned manual checks has yet been
+observed for T091, and no manual PASS is claimed. T091 remains `in_progress`,
+Next Up remains empty, T090 remains completed, and no later task has started.
+
+T091 completed on 2026-08-11 after user-supplied physical-device validation
+closed every remaining manual gate. Foreground permission timing, available
+location, nearby content and background cancellation passed. Microphone
+permission timing, editable voice result, voice cancellation, Assistant-
+departure stale-result protection and force-stop non-restoration passed.
+Actual physical network isolation, the Offline indicator, local search with
+radios/network disabled, canonical offline detail and offline force-stop/cold
+relaunch passed. A compatible external-map handler received the navigation
+action, returning to TravelAssistant recovered the POI detail, connectivity was
+restored during cleanup, and manual validation changed no repository file.
+
+The accepted automated evidence remains focused E2E 2/2, connected Android
+143/143, Android JVM 270 and backend pytest 816/816. No private account,
+transcript, coordinate, token, request/response or log content was recorded.
+T091 is `done`; Completed includes T091 and In progress is empty. T092 is the
+earliest later ready task in index order because T031, T043 and T044 are done;
+it is selected only as Next Up and remains `todo`, unmodified and unstarted. No
+commit or push was made.
