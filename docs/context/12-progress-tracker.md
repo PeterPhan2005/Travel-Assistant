@@ -204,8 +204,7 @@ closure are roadmap requirements.
 
 ## Current goal
 
-T093 is complete. T094 is the next ready task by index order and has not been
-started.
+T094 is complete. No task is active; T096 is the sole Next Up task.
 
 ## Completed
 
@@ -261,6 +260,7 @@ started.
 - T091 Add end-to-end demo tests.
 - T092 Complete HCMC curated dataset.
 - T093 Complete Bangkok curated dataset.
+- T094 Add safe demo mode.
 
 ## In progress
 
@@ -268,7 +268,7 @@ started.
 
 ## Next up
 
-- T094 Add safe demo mode.
+- T096 Finalize preference profile and personalization.
 
 ## Open questions
 
@@ -3088,3 +3088,76 @@ tests passed 25/25, and the complete backend suite passed 840/840. T093 is
 `done`; Completed includes T093; In progress is empty; and T094 is the earliest
 ready task in index order and the sole Next Up task. T094 and later tasks remain
 unimplemented. No commit or push was made.
+
+T094 automated implementation completed on 2026-08-12 after verifying a clean
+`main` worktree at exact `HEAD`/`origin/main` SHA
+`43a103c33f9e961fbdffe6613f90d5f199d34da9`, with GitHub Actions run
+31566298430 complete/success. The production-neutral main contract exposes only
+provider-supplied preset metadata and cannot construct a preset itself. The
+debug source set supplies exactly two transient presets: `Demo: TP.HCM` at
+10.7799, 106.7 from curated HCMC POI
+`hcmc-poi-central-post-office`, and `Demo: Bangkok` at 13.746508, 100.493096
+from curated Bangkok POI `bkk-poi-wat-pho`. The release source set supplies an
+empty provider. Exact labels and coordinate literals exist only in debug
+source, and no `BuildConfig.DEBUG` branch was added.
+
+Real GPS remains the unselected cold-launch default and still uses the existing
+`AndroidLocationClient`. Explicit demo selection neither requests permission
+nor calls the location client. ViewModel generation tokens implement
+latest-explicit-location-action-wins across real requests, permission callbacks,
+preset switches, query changes and nearby searches, so stale real or preset
+results cannot overwrite newer state. Presets are process-local ViewModel state
+only and a new ViewModel restores no selection. Demo selection does not arm or
+emit `geocontext_opened`, and no coordinate, preset label or synthetic identity
+is sent to analytics. Genuine real-location behavior retains the existing KPI
+path.
+
+The Bangkok preset changes only the synthetic search origin. Android remains
+limited to the active HCMC Room package: T094 does not download or activate a
+Bangkok package, insert T093 Bangkok records, change package URLs, bypass
+active-package FTS, or add production seed data. Bangkok may consequently show
+no Bangkok POIs or HCMC-package rows ranked from Bangkok. Multi-city offline
+package selection/activation remains a candidate dedicated future task and was
+not implemented here.
+
+Automated verification passed `./gradlew test --no-daemon --stacktrace` with
+284/284 JVM cases, `./gradlew lintDebug testDebugUnitTest assembleDebug
+--no-daemon --stacktrace`, and all 148/148 `connectedDebugAndroidTest` cases on
+the available API 36 ARM64 emulator: 432 aggregate Android cases with zero
+failures or skips. Focused actual-Hilt demo UI coverage also passed 13/13 within
+the connected total. Release source-policy tests prove an empty release provider,
+conditional UI rendering and absence of debug labels/coordinates from main and
+release source. `assembleRelease` reaches the repository's pre-existing
+`:app:processReleaseGoogleServices` failure because no approved release
+`google-services.json` exists, so a release artifact cannot yet be inspected;
+T094 did not copy the debug Firebase configuration or alter Gradle to bypass
+that boundary. JSON validation, diff whitespace checks and Android-only scope
+checks passed. Backend and curated/travel-package data are unchanged.
+
+User-supplied T094 manual validation was recorded on 2026-08-12. Debug cold
+launch passed with no selected preset or automatic permission request and with
+real GPS remaining the default. HCMC and Bangkok selection, permission
+isolation, transient search/context updates, query preservation, explicit HCMC
+active-package limitation, return to the production location path,
+latest-action-wins and force-stop non-restoration all passed. Release source
+isolation and the empty release provider passed. Release artifact validation
+remains exactly `BLOCKED_MISSING_APPROVED_FIREBASE_CONFIG`, not PASS: the
+required build stops at `:app:processReleaseGoogleServices` because the approved
+release `google-services.json` intentionally does not exist.
+
+This documented build failure satisfies T094's explicit required-check
+contract, which requires checks to pass or failures to be documented and does
+not require an installed release artifact. Source-set isolation proves release
+cannot resolve demo presets. T099 separately owns a variant-safe staging/release
+Firebase configuration and depends on T094; T101 later owns release-artifact
+hardening and depends on T099. Holding T094 open for either would create a
+dependency deadlock. The debug Firebase configuration was not copied or reused.
+
+The Bangkok preset remains only a transient synthetic origin against the active
+HCMC offline package. Multi-city offline package selection/activation remains a
+candidate future dedicated task and was neither created nor implemented during
+closure. T094 is `done`; Completed includes T094; In progress is None; and T096
+is the earliest ready task in index order and the sole Next Up task. T095 and
+T096+ implementation remain untouched. Closure changed only the T094 task,
+validation document and progress tracker; no Android production/test, backend,
+curated data or travel-package artifact changed. No commit or push was made.

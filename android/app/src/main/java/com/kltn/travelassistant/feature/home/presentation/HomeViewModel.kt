@@ -10,6 +10,7 @@ import com.kltn.travelassistant.analytics.trackSafely
 import com.kltn.travelassistant.data.location.LocationAcquisitionResult
 import com.kltn.travelassistant.data.location.LocationClient
 import com.kltn.travelassistant.data.repository.AppInfoRepository
+import com.kltn.travelassistant.feature.home.domain.DemoLocationPresetProvider
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,14 +28,21 @@ class HomeViewModel @Inject constructor(
     repository: AppInfoRepository,
     private val locationClient: LocationClient,
     private val nearbySearchRepository: NearbySearchRepository,
+    private val demoLocationPresetProvider: DemoLocationPresetProvider,
     private val productAnalytics: ProductAnalytics = NoOpProductAnalytics,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(
-        HomeUiState(appName = repository.appName.value),
+        HomeUiState(
+            appName = repository.appName.value,
+            demoLocationPresets = demoLocationPresetProvider.presets.map { preset ->
+                DemoLocationPresetUiModel(id = preset.id, label = preset.label)
+            },
+        ),
     )
     val uiState: StateFlow<HomeUiState> = mutableUiState.asStateFlow()
 
     private var locationRequestJob: Job? = null
+    private var locationActionGeneration = 0L
     private var nearbySearchJob: Job? = null
     private var nearbySearchGeneration = 0L
     private var pendingGeocontextOpen = false
@@ -48,14 +56,28 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun onLocationPermissionRequestStarted() {
-        if (locationRequestJob?.isActive == true) return
-        updateLocationState(LocationUiState.Loading)
+    fun onLocationPermissionRequestStarted(): Long? {
+        if (
+            locationRequestJob?.isActive == true ||
+            mutableUiState.value.locationState == LocationUiState.Loading
+        ) {
+            return null
+        }
+        return beginRealLocationAction()
     }
 
-    fun onLocationPermissionGranted() {
+    fun onLocationPermissionGranted(actionId: Long? = null) {
         if (locationRequestJob?.isActive == true) return
 
+        val activeActionId = when {
+            actionId != null -> {
+                if (actionId != locationActionGeneration) return
+                actionId
+            }
+            mutableUiState.value.locationState == LocationUiState.Loading ->
+                locationActionGeneration
+            else -> beginRealLocationAction()
+        }
         updateLocationState(LocationUiState.Loading)
         locationRequestJob = viewModelScope.launch {
             val result = try {
@@ -65,6 +87,7 @@ class HomeViewModel @Inject constructor(
             } catch (_: Exception) {
                 LocationAcquisitionResult.Failure
             }
+            if (activeActionId != locationActionGeneration) return@launch
             val state = when (result) {
                 is LocationAcquisitionResult.Success -> LocationUiState.Available(result.location)
                 LocationAcquisitionResult.PermissionDenied -> LocationUiState.PermissionDenied(
@@ -77,15 +100,27 @@ class HomeViewModel @Inject constructor(
                 LocationAcquisitionResult.Failure -> LocationUiState.Error(LocationError.FAILED)
             }
             updateLocationState(state)
+            locationRequestJob = null
             if (state is LocationUiState.Available) {
                 if (!geocontextOpenRecorded) pendingGeocontextOpen = true
-                runNearbySearch(state.location.latitude, state.location.longitude)
+                runNearbySearch(
+                    latitude = state.location.latitude,
+                    longitude = state.location.longitude,
+                    locationActionId = activeActionId,
+                )
             }
         }
     }
 
-    fun onLocationPermissionDenied(canRequestPermissionAgain: Boolean) {
+    fun onLocationPermissionDenied(
+        canRequestPermissionAgain: Boolean,
+        actionId: Long? = null,
+    ) {
         if (locationRequestJob?.isActive == true) return
+        if (actionId != null && actionId != locationActionGeneration) return
+        if (actionId == null && mutableUiState.value.locationState != LocationUiState.Loading) {
+            beginRealLocationAction()
+        }
         updateLocationState(
             LocationUiState.PermissionDenied(
                 canRequestPermissionAgain = canRequestPermissionAgain,
@@ -95,10 +130,25 @@ class HomeViewModel @Inject constructor(
 
     fun onLocationRequestCancelled() {
         pendingGeocontextOpen = false
-        val activeRequest = locationRequestJob?.takeIf { job -> job.isActive } ?: return
-        activeRequest.cancel()
+        val activeRequest = locationRequestJob?.takeIf { job -> job.isActive }
+        val isWaitingForPermission = mutableUiState.value.locationState == LocationUiState.Loading
+        if (activeRequest == null && !isWaitingForPermission) return
+        locationActionGeneration += 1
+        activeRequest?.cancel()
         locationRequestJob = null
+        cancelNearbySearch()
         updateLocationState(LocationUiState.Error(LocationError.CANCELLED))
+    }
+
+    fun onDemoLocationPresetSelected(presetId: String) {
+        val preset = demoLocationPresetProvider.findById(presetId) ?: return
+        val actionId = beginLocationAction(selectedDemoLocationPresetId = preset.id)
+        updateLocationState(LocationUiState.Available(preset.location))
+        runNearbySearch(
+            latitude = preset.location.latitude,
+            longitude = preset.location.longitude,
+            locationActionId = actionId,
+        )
     }
 
     fun onNearbyQueryChanged(query: String) {
@@ -107,10 +157,18 @@ class HomeViewModel @Inject constructor(
         val location = (mutableUiState.value.locationState as? LocationUiState.Available)
             ?.location
             ?: return
-        runNearbySearch(location.latitude, location.longitude)
+        runNearbySearch(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            locationActionId = locationActionGeneration,
+        )
     }
 
-    private fun runNearbySearch(latitude: Double, longitude: Double) {
+    private fun runNearbySearch(
+        latitude: Double,
+        longitude: Double,
+        locationActionId: Long,
+    ) {
         nearbySearchJob?.cancel()
         val generation = ++nearbySearchGeneration
         val query = mutableUiState.value.nearbyQuery
@@ -127,7 +185,12 @@ class HomeViewModel @Inject constructor(
             } catch (_: Exception) {
                 NearbySearchResult.DatabaseError
             }
-            if (generation != nearbySearchGeneration) return@launch
+            if (
+                generation != nearbySearchGeneration ||
+                locationActionId != locationActionGeneration
+            ) {
+                return@launch
+            }
             val searchState = when (result) {
                 is NearbySearchResult.Success -> if (result.pois.isEmpty()) {
                     NearbySearchUiState.Empty
@@ -157,6 +220,30 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun beginRealLocationAction(): Long {
+        val actionId = beginLocationAction(selectedDemoLocationPresetId = null)
+        updateLocationState(LocationUiState.Loading)
+        return actionId
+    }
+
+    private fun beginLocationAction(selectedDemoLocationPresetId: String?): Long {
+        locationActionGeneration += 1
+        locationRequestJob?.cancel()
+        locationRequestJob = null
+        cancelNearbySearch()
+        pendingGeocontextOpen = false
+        mutableUiState.update { state ->
+            state.copy(selectedDemoLocationPresetId = selectedDemoLocationPresetId)
+        }
+        return locationActionGeneration
+    }
+
+    private fun cancelNearbySearch() {
+        nearbySearchGeneration += 1
+        nearbySearchJob?.cancel()
+        nearbySearchJob = null
     }
 
     private fun updateLocationState(locationState: LocationUiState) {

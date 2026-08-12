@@ -87,6 +87,7 @@ internal fun TravelAssistantNavHost(
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
+    onDemoLocationPresetSelected: (String) -> Unit = {},
     onAssistantQueryChanged: (String) -> Unit = {},
     onVoiceInput: () -> Unit = {},
     onCancelVoiceInput: () -> Unit = {},
@@ -142,6 +143,7 @@ internal fun TravelAssistantNavHost(
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
                 onNearbyQueryChanged = onNearbyQueryChanged,
+                onDemoLocationPresetSelected = onDemoLocationPresetSelected,
                 onPoiSelected = { poiId ->
                     navController.navigate(PoiDetailDestination.createRoute(poiId)) {
                         launchSingleTop = true

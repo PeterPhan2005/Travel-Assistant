@@ -45,11 +45,15 @@ class MainActivity : ComponentActivity() {
     private val itineraryViewModel: ItineraryViewModel by viewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
     private val downloadsViewModel: DownloadsViewModel by viewModels()
+    private var pendingLocationPermissionActionId: Long? = null
     private var pendingMicrophonePermissionAttemptId: Long? = null
     private var isMicrophonePermissionResultOutstanding = false
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
+        val actionId = pendingLocationPermissionActionId
+            ?: return@registerForActivityResult
+        pendingLocationPermissionActionId = null
         val hasForegroundPermission = permissions.getOrDefault(
             Manifest.permission.ACCESS_FINE_LOCATION,
             false,
@@ -59,7 +63,7 @@ class MainActivity : ComponentActivity() {
         ) || hasForegroundLocationPermission()
 
         if (hasForegroundPermission) {
-            homeViewModel.onLocationPermissionGranted()
+            homeViewModel.onLocationPermissionGranted(actionId)
         } else {
             homeViewModel.onLocationPermissionDenied(
                 canRequestPermissionAgain = shouldShowRequestPermissionRationale(
@@ -67,6 +71,7 @@ class MainActivity : ComponentActivity() {
                 ) || shouldShowRequestPermissionRationale(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                 ),
+                actionId = actionId,
             )
         }
     }
@@ -128,10 +133,11 @@ class MainActivity : ComponentActivity() {
     private fun onUseCurrentLocation() {
         if (homeViewModel.uiState.value.locationState is LocationUiState.Loading) return
 
+        val actionId = homeViewModel.onLocationPermissionRequestStarted() ?: return
         if (hasForegroundLocationPermission()) {
-            homeViewModel.onLocationPermissionGranted()
+            homeViewModel.onLocationPermissionGranted(actionId)
         } else {
-            homeViewModel.onLocationPermissionRequestStarted()
+            pendingLocationPermissionActionId = actionId
             locationPermissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
         }
     }

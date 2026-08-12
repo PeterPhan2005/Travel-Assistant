@@ -31,6 +31,8 @@ import com.kltn.travelassistant.data.seed.SeedValidator
 import com.kltn.travelassistant.feature.appshell.presentation.AppShellUiState
 import com.kltn.travelassistant.feature.appshell.presentation.ConnectivityUiState
 import com.kltn.travelassistant.feature.appshell.presentation.LocalPackageUiState
+import com.kltn.travelassistant.feature.home.domain.DemoLocationPreset
+import com.kltn.travelassistant.feature.home.domain.DemoLocationPresetProvider
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.NearbySearchUiState
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
@@ -108,6 +110,9 @@ class DemoEndToEndTest {
             repository = FixedAppInfoRepository(),
             locationClient = FixedHcmcLocationClient(),
             nearbySearchRepository = RoomNearbySearchRepository(database.poiContentDao()),
+            demoLocationPresetProvider = object : DemoLocationPresetProvider {
+                override val presets: List<DemoLocationPreset> = emptyList()
+            },
         )
         detailRepository = RoomPoiDetailRepository(database.poiContentDao())
     }

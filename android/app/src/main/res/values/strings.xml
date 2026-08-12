@@ -149,9 +149,11 @@
     <string name="downloads_error_cancelled">Lần tải trước đã bị dừng. Bạn có thể thử lại.</string>
     <string name="downloads_previous_data_preserved">Dữ liệu ngoại tuyến trước đó vẫn an toàn và tiếp tục sử dụng được.</string>
     <string name="location_section_title">Vị trí hiện tại</string>
+    <string name="location_demo_section_title">Ngữ cảnh vị trí demo</string>
     <string name="location_use_current">Dùng vị trí hiện tại</string>
     <string name="location_loading">Đang lấy vị trí hiện tại…</string>
     <string name="location_available_local_only">Đã lấy vị trí. Dữ liệu chỉ được giữ tạm thời trên thiết bị.</string>
+    <string name="location_demo_active">Đang dùng vị trí tổng hợp dành cho nhà phát triển: %1$s. Đây không phải GPS hiện tại.</string>
     <string name="location_accuracy">Độ chính xác ước tính: %1$d m</string>
     <string name="location_refresh">Cập nhật vị trí</string>
     <string name="location_permission_denied">Ứng dụng cần quyền vị trí khi đang sử dụng để đưa ra gợi ý gần bạn. Bạn có thể thử lại hoặc cấp quyền trong cài đặt.</string>
@@ -161,11 +163,15 @@
     <string name="location_timeout">Quá thời gian lấy vị trí. Hãy thử lại.</string>
     <string name="location_cancelled">Đã dừng lấy vị trí khi ứng dụng rời màn hình. Hãy thử lại.</string>
     <string name="location_error">Không thể lấy vị trí lúc này. Hãy thử lại.</string>
+    <string name="demo_location_section_title">Công cụ nhà phát triển — vị trí demo</string>
+    <string name="demo_location_explanation">Chỉ thay ngữ cảnh vị trí tạm thời trong bản debug; không đổi GPS hoặc gói dữ liệu đang hoạt động.</string>
+    <string name="demo_location_selected">Đã chọn tạm thời: %1$s</string>
     <string name="nearby_section_title">Địa điểm gần đây</string>
     <string name="nearby_location_required">Hãy dùng vị trí hiện tại để xem các địa điểm gần bạn.</string>
     <string name="nearby_search_label">Tìm địa điểm gần đây</string>
     <string name="nearby_search_placeholder">Tên, loại, bí danh hoặc món ăn</string>
     <string name="nearby_straight_line_notice">Khoảng cách đường thẳng ước tính từ vị trí hiện tại.</string>
+    <string name="nearby_straight_line_demo_notice">Khoảng cách đường thẳng ước tính từ vị trí demo đang chọn, không phải GPS hiện tại.</string>
     <string name="nearby_loading">Đang tìm trong dữ liệu có sẵn trên thiết bị…</string>
     <string name="nearby_empty">Không tìm thấy địa điểm phù hợp trong dữ liệu trên thiết bị.</string>
     <string name="nearby_error">Không thể đọc dữ liệu địa điểm trên thiết bị lúc này.</string>

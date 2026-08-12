@@ -34,8 +34,12 @@ fun HomeScreen(
     onOpenLocationSettings: () -> Unit,
     onNearbyQueryChanged: (String) -> Unit,
     onPoiSelected: (String) -> Unit,
+    onDemoLocationPresetSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val selectedDemoPreset = uiState.demoLocationPresets.firstOrNull { preset ->
+        preset.id == uiState.selectedDemoLocationPresetId
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize(),
@@ -58,9 +62,19 @@ fun HomeScreen(
         item {
             LocationContextSection(
                 state = uiState.locationState,
+                selectedDemoLocationLabel = selectedDemoPreset?.label,
                 onUseCurrentLocation = onUseCurrentLocation,
                 onOpenLocationSettings = onOpenLocationSettings,
             )
+        }
+        if (uiState.demoLocationPresets.isNotEmpty()) {
+            item {
+                DemoLocationControls(
+                    presets = uiState.demoLocationPresets,
+                    selectedPresetId = uiState.selectedDemoLocationPresetId,
+                    onPresetSelected = onDemoLocationPresetSelected,
+                )
+            }
         }
         item {
             Text(
@@ -88,7 +102,13 @@ fun HomeScreen(
             }
             item {
                 Text(
-                    text = stringResource(R.string.nearby_straight_line_notice),
+                    text = stringResource(
+                        if (selectedDemoPreset == null) {
+                            R.string.nearby_straight_line_notice
+                        } else {
+                            R.string.nearby_straight_line_demo_notice
+                        },
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -157,6 +177,7 @@ private fun NearbyPoiRow(
 @Composable
 private fun LocationContextSection(
     state: LocationUiState,
+    selectedDemoLocationLabel: String?,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -166,7 +187,13 @@ private fun LocationContextSection(
         verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
     ) {
         Text(
-            text = stringResource(R.string.location_section_title),
+            text = stringResource(
+                if (selectedDemoLocationLabel == null) {
+                    R.string.location_section_title
+                } else {
+                    R.string.location_demo_section_title
+                },
+            ),
             style = MaterialTheme.typography.titleMedium,
         )
         when (state) {
@@ -176,14 +203,23 @@ private fun LocationContextSection(
                 Text(text = stringResource(R.string.location_loading))
             }
             is LocationUiState.Available -> {
-                Text(text = stringResource(R.string.location_available_local_only))
-                state.location.accuracyMeters?.let { accuracyMeters ->
+                if (selectedDemoLocationLabel == null) {
+                    Text(text = stringResource(R.string.location_available_local_only))
+                    state.location.accuracyMeters?.let { accuracyMeters ->
+                        Text(
+                            text = stringResource(
+                                R.string.location_accuracy,
+                                accuracyMeters.toInt(),
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                } else {
                     Text(
                         text = stringResource(
-                            R.string.location_accuracy,
-                            accuracyMeters.toInt(),
+                            R.string.location_demo_active,
+                            selectedDemoLocationLabel,
                         ),
-                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 LocationActionButton(
@@ -210,6 +246,42 @@ private fun LocationContextSection(
                     onClick = onUseCurrentLocation,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DemoLocationControls(
+    presets: List<DemoLocationPresetUiModel>,
+    selectedPresetId: String?,
+    onPresetSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.content),
+    ) {
+        Text(
+            text = stringResource(R.string.demo_location_section_title),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Text(
+            text = stringResource(R.string.demo_location_explanation),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        presets.forEach { preset ->
+            OutlinedButton(
+                onClick = { onPresetSelected(preset.id) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = preset.label)
+            }
+        }
+        presets.firstOrNull { preset -> preset.id == selectedPresetId }?.let { selected ->
+            Text(
+                text = stringResource(R.string.demo_location_selected, selected.label),
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }

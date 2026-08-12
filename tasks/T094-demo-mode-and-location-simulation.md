@@ -1,7 +1,7 @@
 ---
 id: T094
 title: Add safe demo mode
-status: todo
+status: done
 depends_on: [T091, T092, T093]
 area: android
 ---
@@ -31,12 +31,12 @@ Implement only the goal and acceptance criteria in this file.
 
 # Acceptance criteria
 
-- [ ] Only debug builds expose presets.
-- [ ] Real GPS remains default.
-- [ ] Demo script is documented.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] Only debug builds expose presets.
+- [x] Real GPS remains default.
+- [x] Demo script is documented.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

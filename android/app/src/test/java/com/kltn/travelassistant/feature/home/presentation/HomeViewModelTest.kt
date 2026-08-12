@@ -7,6 +7,8 @@ import com.kltn.travelassistant.data.location.DeviceLocation
 import com.kltn.travelassistant.data.location.LocationAcquisitionResult
 import com.kltn.travelassistant.data.location.LocationClient
 import com.kltn.travelassistant.data.repository.AppInfoRepository
+import com.kltn.travelassistant.feature.home.domain.DemoLocationPreset
+import com.kltn.travelassistant.feature.home.domain.DemoLocationPresetProvider
 import com.kltn.travelassistant.feature.nearby.domain.NearbyPoi
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchRepository
 import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
@@ -61,6 +63,281 @@ class HomeViewModelTest {
             NearbySearchUiState.WaitingForLocation,
             viewModel.uiState.value.nearbySearchState,
         )
+    }
+
+    @Test
+    fun debugPresetsAreInitiallyUnselectedAndRealGpsRemainsTheDefaultAction() =
+        runTest(dispatcher) {
+            val locationClient = FakeLocationClient(successResult)
+            val viewModel = createViewModel(
+                locationClient = locationClient,
+                demoLocationPresetProvider = demoPresetProvider(),
+            )
+
+            assertEquals(null, viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(
+                listOf("hcmc", "bangkok"),
+                viewModel.uiState.value.demoLocationPresets.map(DemoLocationPresetUiModel::id),
+            )
+            assertEquals(LocationUiState.Idle, viewModel.uiState.value.locationState)
+            assertEquals(0, locationClient.requestCount)
+
+            viewModel.onLocationPermissionGranted()
+            advanceUntilIdle()
+
+            assertEquals(LocationUiState.Available(testLocation), viewModel.uiState.value.locationState)
+            assertEquals(null, viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(1, locationClient.requestCount)
+        }
+
+    @Test
+    fun hcmcPresetAppliesTransientLocationPreservesQueryAndSkipsLocationClient() =
+        runTest(dispatcher) {
+            val locationClient = FakeLocationClient(LocationAcquisitionResult.PermissionDenied)
+            val repository = FakeNearbySearchRepository()
+            val viewModel = createViewModel(
+                locationClient = locationClient,
+                nearbySearchRepository = repository,
+                demoLocationPresetProvider = demoPresetProvider(),
+            )
+            viewModel.onNearbyQueryChanged("museum")
+
+            viewModel.onDemoLocationPresetSelected("hcmc")
+            advanceUntilIdle()
+
+            assertEquals("museum", viewModel.uiState.value.nearbyQuery)
+            assertEquals("hcmc", viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(
+                LocationUiState.Available(hcmcDemoLocation),
+                viewModel.uiState.value.locationState,
+            )
+            assertEquals(0, locationClient.requestCount)
+            assertEquals(
+                listOf(SearchRequest(10.7799, 106.7, "museum")),
+                repository.requests,
+            )
+        }
+
+    @Test
+    fun bangkokPresetAppliesWatPhoReferenceWithoutPermissionOrLocationClient() =
+        runTest(dispatcher) {
+            val locationClient = FakeLocationClient(LocationAcquisitionResult.PermissionDenied)
+            val repository = FakeNearbySearchRepository()
+            val viewModel = createViewModel(
+                locationClient = locationClient,
+                nearbySearchRepository = repository,
+                demoLocationPresetProvider = demoPresetProvider(),
+            )
+
+            viewModel.onDemoLocationPresetSelected("bangkok")
+            advanceUntilIdle()
+
+            assertEquals("bangkok", viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(
+                LocationUiState.Available(bangkokDemoLocation),
+                viewModel.uiState.value.locationState,
+            )
+            assertEquals(0, locationClient.requestCount)
+            assertEquals(
+                listOf(SearchRequest(13.746508, 100.493096, "")),
+                repository.requests,
+            )
+        }
+
+    @Test
+    fun presetCancelsRealAcquisitionAndStaleRealResultCannotOverwriteIt() =
+        runTest(dispatcher) {
+            val staleRealResult = CompletableDeferred<LocationAcquisitionResult>()
+            val locationClient = NonCooperativeLocationClient(staleRealResult)
+            val viewModel = createViewModel(
+                locationClient = locationClient,
+                demoLocationPresetProvider = demoPresetProvider(),
+            )
+            viewModel.onLocationPermissionGranted()
+            runCurrent()
+
+            viewModel.onDemoLocationPresetSelected("hcmc")
+            runCurrent()
+            staleRealResult.complete(successResult)
+            advanceUntilIdle()
+
+            assertEquals("hcmc", viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(
+                LocationUiState.Available(hcmcDemoLocation),
+                viewModel.uiState.value.locationState,
+            )
+            assertEquals(1, locationClient.requestCount)
+        }
+
+    @Test
+    fun stalePermissionCallbackCannotReplaceANewerPreset() = runTest(dispatcher) {
+        val locationClient = FakeLocationClient(successResult)
+        val viewModel = createViewModel(
+            locationClient = locationClient,
+            demoLocationPresetProvider = demoPresetProvider(),
+        )
+        val staleActionId = requireNotNull(viewModel.onLocationPermissionRequestStarted())
+
+        viewModel.onDemoLocationPresetSelected("bangkok")
+        viewModel.onLocationPermissionGranted(staleActionId)
+        advanceUntilIdle()
+
+        assertEquals("bangkok", viewModel.uiState.value.selectedDemoLocationPresetId)
+        assertEquals(LocationUiState.Available(bangkokDemoLocation), viewModel.uiState.value.locationState)
+        assertEquals(0, locationClient.requestCount)
+    }
+
+    @Test
+    fun explicitRealGpsActionReplacesSelectedPreset() = runTest(dispatcher) {
+        val realLocation = testLocation.copy(latitude = 10.7725, longitude = 106.698)
+        val locationClient = FakeLocationClient(LocationAcquisitionResult.Success(realLocation))
+        val viewModel = createViewModel(
+            locationClient = locationClient,
+            demoLocationPresetProvider = demoPresetProvider(),
+        )
+        viewModel.onDemoLocationPresetSelected("bangkok")
+        advanceUntilIdle()
+
+        viewModel.onLocationPermissionGranted()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.selectedDemoLocationPresetId)
+        assertEquals(LocationUiState.Available(realLocation), viewModel.uiState.value.locationState)
+        assertEquals(1, locationClient.requestCount)
+    }
+
+    @Test
+    fun switchingHcmcToBangkokUsesLatestPresetAndRejectsStaleSearch() =
+        runTest(dispatcher) {
+            val hcmcResult = CompletableDeferred<NearbySearchResult>()
+            val bangkokResult = CompletableDeferred<NearbySearchResult>()
+            val repository = CoordinateDeferredSearchRepository(
+                firstResult = hcmcResult,
+                secondResult = bangkokResult,
+            )
+            val viewModel = createViewModel(
+                nearbySearchRepository = repository,
+                demoLocationPresetProvider = demoPresetProvider(),
+            )
+            viewModel.onDemoLocationPresetSelected("hcmc")
+            runCurrent()
+            viewModel.onDemoLocationPresetSelected("bangkok")
+            runCurrent()
+            bangkokResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.last())))
+            runCurrent()
+            hcmcResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.first())))
+            advanceUntilIdle()
+
+            assertEquals("bangkok", viewModel.uiState.value.selectedDemoLocationPresetId)
+            assertEquals(
+                NearbySearchUiState.Content(listOf(defaultNearbyPois.last())),
+                viewModel.uiState.value.nearbySearchState,
+            )
+            assertEquals(
+                listOf(10.7799, 13.746508),
+                repository.requests.map(SearchRequest::latitude),
+            )
+        }
+
+    @Test
+    fun switchingBangkokToHcmcUsesLatestPreset() = runTest(dispatcher) {
+        val repository = FakeNearbySearchRepository()
+        val viewModel = createViewModel(
+            nearbySearchRepository = repository,
+            demoLocationPresetProvider = demoPresetProvider(),
+        )
+
+        viewModel.onDemoLocationPresetSelected("bangkok")
+        advanceUntilIdle()
+        viewModel.onDemoLocationPresetSelected("hcmc")
+        advanceUntilIdle()
+
+        assertEquals("hcmc", viewModel.uiState.value.selectedDemoLocationPresetId)
+        assertEquals(LocationUiState.Available(hcmcDemoLocation), viewModel.uiState.value.locationState)
+        assertEquals(
+            listOf(13.746508, 10.7799),
+            repository.requests.map(SearchRequest::latitude),
+        )
+    }
+
+    @Test
+    fun queryChangesUseCurrentlySelectedPresetLocation() = runTest(dispatcher) {
+        val repository = FakeNearbySearchRepository()
+        val viewModel = createViewModel(
+            nearbySearchRepository = repository,
+            demoLocationPresetProvider = demoPresetProvider(),
+        )
+        viewModel.onDemoLocationPresetSelected("bangkok")
+        advanceUntilIdle()
+
+        viewModel.onNearbyQueryChanged("temple")
+        advanceUntilIdle()
+
+        assertEquals(
+            SearchRequest(13.746508, 100.493096, "temple"),
+            repository.requests.last(),
+        )
+    }
+
+    @Test
+    fun stalePresetSearchCannotOverwriteNewerRealGpsSearch() = runTest(dispatcher) {
+        val presetResult = CompletableDeferred<NearbySearchResult>()
+        val realResult = CompletableDeferred<NearbySearchResult>()
+        val repository = CoordinateDeferredSearchRepository(presetResult, realResult)
+        val realLocation = testLocation.copy(latitude = 10.7725, longitude = 106.698)
+        val viewModel = createViewModel(
+            locationClient = FakeLocationClient(LocationAcquisitionResult.Success(realLocation)),
+            nearbySearchRepository = repository,
+            demoLocationPresetProvider = demoPresetProvider(),
+        )
+        viewModel.onDemoLocationPresetSelected("hcmc")
+        runCurrent()
+        viewModel.onLocationPermissionGranted()
+        runCurrent()
+        realResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.last())))
+        runCurrent()
+        presetResult.complete(NearbySearchResult.Success(listOf(defaultNearbyPois.first())))
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.selectedDemoLocationPresetId)
+        assertEquals(LocationUiState.Available(realLocation), viewModel.uiState.value.locationState)
+        assertEquals(
+            NearbySearchUiState.Content(listOf(defaultNearbyPois.last())),
+            viewModel.uiState.value.nearbySearchState,
+        )
+    }
+
+    @Test
+    fun presetSearchDoesNotEmitProductionGeocontextAnalytics() = runTest(dispatcher) {
+        val analytics = RecordingProductAnalytics()
+        val viewModel = createViewModel(
+            demoLocationPresetProvider = demoPresetProvider(),
+            productAnalytics = analytics,
+        )
+
+        viewModel.onDemoLocationPresetSelected("hcmc")
+        advanceUntilIdle()
+        viewModel.onNearbyQueryChanged("market")
+        advanceUntilIdle()
+        viewModel.onDemoLocationPresetSelected("bangkok")
+        advanceUntilIdle()
+
+        assertTrue(analytics.events.isEmpty())
+    }
+
+    @Test
+    fun aNewViewModelDoesNotRestorePreviouslySelectedPreset() = runTest(dispatcher) {
+        val provider = demoPresetProvider()
+        val first = createViewModel(demoLocationPresetProvider = provider)
+        first.onDemoLocationPresetSelected("hcmc")
+        advanceUntilIdle()
+        assertEquals("hcmc", first.uiState.value.selectedDemoLocationPresetId)
+
+        val recreated = createViewModel(demoLocationPresetProvider = provider)
+
+        assertEquals(null, recreated.uiState.value.selectedDemoLocationPresetId)
+        assertEquals(LocationUiState.Idle, recreated.uiState.value.locationState)
+        assertEquals(NearbySearchUiState.WaitingForLocation, recreated.uiState.value.nearbySearchState)
     }
 
     @Test
@@ -286,6 +563,7 @@ class HomeViewModelTest {
             repository,
             FakeLocationClient(successResult),
             FakeNearbySearchRepository(),
+            FakeDemoLocationPresetProvider(),
         )
 
         repository.updateAppName("Updated name")
@@ -427,13 +705,19 @@ class HomeViewModelTest {
     private fun createViewModel(
         locationClient: LocationClient = FakeLocationClient(successResult),
         nearbySearchRepository: NearbySearchRepository = FakeNearbySearchRepository(),
+        demoLocationPresetProvider: DemoLocationPresetProvider = FakeDemoLocationPresetProvider(),
         productAnalytics: ProductAnalytics = RecordingProductAnalytics(),
     ): HomeViewModel = HomeViewModel(
         repository = FakeAppInfoRepository("Initial name"),
         locationClient = locationClient,
         nearbySearchRepository = nearbySearchRepository,
+        demoLocationPresetProvider = demoLocationPresetProvider,
         productAnalytics = productAnalytics,
     )
+
+    private class FakeDemoLocationPresetProvider(
+        override val presets: List<DemoLocationPreset> = emptyList(),
+    ) : DemoLocationPresetProvider
 
     private class RecordingProductAnalytics : ProductAnalytics {
         val events = mutableListOf<ProductAnalyticsEvent>()
@@ -475,6 +759,38 @@ class HomeViewModelTest {
         override suspend fun getCurrentLocation(): LocationAcquisitionResult {
             requestCount += 1
             return result.await()
+        }
+    }
+
+    private class NonCooperativeLocationClient(
+        private val result: CompletableDeferred<LocationAcquisitionResult>,
+    ) : LocationClient {
+        var requestCount: Int = 0
+            private set
+
+        override suspend fun getCurrentLocation(): LocationAcquisitionResult {
+            requestCount += 1
+            return withContext(NonCancellable) { result.await() }
+        }
+    }
+
+    private class CoordinateDeferredSearchRepository(
+        private val firstResult: CompletableDeferred<NearbySearchResult>,
+        private val secondResult: CompletableDeferred<NearbySearchResult>,
+    ) : NearbySearchRepository {
+        val requests = mutableListOf<SearchRequest>()
+
+        override suspend fun search(
+            latitude: Double,
+            longitude: Double,
+            query: String,
+        ): NearbySearchResult {
+            requests += SearchRequest(latitude, longitude, query)
+            return when (requests.size) {
+                1 -> withContext(NonCancellable) { firstResult.await() }
+                2 -> secondResult.await()
+                else -> error("Unexpected search request")
+            }
         }
     }
 
@@ -526,6 +842,18 @@ class HomeViewModelTest {
             capturedAtEpochMillis = 1_753_200_000_000L,
         )
         val successResult = LocationAcquisitionResult.Success(testLocation)
+        val hcmcDemoLocation = DeviceLocation(
+            latitude = 10.7799,
+            longitude = 106.7,
+            accuracyMeters = null,
+            capturedAtEpochMillis = null,
+        )
+        val bangkokDemoLocation = DeviceLocation(
+            latitude = 13.746508,
+            longitude = 100.493096,
+            accuracyMeters = null,
+            capturedAtEpochMillis = null,
+        )
         val defaultNearbyPois = listOf(
             NearbyPoi(
                 poiId = "post-office",
@@ -540,6 +868,21 @@ class HomeViewModelTest {
                 category = "market",
                 categoryLabel = PoiCategoryLabel.MARKET,
                 distanceMeters = 850.0,
+            ),
+        )
+
+        fun demoPresetProvider(): DemoLocationPresetProvider = FakeDemoLocationPresetProvider(
+            presets = listOf(
+                DemoLocationPreset(
+                    id = "hcmc",
+                    label = "Demo: TP.HCM",
+                    location = hcmcDemoLocation,
+                ),
+                DemoLocationPreset(
+                    id = "bangkok",
+                    label = "Demo: Bangkok",
+                    location = bangkokDemoLocation,
+                ),
             ),
         )
     }

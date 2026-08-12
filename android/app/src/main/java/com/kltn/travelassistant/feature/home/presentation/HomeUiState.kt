@@ -8,6 +8,13 @@ data class HomeUiState(
     val locationState: LocationUiState = LocationUiState.Idle,
     val nearbyQuery: String = "",
     val nearbySearchState: NearbySearchUiState = NearbySearchUiState.WaitingForLocation,
+    val demoLocationPresets: List<DemoLocationPresetUiModel> = emptyList(),
+    val selectedDemoLocationPresetId: String? = null,
+)
+
+data class DemoLocationPresetUiModel(
+    val id: String,
+    val label: String,
 )
 
 sealed interface NearbySearchUiState {

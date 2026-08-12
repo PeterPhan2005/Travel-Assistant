@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kltn.travelassistant.R
@@ -37,6 +38,63 @@ class HomeScreenLocationStateTest {
             .performClick()
 
         assertTrue(actionInvoked)
+    }
+
+    @Test
+    fun debugPresetControlsAndNormalCurrentLocationControlAreVisible() {
+        setHomeContent(
+            state = LocationUiState.Idle,
+            demoLocationPresets = demoPresets,
+        )
+
+        composeRule.onNodeWithText("Demo: TP.HCM").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Demo: Bangkok").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.location_use_current)).assertIsDisplayed()
+    }
+
+    @Test
+    fun hcmcDebugPresetControlIsSelectable() {
+        var selectedPresetId: String? = null
+        setHomeContent(
+            state = LocationUiState.Idle,
+            demoLocationPresets = demoPresets,
+            onDemoLocationPresetSelected = { selectedPresetId = it },
+        )
+
+        composeRule.onNodeWithText("Demo: TP.HCM").performScrollTo().performClick()
+
+        assertEquals("hcmc", selectedPresetId)
+    }
+
+    @Test
+    fun bangkokDebugPresetControlIsSelectable() {
+        var selectedPresetId: String? = null
+        setHomeContent(
+            state = LocationUiState.Idle,
+            demoLocationPresets = demoPresets,
+            onDemoLocationPresetSelected = { selectedPresetId = it },
+        )
+
+        composeRule.onNodeWithText("Demo: Bangkok").performScrollTo().performClick()
+
+        assertEquals("bangkok", selectedPresetId)
+    }
+
+    @Test
+    fun selectedPresetIsPresentedAsDemoRatherThanCurrentGps() {
+        setHomeContent(
+            state = availableLocationState(),
+            demoLocationPresets = demoPresets,
+            selectedDemoLocationPresetId = "bangkok",
+        )
+
+        composeRule.onNodeWithText(
+            getString(R.string.location_demo_active, "Demo: Bangkok"),
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.nearby_straight_line_demo_notice))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.location_refresh))
+            .performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -146,6 +204,9 @@ class HomeScreenLocationStateTest {
         onUseCurrentLocation: () -> Unit = {},
         nearbySearchState: NearbySearchUiState = NearbySearchUiState.WaitingForLocation,
         onNearbyQueryChanged: (String) -> Unit = {},
+        demoLocationPresets: List<DemoLocationPresetUiModel> = emptyList(),
+        selectedDemoLocationPresetId: String? = null,
+        onDemoLocationPresetSelected: (String) -> Unit = {},
     ) {
         composeRule.setContent {
             TravelAssistantTheme(dynamicColor = false) {
@@ -154,11 +215,14 @@ class HomeScreenLocationStateTest {
                         appName = "Travel Assistant",
                         locationState = state,
                         nearbySearchState = nearbySearchState,
+                        demoLocationPresets = demoLocationPresets,
+                        selectedDemoLocationPresetId = selectedDemoLocationPresetId,
                     ),
                     onUseCurrentLocation = onUseCurrentLocation,
                     onOpenLocationSettings = {},
                     onNearbyQueryChanged = onNearbyQueryChanged,
                     onPoiSelected = {},
+                    onDemoLocationPresetSelected = onDemoLocationPresetSelected,
                 )
             }
         }
@@ -176,4 +240,11 @@ class HomeScreenLocationStateTest {
     private fun getString(resourceId: Int, vararg formatArgs: Any): String =
         ApplicationProvider.getApplicationContext<android.content.Context>()
             .getString(resourceId, *formatArgs)
+
+    private companion object {
+        val demoPresets = listOf(
+            DemoLocationPresetUiModel(id = "hcmc", label = "Demo: TP.HCM"),
+            DemoLocationPresetUiModel(id = "bangkok", label = "Demo: Bangkok"),
+        )
+    }
 }
