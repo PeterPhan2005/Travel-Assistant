@@ -41,9 +41,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     verify.add_argument("--manifest", required=True, type=Path)
 
-    commands.add_parser(
+    check = commands.add_parser(
         "check",
-        help="Check committed HCMC artifacts for deterministic drift.",
+        help="Check one committed city artifact for deterministic drift.",
+    )
+    check.add_argument(
+        "--city",
+        choices=sorted(CITY_PACKAGE_PATHS),
+        default="hcmc",
     )
     return parser
 
@@ -78,7 +83,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"sha256={verified.manifest.sha256}"
             )
             return 0
-        checked = check_committed_artifact()
+        checked = check_committed_artifact(arguments.city)
         print(
             "current "
             f"package={checked.manifest.package_id} "

@@ -204,8 +204,8 @@ closure are roadmap requirements.
 
 ## Current goal
 
-T092 is complete with exactly 30 canonical HCMC POIs in the fixed 42-POI trust
-anchor; the 12 Bangkok POIs remain owned by T093.
+T093 is complete. T094 is the next ready task by index order and has not been
+started.
 
 ## Completed
 
@@ -260,6 +260,7 @@ anchor; the 12 Bangkok POIs remain owned by T093.
 - T090 Instrument MVP KPIs.
 - T091 Add end-to-end demo tests.
 - T092 Complete HCMC curated dataset.
+- T093 Complete Bangkok curated dataset.
 
 ## In progress
 
@@ -267,7 +268,7 @@ anchor; the 12 Bangkok POIs remain owned by T093.
 
 ## Next up
 
-- T093 Complete Bangkok curated dataset.
+- T094 Add safe demo mode.
 
 ## Open questions
 
@@ -3032,3 +3033,58 @@ price, historical claim, category, coordinate, POI identity or POI count
 changed. No optional area was omitted. A T092-only regression prevents `Quận`,
 `Huyện` or `Thành phố Thủ Đức` from reappearing in current snapshot area/address
 components. Schema version 1 and T106's future GeoArea work remain untouched.
+
+T093 completed on 2026-08-12 from a clean `main` worktree at exact
+`HEAD`/`origin/main` SHA `383002cda0c9e1f65784e6e5ff26f444fc102b9e`, with
+GitHub Actions run 31563231508 complete/success before implementation. The
+canonical `bkk-starter-v1` package advances to content version `1.1.0` with
+exactly 12 unique Bangkok POIs, bringing the unchanged 30-POI HCMC package to
+the fixed 42-POI aggregate. The Bangkok data has 13 sources, 13 POI-source
+links, no menu or price records, and 12 verified `vi-VN` narrations with no
+fallbacks. Sources comprise six official-government, five official-operator,
+one official-institution and one official-tourism record. No review,
+social-media or model output is a factual source.
+
+Category coverage is two temples, two markets, and one each of landmark,
+museum, park, public space, cultural space, performing arts, modern attraction
+and restaurant. Area coverage is seven current Bangkok administrative district
+labels: Phra Nakhon has six POIs; Bang Rak, Bangkok Yai, Chatuchak, Huai Khwang,
+Khlong Toei and Pathum Wan have one each. Every area appears in its current
+authoritative address, and tourism-neighborhood labels are not represented as
+administrative units. The single restaurant does not dominate the package.
+
+Reliable direct menu pricing was not available without ambiguity, so missing
+prices remain absent: menu items and priced menu items are both zero. The
+existing money contract was audited and tested to preserve synthetic Bangkok
+values as integer minor units with currency code `THB`, without VND conversion,
+exchange-rate lookup or guessed scale. Optional-field omissions are deliberate:
+12 sources lack an independently established publication timestamp; all 12 POIs
+lack a short description; and all 12 narrations lack a title and fallback-source
+label. No source lacks publisher, URL or retrieval timestamp; no POI lacks area
+or address; and no narration lacks its source ID.
+
+The deterministic public artifact is committed at
+`data/travel-packages/bkk/1.1.0/`: 17,535 data bytes with SHA-256
+`419350ad82ae0a74eb2af7901dfa3f612688d91904c6bac26d7112abbd6c61d7`.
+No prior Bangkok artifact existed, so no immutable Bangkok version was
+overwritten or retroactively created. The HCMC canonical YAML and both HCMC
+1.0.0/1.1.0 artifact pairs remain byte-for-byte unchanged. The travel-package
+drift-check command now accepts an optional supported city while retaining HCMC
+as its backward-compatible default.
+
+Within this data task, the accepted core Bangkok demo flow is the existing
+production backend path: strict canonical load/validation, deterministic
+artifact build/verify, idempotent PostGIS seed, Bangkok-scoped curated nearby
+discovery, and the city-only curated candidate read used to prepare itinerary
+generation. Focused real-PostGIS coverage proves that path reaches nine POIs
+within five kilometres of Wat Pho and all 12 source-grounded Bangkok itinerary
+candidates. No Android demo-location or package-selection behavior was added or
+claimed; that remains T094 scope.
+
+Schema drift, Bangkok and aggregate validation, artifact build/verify/check,
+two-directory exact-byte determinism, Ruff, strict mypy and `pip check` all
+passed. Focused database-free tests passed 77/77, real PostGIS seed/provider
+tests passed 25/25, and the complete backend suite passed 840/840. T093 is
+`done`; Completed includes T093; In progress is empty; and T094 is the earliest
+ready task in index order and the sole Next Up task. T094 and later tasks remain
+unimplemented. No commit or push was made.

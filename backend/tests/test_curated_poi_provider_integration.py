@@ -114,6 +114,31 @@ HCMC_NEARBY_MUSEUM_IDS = [
     "hcmc-poi-fine-arts-museum",
     "hcmc-poi-ho-chi-minh-museum-nha-rong",
 ]
+BANGKOK_NEARBY_IDS = [
+    "bkk-poi-wat-pho",
+    "bkk-poi-grand-palace",
+    "bkk-poi-wat-arun",
+    "bkk-poi-pak-khlong-talat",
+    "bkk-poi-chao-phraya-sky-park",
+    "bkk-poi-bangkok-national-museum",
+    "bkk-poi-thipsamai-pratu-phi",
+    "bkk-poi-bangkok-art-and-culture-centre",
+    "bkk-poi-king-power-mahanakhon",
+]
+BANGKOK_CITY_ONLY_IDS = [
+    "bkk-poi-bangkok-art-and-culture-centre",
+    "bkk-poi-bangkok-national-museum",
+    "bkk-poi-benjakitti-park",
+    "bkk-poi-chao-phraya-sky-park",
+    "bkk-poi-chatuchak-weekend-market",
+    "bkk-poi-grand-palace",
+    "bkk-poi-king-power-mahanakhon",
+    "bkk-poi-pak-khlong-talat",
+    "bkk-poi-thailand-cultural-centre",
+    "bkk-poi-thipsamai-pratu-phi",
+    "bkk-poi-wat-arun",
+    "bkk-poi-wat-pho",
+]
 
 
 def _run(coroutine: Coroutine[Any, Any, ResultT]) -> ResultT:
@@ -319,10 +344,51 @@ def test_hcmc_and_bangkok_results_are_city_scoped_with_metres(
 
     assert [item.provider_id for item in hcmc.items] == HCMC_NEARBY_IDS
     assert {item.city for item in hcmc.items} == {SupportedCity.HCMC}
-    assert [item.provider_id for item in bangkok.items] == ["bkk-poi-wat-pho"]
+    assert [item.provider_id for item in bangkok.items] == BANGKOK_NEARBY_IDS
     assert {item.city for item in bangkok.items} == {SupportedCity.BANGKOK}
     assert all(item.distance_metres is not None for item in hcmc.items)
     assert hcmc.items[0].distance_metres == pytest.approx(0.0, abs=0.01)
+
+
+def test_t093_core_bangkok_demo_flow_reaches_discovery_and_itinerary_candidates(
+    provider_database_url: str,
+) -> None:
+    nearby = _run(
+        _discover(
+            provider_database_url,
+            _request(
+                city=SupportedCity.BANGKOK,
+                latitude=13.746508,
+                longitude=100.493096,
+            ),
+        )
+    )
+    candidates, _ = _run(
+        _read_city_candidates_with_statement_capture(
+            provider_database_url,
+            SupportedCity.BANGKOK,
+            20,
+        )
+    )
+
+    assert [item.provider_id for item in nearby.items] == BANGKOK_NEARBY_IDS
+    assert [item.provider_id for item in candidates.items] == (
+        BANGKOK_CITY_ONLY_IDS
+    )
+    assert all(item.sources for item in nearby.items)
+    assert all(item.sources for item in candidates.items)
+    assert {item.category for item in candidates.items} == {
+        "cultural_space",
+        "landmark",
+        "market",
+        "modern_attraction",
+        "museum",
+        "park",
+        "performing_arts",
+        "public_space",
+        "restaurant",
+        "temple",
+    }
 
 
 def test_city_only_candidates_are_stable_read_only_and_have_no_distance(
@@ -356,7 +422,7 @@ def test_city_only_candidates_are_stable_read_only_and_have_no_distance(
 
     assert [item.provider_id for item in first.items] == HCMC_CITY_ONLY_IDS
     assert first == second
-    assert [item.provider_id for item in bangkok.items] == ["bkk-poi-wat-pho"]
+    assert [item.provider_id for item in bangkok.items] == BANGKOK_CITY_ONLY_IDS
     assert all(item.distance_metres is None for item in first.items)
     assert all(item.city is SupportedCity.HCMC for item in first.items)
     assert before == after
@@ -797,9 +863,9 @@ def test_nearby_endpoint_uses_seeded_postgis_without_mutation(
     hcmc_body = hcmc.json()
     bangkok_body = bangkok.json()
     assert [item["provider_id"] for item in hcmc_body["items"]] == HCMC_NEARBY_IDS[:5]
-    assert [item["provider_id"] for item in bangkok_body["items"]] == [
-        "bkk-poi-wat-pho"
-    ]
+    assert [item["provider_id"] for item in bangkok_body["items"]] == (
+        BANGKOK_NEARBY_IDS[:5]
+    )
     assert {item["city"] for item in hcmc_body["items"]} == {"hcmc"}
     assert {item["city"] for item in bangkok_body["items"]} == {"bkk"}
     assert [item["provider_id"] for item in category.json()["items"]] == (

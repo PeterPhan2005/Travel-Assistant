@@ -1,7 +1,7 @@
 ---
 id: T093
 title: Complete Bangkok demo dataset
-status: todo
+status: done
 depends_on: [T031, T043, T044]
 area: data
 ---
@@ -57,18 +57,18 @@ available; it must not be dominated by restaurants or food.
 
 # Acceptance criteria
 
-- [ ] The canonical Bangkok package contains exactly 12 curated POIs.
-- [ ] Category and area coverage is documented and the package is not food dominated.
-- [ ] Vietnamese-facing locale behavior and Bangkok local currency are handled without conversion guesses.
-- [ ] Every price/menu fact follows the accepted direct-source and freshness policy.
-- [ ] Historical, cultural, identity, address and opening-hours facts follow the accepted source hierarchy.
-- [ ] User reviews/social posts are never the sole source for restricted fact classes.
-- [ ] Missing facts remain absent and no LLM output is used as a factual source.
-- [ ] Sources and freshness metadata are recorded through the existing strict contract.
-- [ ] The core Bangkok demo flow works.
-- [ ] Relevant tests are added or updated.
-- [ ] Required checks pass or failures are documented.
-- [ ] `docs/context/12-progress-tracker.md` is updated.
+- [x] The canonical Bangkok package contains exactly 12 curated POIs.
+- [x] Category and area coverage is documented and the package is not food dominated.
+- [x] Vietnamese-facing locale behavior and Bangkok local currency are handled without conversion guesses.
+- [x] Every price/menu fact follows the accepted direct-source and freshness policy.
+- [x] Historical, cultural, identity, address and opening-hours facts follow the accepted source hierarchy.
+- [x] User reviews/social posts are never the sole source for restricted fact classes.
+- [x] Missing facts remain absent and no LLM output is used as a factual source.
+- [x] Sources and freshness metadata are recorded through the existing strict contract.
+- [x] The core Bangkok demo flow works.
+- [x] Relevant tests are added or updated.
+- [x] Required checks pass or failures are documented.
+- [x] `docs/context/12-progress-tracker.md` is updated.
 
 # Required checks
 

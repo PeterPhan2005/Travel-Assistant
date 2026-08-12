@@ -187,11 +187,11 @@ def test_migrated_schema_seeds_both_cities_with_spatial_provenance(
 
     assert hcmc_summary.package_id == "hcmc-starter-v1"
     assert bangkok_summary.package_id == "bkk-starter-v1"
-    assert counts["sources"] == 23
-    assert counts["pois"] == 31
-    assert counts["poi_sources"] == 64
+    assert counts["sources"] == 35
+    assert counts["pois"] == 42
+    assert counts["poi_sources"] == 76
     assert counts["menu_items"] == 3
-    assert counts["narrations"] == 30
+    assert counts["narrations"] == 42
     assert {counts[table] for table in USER_TABLES} == {0}
 
     async def snapshot() -> tuple[list[str], list[asyncpg.Record]]:
@@ -279,6 +279,24 @@ def test_second_seed_is_idempotent_and_changed_content_updates(
     assert counts["pois"] == 30
     assert counts["sources"] == 22
     assert counts["poi_sources"] == 63
+
+
+def test_second_bangkok_seed_is_idempotent(
+    curated_database_url: str,
+) -> None:
+    loaded = _loaded_city("bkk")
+    first_summary = _run(seed_loaded_package(loaded, curated_database_url))
+    first_counts = _run(_counts(curated_database_url))
+    second_summary = _run(seed_loaded_package(loaded, curated_database_url))
+    second_counts = _run(_counts(curated_database_url))
+
+    assert first_summary == second_summary
+    assert first_counts == second_counts
+    assert second_counts["sources"] == 13
+    assert second_counts["pois"] == 12
+    assert second_counts["poi_sources"] == 13
+    assert second_counts["menu_items"] == 0
+    assert second_counts["narrations"] == 12
 
 
 def test_menu_and_narration_provenance_and_freshness_survive(

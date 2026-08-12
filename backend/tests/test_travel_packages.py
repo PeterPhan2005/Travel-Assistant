@@ -102,7 +102,7 @@ def test_builds_valid_hcmc_and_generic_bangkok(tmp_path: Path) -> None:
     assert len(hcmc.artifact.pois) == 30
     assert bangkok.manifest.city.value == "bkk"
     assert bangkok.artifact.package_metadata.city == "Bangkok"
-    assert len(bangkok.artifact.pois) == 1
+    assert len(bangkok.artifact.pois) == 12
     assert len(list((tmp_path / "hcmc").iterdir())) == 2
     assert len(list((tmp_path / "bkk").iterdir())) == 2
 
@@ -370,6 +370,14 @@ def test_committed_hcmc_artifact_matches_regenerated_output() -> None:
     assert verified.manifest_path.parent == committed_output_dir()
     assert verified.manifest.package_id == "hcmc-starter-v1"
     assert len(verified.artifact.pois) == 30
+
+
+def test_committed_bangkok_artifact_matches_regenerated_output() -> None:
+    verified = check_committed_artifact("bkk")
+
+    assert verified.manifest_path.parent == committed_output_dir("bkk")
+    assert verified.manifest.package_id == "bkk-starter-v1"
+    assert len(verified.artifact.pois) == 12
 
 
 def test_artifact_is_ordinary_static_json_without_fabricated_content(

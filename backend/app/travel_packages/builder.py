@@ -491,10 +491,14 @@ def committed_output_dir(city: str = COMMITTED_CITY) -> Path:
     return COMMITTED_ARTIFACT_ROOT / city / version
 
 
-def check_committed_artifact() -> VerificationResult:
-    """Fail if committed HCMC bytes drift from current input or builder logic."""
-    output_dir = committed_output_dir()
-    package_validation = load_package(CITY_PACKAGE_PATHS[COMMITTED_CITY])
+def check_committed_artifact(
+    city: str = COMMITTED_CITY,
+) -> VerificationResult:
+    """Fail if committed city bytes drift from current input or builder logic."""
+    if city not in CITY_PACKAGE_PATHS:
+        raise ArtifactBuildError(f"unsupported city: {city}")
+    output_dir = committed_output_dir(city)
+    package_validation = load_package(CITY_PACKAGE_PATHS[city])
     if not package_validation.is_valid:
         raise ArtifactBuildError("committed curated input is invalid")
     package = package_validation.packages[0].package.package
@@ -508,7 +512,7 @@ def check_committed_artifact() -> VerificationResult:
         raise ArtifactBuildError("committed artifact files are missing")
 
     with tempfile.TemporaryDirectory(prefix="travel-package-check-") as raw:
-        generated = build_city_package(COMMITTED_CITY, Path(raw))
+        generated = build_city_package(city, Path(raw))
         if generated.data_path.read_bytes() != committed_data.read_bytes():
             raise ArtifactBuildError("committed data artifact is stale")
         if (

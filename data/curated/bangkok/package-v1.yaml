@@ -2,17 +2,224 @@ schema_version: 1
 package:
   package_id: bkk-starter-v1
   city_code: bkk
-  content_version: "1.0.0"
-  published_at: "2026-07-26T17:00:00Z"
+  content_version: "1.1.0"
+  published_at: "2026-08-12T04:32:37Z"
 sources:
+  - id: bkk-source-bacc-about
+    city_code: bkk
+    source_type: official_operator
+    label: Bangkok Art and Culture Centre — About and visitor information
+    publisher: Bangkok Art and Culture Centre
+    url: https://www.bacc.or.th/en/about/
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-benjakitti-bma
+    city_code: bkk
+    source_type: official_government
+    label: Bangkok Metropolitan Administration — Benjakitti Park
+    publisher: Bangkok Metropolitan Administration
+    url: https://publicspace.bangkok.go.th/Spaces/Info/0FA80112-02CB-45F1-B9B6-A59666D9B990
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-bangkok-national-museum
+    city_code: bkk
+    source_type: official_institution
+    label: Fine Arts Department — Bangkok National Museum
+    publisher: Fine Arts Department, Ministry of Culture
+    url: https://www.virtualmuseum.finearts.go.th/bangkoknationalmuseums/index.php/en/about-us/service.html
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-chao-phraya-sky-park-bma
+    city_code: bkk
+    source_type: official_government
+    label: Bangkok Metropolitan Administration — Chao Phraya Sky Park
+    publisher: Bangkok Metropolitan Administration
+    url: https://publicspace.bangkok.go.th/Spaces/Info/661640D5-6C8E-4E2C-98E4-8FFB0578241D
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-chatuchak-bma
+    city_code: bkk
+    source_type: official_government
+    label: Bangkok Metropolitan Administration — Chatuchak Weekend Market
+    publisher: Bangkok Metropolitan Administration
+    url: https://publicspace.bangkok.go.th/Spaces/Info/2FBD1377-1BC8-4565-86CA-2C647E59F18A
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-grand-palace-history
+    city_code: bkk
+    source_type: official_operator
+    label: The Grand Palace — History and visitor location
+    publisher: Bureau of the Royal Household
+    url: https://www.royalgrandpalace.th/en/discover/history
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-king-power-mahanakhon-location
+    city_code: bkk
+    source_type: official_operator
+    label: King Power Mahanakhon — Location and SkyWalk
+    publisher: King Power Mahanakhon
+    url: https://www.kingpowermahanakhon.co.th/location
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-pak-khlong-talat-bma
+    city_code: bkk
+    source_type: official_government
+    label: Bangkok Metropolitan Administration — Pak Khlong Talat history
+    publisher: Bangkok Metropolitan Administration
+    url: https://webportal.bangkok.go.th/upload/user/00000086/Innovation/PAK%20KLONG%20MARKET.pdf
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-thailand-cultural-centre
+    city_code: bkk
+    source_type: official_government
+    label: Department of Cultural Promotion — Thailand Cultural Centre
+    publisher: Department of Cultural Promotion, Ministry of Culture
+    url: https://www.culture.go.th/culture_en/ewt_news.php?nid=16
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-thailand-cultural-centre-contact
+    city_code: bkk
+    source_type: official_government
+    label: Department of Cultural Promotion — Thailand Cultural Centre contact
+    publisher: Department of Cultural Promotion, Ministry of Culture
+    url: https://www.culture.go.th/culture_en/mobile_detail.php?cid=1&nid=2
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-thipsamai-contact
+    city_code: bkk
+    source_type: official_operator
+    label: Thipsamai — Official menu and Pratu Phi contact
+    publisher: Thipsamai
+    url: https://thipsamai.com/menu-padthai/?language=en
+    retrieved_at: "2026-08-12T04:32:37Z"
+  - id: bkk-source-wat-arun-tat
+    city_code: bkk
+    source_type: official_tourism
+    label: Tourism Authority of Thailand — Bangkok temple guide — Wat Arun
+    publisher: Tourism Authority of Thailand
+    url: https://www.tourismthailand.org/Articles/top-5-must-visit-temples-in-bangkok-once-in-a-lifetime
+    published_at: "2021-08-31T00:00:00Z"
+    retrieved_at: "2026-08-12T04:32:37Z"
   - id: bkk-source-wat-pho-trip
     city_code: bkk
     source_type: official_operator
     label: Wat Pho — Trip to Wat Pho
     publisher: Wat Pho
     url: https://watpho.com/en/contact/trip
-    retrieved_at: "2026-07-26T17:00:00Z"
+    retrieved_at: "2026-08-12T04:32:37Z"
 pois:
+  - id: bkk-poi-bangkok-art-and-culture-centre
+    city_code: bkk
+    canonical_name: Bangkok Art and Culture Centre
+    area: Pathum Wan
+    category: cultural_space
+    address: 939 Rama I Road, Wang Mai, Pathum Wan, Bangkok 10330
+    location:
+      latitude: 13.746711
+      longitude: 100.530153
+    source_ids:
+      - bkk-source-bacc-about
+  - id: bkk-poi-bangkok-national-museum
+    city_code: bkk
+    canonical_name: Bangkok National Museum
+    area: Phra Nakhon
+    category: museum
+    address: Na Phra That Road, Phra Borom Maha Ratchawang, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.75755
+      longitude: 100.49256
+    source_ids:
+      - bkk-source-bangkok-national-museum
+  - id: bkk-poi-benjakitti-park
+    city_code: bkk
+    canonical_name: Benjakitti Park
+    area: Khlong Toei
+    category: park
+    address: Ratchadaphisek Road, Khlong Toei, Bangkok 10110
+    location:
+      latitude: 13.729513
+      longitude: 100.558713
+    source_ids:
+      - bkk-source-benjakitti-bma
+  - id: bkk-poi-chao-phraya-sky-park
+    city_code: bkk
+    canonical_name: Chao Phraya Sky Park
+    area: Phra Nakhon
+    category: public_space
+    address: Phra Pok Klao Bridge, Wang Burapha Phirom, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.739016
+      longitude: 100.498487
+    source_ids:
+      - bkk-source-chao-phraya-sky-park-bma
+  - id: bkk-poi-chatuchak-weekend-market
+    city_code: bkk
+    canonical_name: Chatuchak Weekend Market
+    area: Chatuchak
+    category: market
+    address: 587/10 Kamphaeng Phet 2 Road, Chatuchak, Bangkok 10900
+    location:
+      latitude: 13.799781
+      longitude: 100.550425
+    source_ids:
+      - bkk-source-chatuchak-bma
+  - id: bkk-poi-grand-palace
+    city_code: bkk
+    canonical_name: The Grand Palace
+    area: Phra Nakhon
+    category: landmark
+    address: Na Phra Lan Road, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.750041
+      longitude: 100.491332
+    source_ids:
+      - bkk-source-grand-palace-history
+  - id: bkk-poi-king-power-mahanakhon
+    city_code: bkk
+    canonical_name: King Power Mahanakhon
+    area: Bang Rak
+    category: modern_attraction
+    address: 114 Naradhiwas Rajanagarindra Road, Silom, Bang Rak, Bangkok 10500
+    location:
+      latitude: 13.723729
+      longitude: 100.528542
+    source_ids:
+      - bkk-source-king-power-mahanakhon-location
+  - id: bkk-poi-pak-khlong-talat
+    city_code: bkk
+    canonical_name: Pak Khlong Talat
+    area: Phra Nakhon
+    category: market
+    address: Chak Phet Road, Wang Burapha Phirom, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.741335
+      longitude: 100.496411
+    source_ids:
+      - bkk-source-pak-khlong-talat-bma
+  - id: bkk-poi-thailand-cultural-centre
+    city_code: bkk
+    canonical_name: Thailand Cultural Centre
+    area: Huai Khwang
+    category: performing_arts
+    address: 14 Thiam Ruam Mit Road, Huai Khwang, Bangkok 10310
+    location:
+      latitude: 13.76647
+      longitude: 100.577212
+    source_ids:
+      - bkk-source-thailand-cultural-centre
+      - bkk-source-thailand-cultural-centre-contact
+  - id: bkk-poi-thipsamai-pratu-phi
+    city_code: bkk
+    canonical_name: Thipsamai Pratu Phi
+    area: Phra Nakhon
+    category: restaurant
+    address: 313-315 Maha Chai Road, Samran Rat, Phra Nakhon, Bangkok 10200
+    location:
+      latitude: 13.75262
+      longitude: 100.50476
+    source_ids:
+      - bkk-source-thipsamai-contact
+  - id: bkk-poi-wat-arun
+    city_code: bkk
+    canonical_name: Wat Arun Ratchawararam
+    area: Bangkok Yai
+    category: temple
+    address: 34 Arun Amarin Road, Wat Arun, Bangkok Yai, Bangkok 10600
+    location:
+      latitude: 13.743865
+      longitude: 100.488979
+    source_ids:
+      - bkk-source-wat-arun-tat
   - id: bkk-poi-wat-pho
     city_code: bkk
     canonical_name: Wat Pho
@@ -25,4 +232,198 @@ pois:
     source_ids:
       - bkk-source-wat-pho-trip
 menu_items: []
-narrations: []
+narrations:
+  - id: bkk-narration-bangkok-art-and-culture-centre-vi
+    city_code: bkk
+    poi_id: bkk-poi-bangkok-art-and-culture-centre
+    source_id: bkk-source-bacc-about
+    language_code: vi-VN
+    content: >-
+      Bangkok Art and Culture Centre nằm tại nút giao Pathum Wan, đối diện MBK
+      Center và Siam Discovery. Trang chính thức cho biết trung tâm mở cửa từ
+      năm 2008 sau nhiều năm vận động của mạng lưới nghệ sĩ và người yêu nghệ
+      thuật, với sự hỗ trợ của Bangkok Metropolitan Administration. Không gian
+      này hướng tới nghệ thuật hiện đại và đương đại, gồm các phòng triển lãm,
+      thư viện, khu hoạt động và những chương trình luân phiên. Vì nội dung thay
+      đổi theo thời điểm, khách nên xem lịch chính thức trước khi đến thay vì
+      dựa vào một danh sách trưng bày cũ. Trong phòng triển lãm, hãy tuân thủ
+      biển hướng dẫn về chụp ảnh, không chạm tác phẩm và giữ lối đi chung cho
+      người xem khác.
+    verification_status: verified
+  - id: bkk-narration-bangkok-national-museum-vi
+    city_code: bkk
+    poi_id: bkk-poi-bangkok-national-museum
+    source_id: bkk-source-bangkok-national-museum
+    language_code: vi-VN
+    content: >-
+      Bangkok National Museum nằm trên đường Na Phra That trong khu Phra Nakhon.
+      Cơ quan Fine Arts Department giới thiệu đây là bảo tàng công cộng đầu tiên
+      của Thái Lan, đặt trong quần thể từng là Wang Na, tức cung điện của Phó
+      vương. Các không gian gồm điện, sảnh và nhà nguyện, vì vậy bản thân kiến
+      trúc cũng là một phần của chuyến tham quan chứ không chỉ là vỏ chứa hiện
+      vật. Bộ sưu tập trải qua nhiều giai đoạn lịch sử và nghệ thuật Thái; nên
+      chọn một tuyến chủ đề, đọc nhãn hiện vật và phân biệt vật gốc với phần
+      diễn giải. Lịch mở cửa hoặc phòng trưng bày có thể thay đổi, vì thế hãy
+      kiểm tra thông báo của bảo tàng trước chuyến đi.
+    verification_status: verified
+  - id: bkk-narration-benjakitti-park-vi
+    city_code: bkk
+    poi_id: bkk-poi-benjakitti-park
+    source_id: bkk-source-benjakitti-bma
+    language_code: vi-VN
+    content: >-
+      Benjakitti Park là công viên cấp khu vực ở Khlong Toei, nằm trên phần đất
+      của nhà máy thuốc lá cũ cạnh Queen Sirikit National Convention Center.
+      Bangkok Metropolitan Administration mô tả nơi đây như một công viên rừng
+      sinh thái, đồng thời là không gian giữ nước mưa, hỗ trợ xử lý nước và giảm
+      hiệu ứng đảo nhiệt đô thị. Hệ thống đường đi bộ, đường chạy, khu quan sát
+      thiên nhiên và mặt nước tạo nhiều cách trải nghiệm hơn một bãi cỏ nghỉ
+      chân thông thường. Khách nên đi đúng làn, không cản người tập thể dục và
+      tuân thủ quy định tại từng khu vực, đặc biệt ở lối trên cao hoặc khu sinh
+      thái. Thời tiết Bangkok nóng ẩm, nên chuẩn bị nước và chống nắng.
+    verification_status: verified
+  - id: bkk-narration-chao-phraya-sky-park-vi
+    city_code: bkk
+    poi_id: bkk-poi-chao-phraya-sky-park
+    source_id: bkk-source-chao-phraya-sky-park-bma
+    language_code: vi-VN
+    content: >-
+      Chao Phraya Sky Park nằm trên phần giữa của cầu Phra Pok Klao, nối hai bờ
+      sông Chao Phraya. Bangkok Metropolitan Administration cho biết dự án cải
+      tạo một kết cấu giao thông chưa sử dụng thành lối đi và không gian xanh,
+      đồng thời thuộc định hướng phục hồi khu phố cổ Kudi Chin–Khlong San. Từ
+      giữa cầu, khách có thể quan sát dòng sông và cảnh quan đô thị theo nhiều
+      hướng mà không cần vào một đài quan sát thương mại. Đây vẫn là không gian
+      công cộng hẹp, nên hãy đi gọn, không chặn lối và tôn trọng người tập thể
+      dục hoặc di chuyển qua cầu. Nắng, mưa và gió ảnh hưởng trực tiếp đến trải
+      nghiệm; nên kiểm tra điều kiện thực tế trước khi lên cầu.
+    verification_status: verified
+  - id: bkk-narration-chatuchak-weekend-market-vi
+    city_code: bkk
+    poi_id: bkk-poi-chatuchak-weekend-market
+    source_id: bkk-source-chatuchak-bma
+    language_code: vi-VN
+    content: >-
+      Chatuchak Weekend Market nằm trên đường Kamphaeng Phet 2 trong quận
+      Chatuchak. Trang không gian công cộng của Bangkok Metropolitan
+      Administration mô tả chợ có nhiều nhóm hàng, từ cây cối, quần áo và đồ
+      dùng đến thực phẩm tươi hoặc chế biến. Hoạt động bán hàng tổng hợp và khu
+      cây cảnh không cùng lịch, vì vậy không nên giả định mọi khu đều mở giống
+      nhau mỗi ngày. Quy mô lớn và nhiều lối rẽ khiến việc chọn trước một nhóm
+      hàng hoặc một cổng gặp nhau hữu ích hơn cố đi hết chợ. Khi tham quan, hãy
+      giữ đồ cá nhân cẩn thận, không cản lối giao hàng, hỏi rõ giá trước khi mua
+      và xin phép nếu muốn chụp cận cảnh người bán.
+    verification_status: verified
+  - id: bkk-narration-grand-palace-vi
+    city_code: bkk
+    poi_id: bkk-poi-grand-palace
+    source_id: bkk-source-grand-palace-history
+    language_code: vi-VN
+    content: >-
+      The Grand Palace nằm trên đường Na Phra Lan ở Phra Nakhon. Theo Bureau of
+      the Royal Household, quần thể được xây dựng sau khi kinh đô chuyển sang bờ
+      đông sông Chao Phraya năm 1782. Bên trong có các điện ở, điện thiết triều,
+      công trình hành chính và Wat Phra Kaew, ngôi đền hoàng gia thờ Emerald
+      Buddha. Vì đây là quần thể cung điện và tôn giáo vẫn gắn với nghi lễ,
+      khách cần mặc trang phục phù hợp, đi theo khu vực được mở và giữ thái độ
+      trang trọng. Sơ đồ rộng, nhiều lớp sân và công trình có chức năng khác
+      nhau; nên đọc biển giới thiệu theo thứ tự thay vì coi toàn bộ nơi đây là
+      một tòa nhà duy nhất. Hãy kiểm tra lịch chính thức trước khi đến.
+    verification_status: verified
+  - id: bkk-narration-king-power-mahanakhon-vi
+    city_code: bkk
+    poi_id: bkk-poi-king-power-mahanakhon
+    source_id: bkk-source-king-power-mahanakhon-location
+    language_code: vi-VN
+    content: >-
+      King Power Mahanakhon nằm trên đường Naradhiwas Rajanagarindra, gần ga BTS
+      Chong Nonsi ở Bang Rak. Trang chính thức giới thiệu Mahanakhon SkyWalk với
+      khu quan sát trong nhà ở tầng 74, khu ngoài trời ở tầng 78 và tầm nhìn 360
+      độ qua Bangkok. Sàn kính là một khu trải nghiệm có quy định riêng; khách
+      phải dùng bao giày và để đồ rời, kể cả điện thoại, ngoài bề mặt kính. Tầm
+      nhìn thực tế phụ thuộc mưa, mây và chất lượng không khí, nên ảnh quảng bá
+      không bảo đảm điều kiện tại thời điểm đến. Hãy kiểm tra giờ vào cuối,
+      điều kiện vận hành và vé trên kênh chính thức, đồng thời cân nhắc thời tiết
+      trước khi chọn khu quan sát ngoài trời.
+    verification_status: verified
+  - id: bkk-narration-pak-khlong-talat-vi
+    city_code: bkk
+    poi_id: bkk-poi-pak-khlong-talat
+    source_id: bkk-source-pak-khlong-talat-bma
+    language_code: vi-VN
+    content: >-
+      Pak Khlong Talat là khu chợ hoa và nông sản gần đường Chak Phet, bến sông
+      và ga MRT Sanam Chai. Tài liệu của Bangkok Metropolitan Administration
+      ghi lại quá trình nơi đây chuyển từ điểm giao thương đường thủy và chợ cá
+      thành trung tâm rau, quả và hoa. Khu vực hiện gồm nhiều phần chợ khác nhau,
+      với hoạt động giao hàng bằng xe và thuyền đặc biệt nhộn nhịp trước bình
+      minh. Đây là nơi buôn bán đang vận hành, không phải một trường quay được
+      dàn dựng. Khách nên đi gọn, tránh cản người vận chuyển, hỏi trước khi chụp
+      người bán và không tự diễn giải mọi hoạt động quan sát được thành phong
+      tục. Có thể kết hợp chuyến đi với bờ sông hoặc Sanam Chai.
+    verification_status: verified
+  - id: bkk-narration-thailand-cultural-centre-vi
+    city_code: bkk
+    poi_id: bkk-poi-thailand-cultural-centre
+    source_id: bkk-source-thailand-cultural-centre
+    language_code: vi-VN
+    content: >-
+      Thailand Cultural Centre nằm trên đường Thiam Ruam Mit ở Huai Khwang và
+      thuộc Department of Cultural Promotion. Nguồn chính thức mô tả đây là
+      trung tâm giáo dục công chúng về nghệ thuật và văn hóa, tổ chức biểu diễn,
+      hoạt động văn hóa, triển lãm thay đổi, trưng bày thường xuyên và thư viện.
+      Hai không gian chính là Main Hall và Small Hall, phục vụ những quy mô và
+      hình thức sự kiện khác nhau. Vì chương trình phụ thuộc từng đơn vị tổ
+      chức, việc có mặt tại tòa nhà không đồng nghĩa luôn có một buổi diễn để
+      xem. Hãy kiểm tra lịch, điều kiện vé và cửa vào trên kênh của trung tâm,
+      đến sớm nếu có chỗ ngồi được đánh số và giữ yên lặng trong phần trình
+      diễn.
+    verification_status: verified
+  - id: bkk-narration-thipsamai-pratu-phi-vi
+    city_code: bkk
+    poi_id: bkk-poi-thipsamai-pratu-phi
+    source_id: bkk-source-thipsamai-contact
+    language_code: vi-VN
+    content: >-
+      Thipsamai Pratu Phi là địa điểm của Thipsamai tại số 313–315 Maha Chai
+      Road, khu Samran Rat thuộc Phra Nakhon. Trang chính thức giới thiệu nhiều
+      biến thể pad thai, gồm bản cơ bản, bản chay, bản dùng dầu tôm và các lựa
+      chọn có tôm biển hoặc trứng. Danh sách món trên trang không phải bằng
+      chứng rằng mọi món luôn còn tại mọi thời điểm, và dữ liệu canonical này
+      không lưu giá khi chưa có một mức giá rõ ràng cho đúng chi nhánh. Khi gọi
+      món, nên xác nhận thành phần, khẩu phần và giá trực tiếp tại quầy, nhất là
+      nếu có dị ứng hoặc yêu cầu ăn chay. Giờ phục vụ cũng nên được kiểm tra lại
+      từ kênh chính thức trước khi đến.
+    verification_status: verified
+  - id: bkk-narration-wat-arun-vi
+    city_code: bkk
+    poi_id: bkk-poi-wat-arun
+    source_id: bkk-source-wat-arun-tat
+    language_code: vi-VN
+    content: >-
+      Wat Arun Ratchawararam nằm ở bờ tây sông Chao Phraya, trên đường Arun
+      Amarin thuộc Bangkok Yai. Tourism Authority of Thailand giới thiệu đây là
+      một ngôi chùa có nguồn gốc từ thời Ayutthaya và gắn với triều Rama II.
+      Cụm prang cao được xây bằng gạch sáng màu, trang trí bằng vỏ sò, mảnh sứ
+      và đồ gốm, tạo bề mặt thay đổi theo ánh sáng. Dù hình ảnh ngọn tháp thường
+      đại diện cho Bangkok, đây trước hết là một cơ sở Phật giáo đang hoạt động.
+      Khách nên mặc trang phục lịch sự, nói nhỏ, đi theo lối được phép và tôn
+      trọng người hành lễ. Khi quan sát từ sông hoặc leo khu được mở, hãy tuân
+      thủ biển an toàn thay vì tìm góc chụp vượt rào.
+    verification_status: verified
+  - id: bkk-narration-wat-pho-vi
+    city_code: bkk
+    poi_id: bkk-poi-wat-pho
+    source_id: bkk-source-wat-pho-trip
+    language_code: vi-VN
+    content: >-
+      Wat Pho có tên chính thức là Wat Phra Chetuphon Wimon Mangkhalaram, nằm
+      trên đường Sanam Chai ở Phra Nakhon, gần The Grand Palace. Trang của chùa
+      hướng dẫn khách tiếp cận quần thể qua khu cổng dành cho tham quan. Không
+      gian nổi tiếng với tượng Phật nằm, nhưng còn có nhiều sân, tháp chedi,
+      điện thờ và chi tiết trang trí cần được xem theo từng khu vực. Đây là nơi
+      thờ tự đang hoạt động, không chỉ là điểm chụp ảnh; khách nên ăn mặc lịch
+      sự, giữ giọng nhỏ, không chắn lối trước ban thờ và tuân thủ biển hạn chế
+      chụp ảnh. Lịch nghi lễ hoặc vận hành có thể ảnh hưởng quyền tiếp cận, vì
+      vậy hãy kiểm tra thông tin chính thức trước khi đến.
+    verification_status: verified
