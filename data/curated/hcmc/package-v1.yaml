@@ -2,42 +2,1037 @@ schema_version: 1
 package:
   package_id: hcmc-starter-v1
   city_code: hcmc
-  content_version: "1.0.0"
-  published_at: "2026-07-26T17:00:00Z"
+  content_version: "1.1.0"
+  published_at: "2026-08-12T04:16:22Z"
 sources:
-  - id: hcmc-source-vnat-central-post-office
+  - id: hcmc-source-admin-resolution-1685
     city_code: hcmc
     source_type: official_government
-    label: Vietnam National Authority of Tourism — Saigon Central Post Office
+    label: Government of Vietnam — Resolution 1685 HCMC commune-level reorganization
+    publisher: Government of Vietnam
+    url: https://xaydungchinhsach.chinhphu.vn/sap-xep-dvhc-danh-sach-168-xa-phuong-dac-khu-cua-thanh-pho-ho-chi-minh-119250623085031865.htm
+    retrieved_at: "2026-08-12T04:16:22Z"
+  - id: hcmc-source-ao-dai-museum-vietnam-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Vietnam Tourism — 10 Tourist Spots — Ao Dai Museum
     publisher: Vietnam National Authority of Tourism
-    url: https://vietnamtourism.gov.vn/en/post/18661
-    retrieved_at: "2026-07-26T17:00:00Z"
-  - id: hcmc-source-war-remnants-museum-visit
+    url: https://vietnam.travel/node/1613
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-bitexco-government-address
+    city_code: hcmc
+    source_type: official_government
+    label: Government Gazette — Bitexco Financial Tower civic address
+    publisher: Government of Vietnam
+    url: https://congbao.chinhphu.vn/tai-ve-van-ban-so-01-2022-qd-ttg-36723-39717
+    retrieved_at: "2026-08-12T04:16:22Z"
+  - id: hcmc-source-book-street-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Nguyen Van Binh Book Street
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/khong-gian-an-tuong-cho-tin-do-yeu-sach
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-central-attractions-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Central attractions itinerary
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/page/ke-hoach-chuyen-di
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-cu-chi-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Explore Cu Chi Tunnels
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/tham-quan-dia-dao-cu-chi-thanh-pho-duoi-long-dat
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-current-heritage-localities
+    city_code: hcmc
+    source_type: official_government
+    label: HCMC Culture and Sports — Post-reorganization heritage localities
+    publisher: Ho Chi Minh City Department of Culture and Sports
+    url: https://svhtt.hochiminhcity.gov.vn/documents/10184/428712/Ban%2Bchot_ban%2Bphu%2Bluc%2Bso%2Blieu.pdf/c0efdbf8-7e2f-488e-b62a-5aa34c2240f0
+    retrieved_at: "2026-08-12T04:16:22Z"
+  - id: hcmc-source-giac-lam-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Heritage Colors — Giac Lam Pagoda
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/sac-mau-di-san-thanh-pho-ho-chi-minh
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-golden-dragon-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Performing Arts — Golden Dragon
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/dia-diem-thuong-thuc-bieu-dien-nghe-thuat-tai-tphcm
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-ho-chi-minh-museum-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Ho Chi Minh Museum, Dragon Wharf
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/6-diem-tham-quan-du-lich-du-dieu-kien-thi-diem-to-chuc-don-phuc-vu-khach-du-lich-quoc-te-den-thanh-pho-ho-chi-minh-ke-tu-ngay-16022022
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-hum-location
+    city_code: hcmc
+    source_type: official_operator
+    label: Hum — Official locations — Hum Signature
+    publisher: HumVentures
+    url: https://hum-dining.vn/en/locations/
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-hum-menu
+    city_code: hcmc
+    source_type: official_operator
+    label: Hum — Official plant-based fine dining menu
+    publisher: HumVentures
+    url: https://hum-dining.vn/en/fine-dining-menu/
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-independence-palace
     city_code: hcmc
     source_type: official_institution
-    label: War Remnants Museum — Visit
-    publisher: War Remnants Museum
-    url: https://baotangchungtichchientranh.vn/en/visit
-    retrieved_at: "2026-07-26T17:00:00Z"
+    label: Independence Palace National Historic Site
+    publisher: Independence Palace
+    url: https://dinhdoclap.gov.vn/en/the-independence-palace-national-historic-site/
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-jade-emperor-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Jade Emperor Pagoda
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/chua-ngoc-hoang-chua-cau-con-cau-duyen-o-tphcm
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-markets-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Unique City Markets
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/10-khu-cho-doc-dao-nhat-thanh-pho-ban-khong-nen-bo-lo
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-museums-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Five City Museums
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/vi-vu-trong-ngay-tai-5-bao-tang-thu-vi-nhat-thanh-pho-ho-chi-minh
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-nguyen-hue-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Nguyen Hue Walking Street
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/pho-di-bo-nguyen-hue-ve-dep-am-thuc-va-trai-nghiem-tai-tp-hcm
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-saigon-skydeck
+    city_code: hcmc
+    source_type: official_operator
+    label: Bitexco Financial Tower — Saigon Skydeck
+    publisher: Bitexco Financial Tower
+    url: https://www.bitexcofinancialtower.com/?page_id=468
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-tan-dinh-church-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Heritage Colors — Tan Dinh Church
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/sac-mau-di-san-thanh-pho-ho-chi-minh
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-thien-hau-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Cho Lon and Thien Hau Pagoda
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/nhung-dia-diem-du-lich-it-nguoi-biet-o-sai-gon-dang-can-ban-kham-pha
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-ton-duc-thang-museum
+    city_code: hcmc
+    source_type: official_institution
+    label: Ton Duc Thang Museum — Museum overview
+    publisher: Ton Duc Thang Museum
+    url: https://baotangtonducthang.vn/toan-canh-bao-tang-ton-duc-thang
+    retrieved_at: "2026-08-12T03:34:22Z"
+  - id: hcmc-source-vam-sat-hcmc-tourism
+    city_code: hcmc
+    source_type: official_tourism
+    label: Ho Chi Minh City Tourism — Can Gio for Nature Lovers
+    publisher: Ho Chi Minh City Department of Tourism
+    url: https://visithcmc.net/en/news/kham-pha-can-gio-6-trai-nghiem-khong-the-bo-qua
+    retrieved_at: "2026-08-12T03:34:22Z"
 pois:
+  - id: hcmc-poi-ao-dai-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Áo dài
+    area: Phường Long Phước
+    category: museum
+    address: 206/19/30 Long Thuận, Phường Long Phước, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.821642
+      longitude: 106.841041
+    source_ids:
+      - hcmc-source-ao-dai-museum-vietnam-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-ben-thanh-market
+    city_code: hcmc
+    canonical_name: Chợ Bến Thành
+    area: Phường Bến Thành
+    category: market
+    address: Quảng trường Quách Thị Trang, Phường Bến Thành, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.772516
+      longitude: 106.698036
+    source_ids:
+      - hcmc-source-markets-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-binh-tay-market
+    city_code: hcmc
+    canonical_name: Chợ Bình Tây
+    area: Phường Bình Tây
+    category: market
+    address: 57A Tháp Mười, Phường Bình Tây, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.749574
+      longitude: 106.650429
+    source_ids:
+      - hcmc-source-markets-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
   - id: hcmc-poi-central-post-office
     city_code: hcmc
     canonical_name: Bưu điện Trung tâm Sài Gòn
+    area: Phường Sài Gòn
     category: landmark
+    address: 2 Công xã Paris, Phường Sài Gòn, Thành phố Hồ Chí Minh
     location:
       latitude: 10.7799
       longitude: 106.7
     source_ids:
-      - hcmc-source-vnat-central-post-office
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-cu-chi-tunnels-ben-duoc
+    city_code: hcmc
+    canonical_name: Địa đạo Củ Chi — Bến Dược
+    area: Xã An Nhơn Tây
+    category: history_site
+    address: Ấp Phú Hiệp, Xã An Nhơn Tây, Thành phố Hồ Chí Minh
+    location:
+      latitude: 11.140363
+      longitude: 106.46201
+    source_ids:
+      - hcmc-source-cu-chi-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-fine-arts-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Mỹ thuật Thành phố Hồ Chí Minh
+    area: Phường Bến Thành
+    category: museum
+    address: 97A Phó Đức Chính, Phường Bến Thành, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.769871
+      longitude: 106.699905
+    source_ids:
+      - hcmc-source-museums-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+      - hcmc-source-current-heritage-localities
+  - id: hcmc-poi-giac-lam-pagoda
+    city_code: hcmc
+    canonical_name: Chùa Giác Lâm
+    area: Phường Bảy Hiền
+    category: religious_site
+    address: 565 Lạc Long Quân, Phường Bảy Hiền, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.778451
+      longitude: 106.649732
+    source_ids:
+      - hcmc-source-giac-lam-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-golden-dragon-water-puppet-theater
+    city_code: hcmc
+    canonical_name: Nhà hát Múa rối nước Rồng Vàng
+    area: Phường Bến Thành
+    category: entertainment
+    address: 55B Nguyễn Thị Minh Khai, Phường Bến Thành, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.776525
+      longitude: 106.692266
+    source_ids:
+      - hcmc-source-golden-dragon-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-ho-chi-minh-city-book-street
+    city_code: hcmc
+    canonical_name: Đường sách Thành phố Hồ Chí Minh
+    area: Phường Sài Gòn
+    category: cultural_space
+    address: Đường Nguyễn Văn Bình, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.780166
+      longitude: 106.699666
+    source_ids:
+      - hcmc-source-book-street-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-ho-chi-minh-city-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Thành phố Hồ Chí Minh
+    area: Phường Sài Gòn
+    category: museum
+    address: 65 Lý Tự Trọng, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.776081
+      longitude: 106.699808
+    source_ids:
+      - hcmc-source-museums-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-ho-chi-minh-museum-nha-rong
+    city_code: hcmc
+    canonical_name: Bảo tàng Hồ Chí Minh — Chi nhánh Thành phố Hồ Chí Minh
+    area: Phường Xóm Chiếu
+    category: museum
+    address: 1 Nguyễn Tất Thành, Phường Xóm Chiếu, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.768144
+      longitude: 106.706534
+    source_ids:
+      - hcmc-source-ho-chi-minh-museum-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+      - hcmc-source-current-heritage-localities
+  - id: hcmc-poi-hum-signature
+    city_code: hcmc
+    canonical_name: Hum Signature
+    area: Phường Xuân Hòa
+    category: restaurant
+    address: Tầng thượng Thung Xanh, 34 Võ Văn Tần, Phường Xuân Hòa, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.780554
+      longitude: 106.691808
+    source_ids:
+      - hcmc-source-hum-location
+      - hcmc-source-hum-menu
+  - id: hcmc-poi-independence-palace
+    city_code: hcmc
+    canonical_name: Dinh Độc Lập
+    area: Phường Bến Thành
+    category: landmark
+    address: 135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.777008
+      longitude: 106.695326
+    source_ids:
+      - hcmc-source-independence-palace
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-jade-emperor-pagoda
+    city_code: hcmc
+    canonical_name: Chùa Ngọc Hoàng
+    area: Phường Tân Định
+    category: religious_site
+    address: 73 Mai Thị Lựu, Phường Tân Định, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.791732
+      longitude: 106.698152
+    source_ids:
+      - hcmc-source-jade-emperor-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+      - hcmc-source-current-heritage-localities
+  - id: hcmc-poi-landmark-81
+    city_code: hcmc
+    canonical_name: Landmark 81
+    area: Phường Thạnh Mỹ Tây
+    category: modern_attraction
+    address: 720A Điện Biên Phủ, Phường Thạnh Mỹ Tây, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.794882
+      longitude: 106.721917
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-le-van-duyet-tomb
+    city_code: hcmc
+    canonical_name: Lăng Lê Văn Duyệt
+    area: Phường Gia Định
+    category: heritage_site
+    address: 1 Vũ Tùng, Phường Gia Định, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.803731
+      longitude: 106.696808
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-nguyen-hue-walking-street
+    city_code: hcmc
+    canonical_name: Phố đi bộ Nguyễn Huệ
+    area: Phường Sài Gòn
+    category: public_space
+    address: Đường Nguyễn Huệ, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.774184
+      longitude: 106.703443
+    source_ids:
+      - hcmc-source-nguyen-hue-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-notre-dame-cathedral
+    city_code: hcmc
+    canonical_name: Vương cung thánh đường Đức Bà Sài Gòn
+    area: Phường Sài Gòn
+    category: religious_site
+    address: 1 Công xã Paris, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.779757
+      longitude: 106.699031
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-park-30-april
+    city_code: hcmc
+    canonical_name: Công viên 30 tháng 4
+    area: Phường Sài Gòn
+    category: park
+    address: Đường Lê Duẩn, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.779137
+      longitude: 106.695969
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-saigon-opera-house
+    city_code: hcmc
+    canonical_name: Nhà hát Thành phố Hồ Chí Minh
+    area: Phường Sài Gòn
+    category: performing_arts
+    address: 7 Công trường Lam Sơn, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.776487
+      longitude: 106.703023
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-saigon-skydeck
+    city_code: hcmc
+    canonical_name: Saigon Skydeck
+    area: Phường Sài Gòn
+    category: modern_attraction
+    address: Tầng 49, Bitexco Financial Tower, 36 Hồ Tùng Mậu, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.771706
+      longitude: 106.70412
+    source_ids:
+      - hcmc-source-saigon-skydeck
+      - hcmc-source-bitexco-government-address
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-saigon-zoo-botanical-gardens
+    city_code: hcmc
+    canonical_name: Thảo Cầm Viên Sài Gòn
+    area: Phường Sài Gòn
+    category: family_attraction
+    address: 2 Nguyễn Bỉnh Khiêm, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.787578
+      longitude: 106.705079
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-tan-dinh-church
+    city_code: hcmc
+    canonical_name: Nhà thờ Tân Định
+    area: Phường Xuân Hòa
+    category: religious_site
+    address: 289 Hai Bà Trưng, Phường Xuân Hòa, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.788142
+      longitude: 106.690199
+    source_ids:
+      - hcmc-source-tan-dinh-church-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+      - hcmc-source-current-heritage-localities
+  - id: hcmc-poi-tan-dinh-market
+    city_code: hcmc
+    canonical_name: Chợ Tân Định
+    area: Phường Tân Định
+    category: market
+    address: 314-336 Hai Bà Trưng, Phường Tân Định, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.790111
+      longitude: 106.690019
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-tao-dan-park
+    city_code: hcmc
+    canonical_name: Công viên Tao Đàn
+    area: Phường Bến Thành
+    category: park
+    address: 55C Nguyễn Thị Minh Khai, Phường Bến Thành, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.775502
+      longitude: 106.692735
+    source_ids:
+      - hcmc-source-central-attractions-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-thien-hau-pagoda
+    city_code: hcmc
+    canonical_name: Chùa Bà Thiên Hậu
+    area: Phường Chợ Lớn
+    category: religious_site
+    address: 710 Nguyễn Trãi, Phường Chợ Lớn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.754435
+      longitude: 106.663277
+    source_ids:
+      - hcmc-source-thien-hau-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-ton-duc-thang-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Tôn Đức Thắng
+    area: Phường Sài Gòn
+    category: museum
+    address: 5 Tôn Đức Thắng, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.7814
+      longitude: 106.7068
+    source_ids:
+      - hcmc-source-ton-duc-thang-museum
+  - id: hcmc-poi-vam-sat-ecotourism
+    city_code: hcmc
+    canonical_name: Khu du lịch sinh thái Vàm Sát
+    area: Xã An Thới Đông
+    category: nature
+    address: Tiểu khu 15A, Xã An Thới Đông, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.583526
+      longitude: 106.815392
+    source_ids:
+      - hcmc-source-vam-sat-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
+  - id: hcmc-poi-vietnam-history-museum
+    city_code: hcmc
+    canonical_name: Bảo tàng Lịch sử Thành phố Hồ Chí Minh
+    area: Phường Sài Gòn
+    category: museum
+    address: 2 Nguyễn Bỉnh Khiêm, Phường Sài Gòn, Thành phố Hồ Chí Minh
+    location:
+      latitude: 10.787791
+      longitude: 106.704531
+    source_ids:
+      - hcmc-source-museums-hcmc-tourism
+      - hcmc-source-admin-resolution-1685
   - id: hcmc-poi-war-remnants-museum
     city_code: hcmc
     canonical_name: Bảo tàng Chứng tích Chiến tranh
+    area: Phường Xuân Hòa
     category: museum
     address: 28 Võ Văn Tần, Phường Xuân Hòa, Thành phố Hồ Chí Minh
     location:
       latitude: 10.7795
       longitude: 106.692
     source_ids:
-      - hcmc-source-war-remnants-museum-visit
-menu_items: []
-narrations: []
+      - hcmc-source-central-attractions-hcmc-tourism
+menu_items:
+  - id: hcmc-menu-hum-full-dining-experience
+    city_code: hcmc
+    poi_id: hcmc-poi-hum-signature
+    source_id: hcmc-source-hum-menu
+    item_name: Trải nghiệm mỹ thực thực vật trọn vẹn
+    price_minor_units: 1960000
+    currency_code: VND
+    source_type: official_operator
+    source_updated_at: "2026-07-03T08:05:17Z"
+  - id: hcmc-menu-hum-local-wine-experience
+    city_code: hcmc
+    poi_id: hcmc-poi-hum-signature
+    source_id: hcmc-source-hum-menu
+    item_name: Trải nghiệm mỹ thực kèm rượu mơ Hương Tích
+    price_minor_units: 2280000
+    currency_code: VND
+    source_type: official_operator
+    source_updated_at: "2026-07-03T08:05:17Z"
+  - id: hcmc-menu-hum-lotus-wine-experience
+    city_code: hcmc
+    poi_id: hcmc-poi-hum-signature
+    source_id: hcmc-source-hum-menu
+    item_name: Trải nghiệm mỹ thực kèm rượu sen trăm cánh Đồng Tháp
+    price_minor_units: 2680000
+    currency_code: VND
+    source_type: official_operator
+    source_updated_at: "2026-07-03T08:05:17Z"
+narrations:
+  - id: hcmc-narration-ao-dai-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ao-dai-museum
+    source_id: hcmc-source-ao-dai-museum-vietnam-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Áo dài nằm trong một không gian xanh ở Long Phước, tách khỏi nhịp
+      phố trung tâm. Theo trang du lịch quốc gia, nơi đây được xây dựng để bảo
+      tồn tư liệu, hình ảnh và hiện vật về áo dài Việt Nam, đồng thời kể câu
+      chuyện của trang phục này qua lịch sử và đời sống phụ nữ Việt. Không gian
+      mang nét kiến trúc truyền thống, phù hợp với một chuyến đi chậm để quan sát
+      kiểu dáng, chất liệu và cách áo dài xuất hiện trong nhiều lĩnh vực xã hội.
+      Vị trí tại phường Long Phước giúp điểm đến bổ sung một lát cắt văn hóa ngoài
+      khu trung tâm. Khi tham quan, nên dành thời gian đọc chú thích của từng
+      trưng bày thay vì chỉ xem áo dài như phông chụp ảnh.
+    verification_status: verified
+  - id: hcmc-narration-ben-thanh-market-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ben-thanh-market
+    source_id: hcmc-source-markets-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chợ Bến Thành là một đầu mối mua bán quen thuộc ngay khu trung tâm Thành
+      phố Hồ Chí Minh, với các cổng tiếp cận từ quảng trường Quách Thị Trang và
+      những tuyến phố bao quanh. Nguồn của Sở Du lịch thành phố giới thiệu khu
+      chợ như một không gian có nhiều nhóm hàng và hoạt động kéo dài sang buổi
+      tối. Giá trị của chuyến ghé chợ không chỉ nằm ở việc mua sắm: cách quầy
+      hàng bố trí sát nhau, nhịp trao đổi giữa tiểu thương và khách, cùng vị trí
+      nối nhiều tuyến phố giúp người đi bộ quan sát đời sống thương mại đô thị.
+      Hãy xem giá niêm yết, hỏi rõ đơn vị tính trước khi mua và giữ lối đi thông
+      thoáng khi khu chợ đông người.
+    verification_status: verified
+  - id: hcmc-narration-binh-tay-market-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-binh-tay-market
+    source_id: hcmc-source-markets-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chợ Bình Tây nằm tại phường Bình Tây và là một điểm quan trọng của khu Chợ Lớn. Theo
+      Sở Du lịch Thành phố Hồ Chí Minh, chợ được xây dựng năm 1928, có nhiều cửa
+      vào và hơn hai nghìn sạp, nổi bật với hoạt động bán sỉ các nhóm hàng như
+      gia vị, bánh kẹo, quần áo và đồ gia dụng. Khoảng sân ở giữa tạo một nhịp
+      nghỉ trong cấu trúc buôn bán dày đặc. Đây là nơi phù hợp để nhìn thấy vai
+      trò thương mại lâu đời của cộng đồng người Hoa trong thành phố, đồng thời
+      quan sát kiến trúc chợ và cách hàng hóa được phân khu. Khi ghé, nên ưu tiên
+      đi bộ chậm, không cản hoạt động giao nhận và hỏi trước khi chụp tiểu thương.
+    verification_status: verified
+  - id: hcmc-narration-central-post-office-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-central-post-office
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bưu điện Trung tâm Sài Gòn đứng tại Công xã Paris, bên cạnh Nhà thờ Đức
+      Bà, tạo thành một cụm kiến trúc dễ khám phá bằng cách đi bộ. Trang du lịch
+      chính thức của thành phố mô tả đây là công trình có giá trị nghệ thuật
+      tiêu biểu, được xây dựng vào cuối thế kỷ XIX. Bên trong, không gian sảnh
+      cao, những băng ghế gỗ, quầy bưu chính và các chi tiết trang trí cho thấy
+      công trình vẫn gắn với chức năng công cộng chứ không chỉ là một phông ảnh.
+      Khách có thể quan sát hai bản đồ lớn và các dấu vết của lịch sử đô thị
+      trong sảnh. Khi tham quan, hãy chừa lối cho người sử dụng dịch vụ và kết
+      hợp đi bộ sang đường sách ở gần đó.
+    verification_status: verified
+  - id: hcmc-narration-cu-chi-tunnels-ben-duoc-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-cu-chi-tunnels-ben-duoc
+    source_id: hcmc-source-cu-chi-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Khu Bến Dược thuộc hệ thống Địa đạo Củ Chi ở phía tây bắc Thành phố Hồ Chí
+      Minh. Theo Sở Du lịch thành phố, địa đạo bắt đầu hình thành trong thời kỳ
+      kháng chiến chống Pháp và phát triển thành mạng lưới gồm đường hầm, căn cứ,
+      kho, nơi làm việc, bếp và trạm cứu chữa. Một số đoạn mở cho khách giúp hình
+      dung điều kiện sinh hoạt dưới lòng đất, nhưng lối đi hẹp và phải cúi hoặc
+      quỳ ở vài vị trí. Vì vậy trải nghiệm xuống hầm không phù hợp với mọi người;
+      khách vẫn có thể tìm hiểu qua khu trưng bày trên mặt đất. Nên chuẩn bị cho
+      quãng đường xa trung tâm, đi giày chắc chân và tuân theo hướng dẫn tại di
+      tích thay vì tự tách khỏi tuyến tham quan.
+    verification_status: verified
+  - id: hcmc-narration-fine-arts-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-fine-arts-museum
+    source_id: hcmc-source-museums-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Mỹ thuật Thành phố Hồ Chí Minh tọa lạc trên đường Phó Đức Chính
+      trong một quần thể từng gắn với gia đình Hứa Bổn Hòa. Nguồn du lịch thành
+      phố mô tả ba tòa nhà có sự kết hợp của kiến trúc Tân cổ điển, Art Deco và
+      yếu tố Á Đông. Bộ sưu tập của bảo tàng bao quát mỹ thuật cổ, mỹ thuật hiện
+      đại và nghề thủ công truyền thống, vì vậy chuyến xem sẽ rõ ràng hơn nếu đi
+      theo từng tòa và đọc thứ tự trưng bày. Bản thân cầu thang, hành lang, cửa
+      kính và mặt đứng cũng là một phần đáng quan sát, nhưng không nên để việc
+      chụp ảnh lấn át tác phẩm. Hãy giữ khoảng cách với hiện vật và làm theo quy
+      định của từng phòng trưng bày.
+    verification_status: verified
+  - id: hcmc-narration-giac-lam-pagoda-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-giac-lam-pagoda
+    source_id: hcmc-source-giac-lam-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chùa Giác Lâm ở đường Lạc Long Quân là một trong những ngôi chùa lâu đời
+      của thành phố. Theo Sở Du lịch Thành phố Hồ Chí Minh, chùa được dựng năm
+      1744 và còn lưu nhiều đặc trưng của kiến trúc chùa Nam Bộ. Hệ cột, vì kèo,
+      tượng, hoành phi và câu đối bằng gỗ tạo nên sắc nâu trầm, trong khi các mô
+      típ hoa mai, lan, tre, hạc và linh vật truyền tải ước nguyện bình an. Khu
+      vườn tháp và cây xanh đem lại một khoảng lặng khác hẳn phố xá bên ngoài.
+      Đây trước hết là cơ sở tôn giáo đang hoạt động, nên khách cần ăn mặc kín
+      đáo, nói nhỏ, không chắn lối hành lễ và chỉ chụp ảnh ở nơi được phép.
+    verification_status: verified
+  - id: hcmc-narration-golden-dragon-water-puppet-theater-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-golden-dragon-water-puppet-theater
+    source_id: hcmc-source-golden-dragon-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Nhà hát Múa rối nước Rồng Vàng là một địa chỉ biểu diễn ở đường Nguyễn Thị
+      Minh Khai. Sở Du lịch Thành phố Hồ Chí Minh giới thiệu múa rối nước như
+      một loại hình nghệ thuật dân gian có nguồn gốc từ đồng bằng Bắc Bộ, kết hợp
+      con rối gỗ, mặt nước, âm nhạc truyền thống và những tích truyện về lễ hội,
+      truyền thuyết hay sinh hoạt hằng ngày. Trên sân khấu, người điều khiển ẩn
+      sau phông, khiến chuyển động của nhân vật xuất hiện trực tiếp trên mặt
+      nước. Trải nghiệm phù hợp với người muốn tiếp cận nghệ thuật biểu diễn Việt
+      Nam trong một buổi ngắn. Nên đến đúng suất đã chọn, ổn định chỗ ngồi trước
+      giờ diễn và hạn chế màn hình sáng để không ảnh hưởng khán giả khác.
+    verification_status: verified
+  - id: hcmc-narration-ho-chi-minh-city-book-street-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ho-chi-minh-city-book-street
+    source_id: hcmc-source-book-street-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Đường sách Thành phố Hồ Chí Minh chạy dọc đường Nguyễn Văn Bình, ngay cạnh
+      Nhà thờ Đức Bà và Bưu điện Trung tâm. Theo Sở Du lịch thành phố, tuyến phố
+      dài hơn một trăm mét tập hợp gian hàng của nhiều nhà xuất bản, sách trong
+      và ngoài nước, sách cũ, quà lưu niệm, chỗ ngồi đọc và các quán nhỏ. Không
+      gian cũng được dùng cho hoạt động ra mắt sách và giao lưu với tác giả,
+      dịch giả. Đây là điểm dừng phù hợp giữa hành trình đi bộ qua các công trình
+      trung tâm, nhưng giá trị chính vẫn là văn hóa đọc và sự hiện diện của sách
+      trong không gian công cộng. Hãy xem lịch sự kiện tại chỗ, giữ yên lặng ở
+      khu đọc và không chiếm ghế quá lâu khi đông khách.
+    verification_status: verified
+  - id: hcmc-narration-ho-chi-minh-city-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ho-chi-minh-city-museum
+    source_id: hcmc-source-museums-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Thành phố Hồ Chí Minh nằm tại 65 Lý Tự Trọng, trong một công trình
+      cuối thế kỷ XIX do kiến trúc sư Alfred Foulhoux thiết kế. Theo nguồn du
+      lịch chính thức của thành phố, tòa nhà kết hợp khối kiến trúc châu Âu với
+      một số chi tiết mái Á Đông và từng là dinh thự của Thống đốc Nam Kỳ. Các
+      phòng trưng bày hiện giới thiệu nhiều lớp lịch sử đô thị, từ tự nhiên, khảo
+      cổ, địa lý hành chính đến thương mại, tiền tệ, cưới hỏi Nam Bộ và nghệ
+      thuật cải lương. Cách xem hữu ích là chọn một chủ đề rồi nối hiện vật với
+      bối cảnh thành phố hôm nay. Đồng thời, hãy quan sát mặt đứng, hàng cột và
+      sân vườn mà không chạm vào hiện vật hay khu vực hạn chế.
+    verification_status: verified
+  - id: hcmc-narration-ho-chi-minh-museum-nha-rong-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ho-chi-minh-museum-nha-rong
+    source_id: hcmc-source-ho-chi-minh-museum-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Hồ Chí Minh — Chi nhánh Thành phố Hồ Chí Minh nằm tại Bến Nhà
+      Rồng bên sông Sài Gòn. Theo Sở Du lịch thành phố, công trình ban đầu là trụ
+      sở của hãng vận tải Messageries Maritimes, mang sự pha trộn kiến trúc Á và
+      Âu. Năm 1911, Nguyễn Tất Thành rời nơi này trên tàu Amiral
+      Latouche-Tréville trong hành trình ra nước ngoài. Từ năm 1982, địa điểm trở
+      thành không gian lưu giữ và giới thiệu hiện vật, tài liệu, hình ảnh liên
+      quan đến cuộc đời và hoạt động của Chủ tịch Hồ Chí Minh. Khi tham quan,
+      nên đọc trưng bày theo mốc thời gian rồi nhìn ra bến sông để hiểu rõ hơn
+      mối liên hệ giữa tòa nhà, giao thông đường thủy và lịch sử của địa điểm.
+    verification_status: verified
+  - id: hcmc-narration-hum-signature-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-hum-signature
+    source_id: hcmc-source-hum-location
+    language_code: vi-VN
+    content: >-
+      Hum Signature là không gian ẩm thực thực vật trên tầng thượng Thung Xanh,
+      số 34 Võ Văn Tần. Trang chính thức của Hum mô tả trải nghiệm tại đây được
+      xây dựng quanh nông sản địa phương theo mùa và một thực đơn nếm thử phục
+      vụ buổi tối. Cách tiếp cận này xem bữa ăn như một hành trình có trình tự,
+      thay vì tập hợp các món gọi riêng lẻ. Không gian đặt giữa khu vực có nhiều
+      bảo tàng và công trình văn hóa, nên có thể kết hợp trong lịch trình trung
+      tâm nhưng cần dành đủ thời gian cho toàn bộ trải nghiệm. Giá trong dữ liệu
+      được lấy trực tiếp từ thực đơn của nhà hàng và có ngày kiểm tra riêng;
+      thuế, phí phục vụ hoặc thay đổi theo mùa cần được xác nhận lại khi đặt bàn.
+    verification_status: verified
+  - id: hcmc-narration-independence-palace-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-independence-palace
+    source_id: hcmc-source-independence-palace
+    language_code: vi-VN
+    content: >-
+      Dinh Độc Lập hiện nay được xây trên nền Dinh Norodom và khánh thành năm
+      1966, theo thiết kế của kiến trúc sư Ngô Viết Thụ. Trang chính thức của di
+      tích cho biết công trình từng là nơi ở và làm việc của chính quyền Việt
+      Nam Cộng hòa; sự kiện xe tăng tiến vào dinh ngày 30 tháng 4 năm 1975 gắn
+      địa điểm với một bước ngoặt của lịch sử Việt Nam. Kiến trúc hiện đại được
+      kết hợp với tư duy tạo hình phương Đông, thể hiện ở mặt đứng, rèm hoa đá
+      và tổ chức không gian. Tuyến tham quan đi qua phòng khánh tiết, khu làm
+      việc và hầm kiên cố. Để hiểu công trình, nên theo đúng thứ tự phòng, phân
+      biệt kiến trúc gốc với phần trưng bày diễn giải và dành thời gian đọc chú
+      thích.
+    verification_status: verified
+  - id: hcmc-narration-jade-emperor-pagoda-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-jade-emperor-pagoda
+    source_id: hcmc-source-jade-emperor-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chùa Ngọc Hoàng, còn gọi là Phước Hải Tự, nằm trên đường Mai Thị Lựu. Theo
+      Sở Du lịch Thành phố Hồ Chí Minh, công trình được dựng vào đầu thế kỷ XX
+      bởi Lưu Minh, một người gốc Quảng Đông, và đến năm 1984 mang tên Phước Hải
+      Tự. Kiến trúc chùa chịu ảnh hưởng đền miếu Hoa, với mái ngói, tượng gốm,
+      chạm khắc gỗ, tranh thờ và nhiều ban thờ. Tên gọi quen thuộc xuất phát từ
+      điện thờ Ngọc Hoàng trong chính điện. Đây là nơi tín ngưỡng đang hoạt động,
+      không phải không gian trưng bày thuần túy. Khách nên mặc trang phục lịch
+      sự, nói nhỏ, tránh đứng chắn trước ban thờ và xin phép trước khi chụp ảnh
+      hoặc quay phim trong khu vực thờ tự.
+    verification_status: verified
+  - id: hcmc-narration-landmark-81-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-landmark-81
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Landmark 81 nằm trong khu Vinhomes Central Park bên sông Sài Gòn, ở địa
+      chỉ 720A Điện Biên Phủ. Trang du lịch chính thức của thành phố ghi nhận
+      tòa tháp do Vingroup xây dựng từ năm 2015 và đưa vào hoạt động năm 2018.
+      Hình khối vươn cao tạo một mốc thị giác rõ rệt cho khu Bình Thạnh và phần
+      phía đông trung tâm. Điểm đến đại diện cho lớp cảnh quan đô thị mới, đối
+      lập thú vị với các công trình cuối thế kỷ XIX quanh trung tâm Sài Gòn. Khu phức hợp
+      có nhiều chức năng thương mại và công cộng, vì vậy trải nghiệm cụ thể phụ
+      thuộc khu vực khách được phép tiếp cận. Nên kiểm tra thông tin vận hành tại
+      chỗ, tôn trọng khu vực cư dân và kết hợp đi bộ ở công viên ven sông.
+    verification_status: verified
+  - id: hcmc-narration-le-van-duyet-tomb-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-le-van-duyet-tomb
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Lăng Lê Văn Duyệt, thường được gọi là Lăng Ông Bà Chiểu, nằm trên đường Vũ
+      Tùng ở Bình Thạnh. Theo trang du lịch chính thức của thành phố, quần thể
+      gồm khu mộ và nơi thờ Tả quân Lê Văn Duyệt, một nhân vật sống từ năm 1764
+      đến 1832. Không gian cổng, sân, nhà bia, mộ và điện thờ tạo nên một điểm
+      di sản gắn với ký ức địa phương, khác với mô hình bảo tàng trong nhà. Người
+      dân vẫn đến đây thực hành tín ngưỡng, nên chuyến thăm cần giữ thái độ trang
+      trọng. Hãy đi theo lối dành cho khách, đọc biển giới thiệu trước khi vào
+      điện thờ, ăn mặc lịch sự và tránh nói lớn. Việc quan sát cách di tích tồn
+      tại giữa khu dân cư cũng giúp hiểu thêm đời sống văn hóa của Bà Chiểu.
+    verification_status: verified
+  - id: hcmc-narration-nguyen-hue-walking-street-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-nguyen-hue-walking-street
+    source_id: hcmc-source-nguyen-hue-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Phố đi bộ Nguyễn Huệ là trục không gian công cộng tại phường Sài Gòn, nối
+      khu trụ sở Ủy ban Nhân dân thành phố với hướng Bến Bạch Đằng. Sở Du lịch
+      Thành phố Hồ Chí Minh mô tả nơi đây vừa là khu đi bộ, vui chơi, vừa thường
+      xuyên đón hoạt động văn hóa, triển lãm và biểu diễn. Mặt lát rộng, hàng cây,
+      đài phun nước cùng các tòa nhà cũ và mới hai bên tạo nhiều lớp cảnh quan
+      đô thị trong một quãng ngắn. Trải nghiệm thay đổi theo thời điểm: ban ngày
+      thuận lợi để quan sát kiến trúc, còn buổi tối nhấn mạnh ánh sáng và sinh
+      hoạt cộng đồng. Khi có sự kiện, hãy tuân theo phân luồng, giữ lối thoát và
+      không xem đám đông như bằng chứng cho một hoạt động thường nhật.
+    verification_status: verified
+  - id: hcmc-narration-notre-dame-cathedral-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-notre-dame-cathedral
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Vương cung thánh đường Đức Bà Sài Gòn nằm tại Công xã Paris, đối diện Bưu
+      điện Trung tâm. Theo Sở Du lịch Thành phố Hồ Chí Minh, đây là công trình
+      tôn giáo quy mô lớn được hình thành trong giai đoạn đầu thời thuộc địa
+      Pháp. Hai tháp chuông và mặt đứng gạch đỏ tạo điểm nhận diện nổi bật trong
+      cụm kiến trúc trung tâm, còn tượng Đức Mẹ Hòa Bình đặt ở quảng trường phía
+      trước. Nhà thờ trước hết là nơi sinh hoạt Công giáo, nên khả năng tiếp cận
+      bên trong có thể phụ thuộc nghi lễ hoặc công tác bảo tồn. Khách nên quan
+      sát từ không gian công cộng, tránh cản người dự lễ và không dựa vào lịch
+      cũ trên mạng. Có thể kết hợp điểm này với Bưu điện và đường sách bằng một
+      vòng đi bộ ngắn.
+    verification_status: verified
+  - id: hcmc-narration-park-30-april-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-park-30-april
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Công viên 30 tháng 4 là mảng xanh công cộng nằm trước Dinh Độc Lập, giữa
+      các tuyến Lê Duẩn, Nam Kỳ Khởi Nghĩa, Hàn Thuyên và Alexandre de Rhodes.
+      Trang du lịch chính thức của thành phố giới thiệu nơi đây như một điểm nghỉ
+      trong hành trình khám phá khu trung tâm. Hàng cây và lối đi tạo khoảng đệm
+      giữa các công trình có mật độ lịch sử, tôn giáo và hành chính cao, gồm Dinh
+      Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm và đường sách. Công viên không
+      cần một tuyến tham quan cố định; giá trị nằm ở việc dừng lại, quan sát nhịp
+      đi bộ và chuyển tiếp giữa các địa điểm. Hãy giữ vệ sinh, dùng ghế và lối đi
+      chung có chừng mực, đồng thời chú ý giao thông khi băng qua các đường bao
+      quanh.
+    verification_status: verified
+  - id: hcmc-narration-saigon-opera-house-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-saigon-opera-house
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Nhà hát Thành phố Hồ Chí Minh nằm ở Công trường Lam Sơn, gần trục Đồng
+      Khởi và Nguyễn Huệ. Theo Sở Du lịch thành phố, công trình được khánh thành
+      năm 1900 và là một dấu mốc kiến trúc lâu đời của trung tâm Sài Gòn. Mặt
+      đứng giàu chi tiết trang trí tạo ấn tượng từ quảng trường, trong khi chức
+      năng chính vẫn là không gian biểu diễn. Vì vậy, ngắm kiến trúc bên ngoài
+      và dự một chương trình bên trong là hai trải nghiệm khác nhau; quyền vào
+      khán phòng phụ thuộc vé và lịch diễn của từng đơn vị tổ chức. Nên kiểm tra
+      chương trình qua kênh chính thức, đến sớm nếu có vé và giữ yên lặng trong
+      buổi diễn. Từ đây có thể tiếp tục đi bộ tới Nguyễn Huệ hoặc Bến Bạch Đằng.
+    verification_status: verified
+  - id: hcmc-narration-saigon-skydeck-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-saigon-skydeck
+    source_id: hcmc-source-saigon-skydeck
+    language_code: vi-VN
+    content: >-
+      Saigon Skydeck là đài quan sát trên tầng 49 của Bitexco Financial Tower,
+      với lối vào tại 36 Hồ Tùng Mậu. Trang chính thức của tòa nhà cho biết đài
+      quan sát nằm ở độ cao 178 mét và cung cấp góc nhìn 360 độ ra cảnh quan đô
+      thị cùng sông Sài Gòn. Các ống quan sát và bảng thông tin giúp nhận diện
+      những điểm mốc thay vì chỉ nhìn thành phố như một bề mặt ánh sáng. Đây là
+      góc nhìn trên cao có kiểm soát trong nhà, khác với trải nghiệm đi bộ ở
+      Nguyễn Huệ hoặc bờ sông gần đó. Tầm nhìn thực tế phụ thuộc thời tiết, vì
+      vậy không nên coi ảnh quảng bá là điều kiện chắc chắn. Hãy kiểm tra thông
+      tin vé và vận hành trực tiếp từ đơn vị khai thác trước khi đến.
+    verification_status: verified
+  - id: hcmc-narration-saigon-zoo-botanical-gardens-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-saigon-zoo-botanical-gardens
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Thảo Cầm Viên Sài Gòn nằm trên đường Nguyễn Bỉnh Khiêm, cạnh Bảo tàng Lịch
+      sử Thành phố Hồ Chí Minh. Theo Sở Du lịch thành phố, nơi đây được hình
+      thành từ năm 1864 và kết hợp khu nuôi động vật với vườn thực vật trong một
+      không gian xanh rộng. Điểm đến phù hợp cho gia đình và người muốn quan sát
+      cây cối, hồ nước cùng nhiều nhóm động vật trong nhịp tham quan ngoài trời.
+      Tuy nhiên, đây không phải công viên tự do hoàn toàn: khách cần đi theo lối,
+      giữ khoảng cách với chuồng nuôi và tuân thủ hướng dẫn của đơn vị quản lý.
+      Nên chuẩn bị nước uống, chống nắng và thời gian nghỉ; có thể ghép chuyến đi
+      với Bảo tàng Lịch sử ở cùng tuyến phố.
+    verification_status: verified
+  - id: hcmc-narration-tan-dinh-church-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-tan-dinh-church
+    source_id: hcmc-source-tan-dinh-church-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Nhà thờ Tân Định nằm trên đường Hai Bà Trưng và dễ nhận ra bởi mặt ngoài
+      màu hồng. Theo Sở Du lịch Thành phố Hồ Chí Minh, nhà thờ được xây dựng năm
+      1876, kết hợp phong cách Gothic, Roman và một số đường nét Baroque. Sắc
+      hồng, các chi tiết trắng, tháp cao và hệ cửa tạo nên diện mạo khác biệt
+      giữa khu phố đông đúc. Dù thường được nhắc đến như điểm chụp ảnh, đây vẫn
+      là nơi sinh hoạt tôn giáo. Khách nên quan sát từ khu vực được phép, tránh
+      bước vào khi đang có nghi lễ nếu không tham dự, giữ yên lặng và chọn trang
+      phục phù hợp. Không nên đứng dưới lòng đường để lấy toàn cảnh; phía đối
+      diện và vỉa hè cho góc nhìn an toàn hơn.
+    verification_status: verified
+  - id: hcmc-narration-tan-dinh-market-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-tan-dinh-market
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chợ Tân Định nằm trên đường Hai Bà Trưng, gần Nhà thờ Tân Định, và được
+      bao quanh bởi nhiều tuyến phố nhỏ. Trang du lịch chính thức của thành phố
+      mô tả đây là một khu chợ lâu đời gần trung tâm, có hoạt động mua bán ban
+      ngày và một phần ẩm thực vào buổi tối. Việc ghé chợ cho phép quan sát nhịp
+      mua thực phẩm, vải vóc và hàng dùng thường nhật trong một khu dân cư đang
+      hoạt động, thay vì một điểm trưng bày được dàn dựng. Lối đi có thể hẹp và
+      bận rộn, nên hãy đi gọn, không chắn khu giao hàng, hỏi giá trước khi mua và
+      xin phép khi chụp người bán. Có thể kết hợp chợ với nhà thờ bằng một quãng
+      đi bộ ngắn nhưng cần chú ý giao thông trên Hai Bà Trưng.
+    verification_status: verified
+  - id: hcmc-narration-tao-dan-park-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-tao-dan-park
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Công viên Tao Đàn là mảng xanh lớn ở khu trung tâm, với một lối tiếp cận
+      từ đường Nguyễn Thị Minh Khai. Sở Du lịch Thành phố Hồ Chí Minh giới thiệu
+      đây là công viên có lịch sử lâu đời và từng mang nhiều tên qua các thời kỳ.
+      Hàng cây lớn, lối đi, khoảng sân và những góc sinh hoạt cộng đồng tạo một
+      nhịp nghỉ giữa khu phố dày đặc bảo tàng, trường học và giao thông. Trải
+      nghiệm tốt nhất không đòi hỏi một điểm kiểm tra cố định: người đi bộ có thể
+      quan sát cây, hoạt động thể dục và cách cư dân sử dụng không gian chung.
+      Hãy giữ vệ sinh, tôn trọng nhóm đang sinh hoạt, không tự gán mọi hoạt động
+      quan sát được thành phong tục và chú ý lối xe ở các cổng công viên.
+    verification_status: verified
+  - id: hcmc-narration-thien-hau-pagoda-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-thien-hau-pagoda
+    source_id: hcmc-source-thien-hau-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Chùa Bà Thiên Hậu trên đường Nguyễn Trãi là một điểm tín ngưỡng quan trọng
+      trong khu Chợ Lớn. Sở Du lịch Thành phố Hồ Chí Minh đặt ngôi chùa trong
+      bối cảnh cộng đồng người Hoa sinh sống lâu đời tại khu Chợ Lớn, đồng
+      thời nhấn mạnh nét kiến trúc Hoa và vai trò thờ tự của địa điểm. Không gian
+      điện, sân, mái ngói và các chi tiết trang trí nên được quan sát như một
+      tổng thể đang được cộng đồng sử dụng, không chỉ như phông ảnh. Chùa thu hút
+      người đến dâng hương và cầu nguyện, vì vậy khách tham quan cần ăn mặc lịch
+      sự, nói nhỏ, không chắn lối trước ban thờ và xin phép trước khi chụp ảnh.
+      Có thể kết hợp chuyến đi với Chợ Bình Tây để hiểu thêm cảnh quan Chợ Lớn.
+    verification_status: verified
+  - id: hcmc-narration-ton-duc-thang-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-ton-duc-thang-museum
+    source_id: hcmc-source-ton-duc-thang-museum
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Tôn Đức Thắng tại số 5 Tôn Đức Thắng là cơ sở chuyên đề về cuộc
+      đời và sự nghiệp cách mạng của Chủ tịch Tôn Đức Thắng. Trang chính thức
+      của bảo tàng cho biết hệ thống trưng bày tại địa chỉ này phục vụ công chúng
+      từ đầu năm 2025, sau giai đoạn xây dựng cơ sở mới. Nội dung tham quan tập
+      trung vào tư liệu, hình ảnh và hiện vật, đồng thời đặt nhân vật trong những
+      chặng lịch sử của đất nước. Đây là điểm bổ sung cho nhóm bảo tàng trung tâm
+      nhưng có phạm vi rõ hơn Bảo tàng Thành phố. Khi xem, nên theo tuyến chủ đề,
+      phân biệt hiện vật gốc với phần diễn giải và đọc chú thích trước khi hình
+      thành kết luận. Hãy kiểm tra thông báo của bảo tàng nếu có trưng bày tạm
+      thời hoặc thay đổi không gian phục vụ.
+    verification_status: verified
+  - id: hcmc-narration-vam-sat-ecotourism-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-vam-sat-ecotourism
+    source_id: hcmc-source-vam-sat-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Khu du lịch sinh thái Vàm Sát nằm trong vùng rừng ngập mặn Cần Giờ, tại
+      tiểu khu 15A, xã Lý Nhơn. Theo Sở Du lịch Thành phố Hồ Chí Minh, hành trình
+      có thể kết hợp đường bộ và đường thủy để quan sát kênh rạch, rừng ngập mặn,
+      khu sinh cảnh động vật và cảnh quan từ đài quan sát. Nguồn cũng giới thiệu
+      các hoạt động như đi bộ, chèo thuyền và tìm hiểu hệ sinh thái. Đây là điểm
+      xa trung tâm, chịu ảnh hưởng của thời tiết và điều kiện vận hành, nên cần
+      xác nhận tuyến tham quan với đơn vị tại chỗ thay vì tự đi vào rừng. Khách
+      nên mang nước, chống nắng, chống côn trùng, tuân thủ hướng dẫn an toàn và
+      không cho động vật ăn ngoài quy định.
+    verification_status: verified
+  - id: hcmc-narration-vietnam-history-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-vietnam-history-museum
+    source_id: hcmc-source-museums-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Lịch sử Thành phố Hồ Chí Minh nằm cạnh Thảo Cầm Viên trên đường
+      Nguyễn Bỉnh Khiêm. Theo nguồn du lịch chính thức của thành phố, bảo tàng
+      khánh thành năm 1929 trong một công trình mang phong cách kiến trúc Đông
+      Dương. Bộ sưu tập giới thiệu nhiều giai đoạn lịch sử và văn hóa Việt Nam,
+      đồng thời có nội dung về Champa, Óc Eo, Khmer và một số nền văn hóa châu Á.
+      Phạm vi rộng khiến việc xem toàn bộ trong một lượt dễ quá tải; nên chọn
+      một tuyến thời gian hoặc một nhóm văn hóa, đọc nhãn hiện vật rồi mới nối
+      sang phòng kế tiếp. Bản thân mái, sảnh và bố cục tòa nhà cũng đáng quan sát.
+      Có thể kết hợp bảo tàng với Thảo Cầm Viên nhưng nên dành thời gian riêng
+      cho từng nơi.
+    verification_status: verified
+  - id: hcmc-narration-war-remnants-museum-vi
+    city_code: hcmc
+    poi_id: hcmc-poi-war-remnants-museum
+    source_id: hcmc-source-central-attractions-hcmc-tourism
+    language_code: vi-VN
+    content: >-
+      Bảo tàng Chứng tích Chiến tranh ở đường Võ Văn Tần là bảo tàng chuyên đề
+      nghiên cứu, sưu tầm, bảo quản và trưng bày tư liệu, hình ảnh, hiện vật liên
+      quan đến chiến tranh và hậu quả của chiến tranh tại Việt Nam. Trang du
+      lịch chính thức của thành phố nhấn mạnh chức năng lưu giữ bằng chứng và
+      truyền tải thông điệp về hòa bình. Nội dung có thể nặng nề, vì vậy nên đi
+      theo trình tự phòng, đọc bối cảnh của hình ảnh và dành khoảng nghỉ khi cần.
+      Các hiện vật ngoài trời và trưng bày trong nhà dùng hình thức diễn giải
+      khác nhau; không nên tách một hình ảnh khỏi chú thích của nó. Hãy giữ thái
+      độ tôn trọng với chủ đề, không tạo dáng phản cảm và dành thời gian suy
+      ngẫm thay vì chỉ lướt qua.
+    verification_status: verified

@@ -36,7 +36,7 @@ from tests.curated_fixtures import valid_package_document
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 ANDROID_ROOT = REPOSITORY_ROOT / "android" / "app"
-HCMC_MANIFEST_NAME = "hcmc-starter-v1-1.0.0.manifest.json"
+HCMC_MANIFEST_NAME = "hcmc-starter-v1-1.1.0.manifest.json"
 FORBIDDEN_PUBLIC_KEYS = {
     "user",
     "userId",
@@ -99,7 +99,7 @@ def test_builds_valid_hcmc_and_generic_bangkok(tmp_path: Path) -> None:
     bangkok = build_city_package("bkk", tmp_path / "bkk")
 
     assert hcmc.manifest.city.value == "hcmc"
-    assert len(hcmc.artifact.pois) == 2
+    assert len(hcmc.artifact.pois) == 30
     assert bangkok.manifest.city.value == "bkk"
     assert bangkok.artifact.package_metadata.city == "Bangkok"
     assert len(bangkok.artifact.pois) == 1
@@ -121,7 +121,7 @@ def test_cli_requires_exactly_one_supported_city(tmp_path: Path) -> None:
         == 0
     )
     assert {path.name for path in tmp_path.iterdir()} == {
-        "hcmc-starter-v1-1.0.0.data.json",
+        "hcmc-starter-v1-1.1.0.data.json",
         HCMC_MANIFEST_NAME,
     }
     with pytest.raises(ArtifactBuildError, match="unsupported city"):
@@ -207,7 +207,7 @@ def test_canonical_serialization_has_sorted_keys_utf8_and_one_newline(
     assert "\\u" not in text
     assert raw.endswith(b"\n")
     assert not raw.endswith(b"\n\n")
-    assert b": " not in raw
+    assert b'": ' not in raw
     assert canonical_json_bytes(result.artifact) == raw
 
 
@@ -217,10 +217,10 @@ def test_datetime_serialization_is_deterministic_and_clock_free(
     first = build_city_package("hcmc", tmp_path / "first")
     second = build_city_package("hcmc", tmp_path / "second")
 
-    assert first.manifest.published_at == "2026-07-26T17:00:00Z"
+    assert first.manifest.published_at == "2026-08-12T04:16:22Z"
     assert (
         first.artifact.package_metadata.published_at_epoch_millis
-        == 1_785_085_200_000
+        == 1_786_508_182_000
     )
     assert (
         first.manifest_path.read_bytes()
@@ -369,7 +369,7 @@ def test_committed_hcmc_artifact_matches_regenerated_output() -> None:
 
     assert verified.manifest_path.parent == committed_output_dir()
     assert verified.manifest.package_id == "hcmc-starter-v1"
-    assert len(verified.artifact.pois) == 2
+    assert len(verified.artifact.pois) == 30
 
 
 def test_artifact_is_ordinary_static_json_without_fabricated_content(
@@ -381,8 +381,8 @@ def test_artifact_is_ordinary_static_json_without_fabricated_content(
     assert result.data_path.suffix == ".json"
     assert result.manifest_path.suffix == ".json"
     assert result.artifact.aliases == ()
-    assert result.artifact.menu_items == ()
-    assert result.artifact.narrations == ()
+    assert len(result.artifact.menu_items) == 3
+    assert len(result.artifact.narrations) == 30
 
 
 def test_supported_menu_and_narration_fields_are_preserved_not_synthesized() -> None:

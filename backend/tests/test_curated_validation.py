@@ -293,6 +293,50 @@ def test_menu_without_provenance_or_freshness_fails(
     )
 
 
+def test_menu_requires_direct_operator_source(tmp_path: Path) -> None:
+    document = copied_document()
+    document["sources"][0]["source_type"] = "official_tourism"
+    document["menu_items"][0]["source_type"] = "official_tourism"
+
+    assert "menu_source_not_direct" in _codes(
+        _write_package(tmp_path, document)
+    )
+
+
+def test_menu_source_requires_retrieval_freshness(tmp_path: Path) -> None:
+    document = copied_document()
+    del document["sources"][0]["retrieved_at"]
+
+    assert "menu_source_freshness_required" in _codes(
+        _write_package(tmp_path, document)
+    )
+
+
+def test_duplicate_physical_poi_is_rejected(tmp_path: Path) -> None:
+    document = copied_document()
+    duplicate = document["pois"][0].copy()
+    duplicate["id"] = "hcmc-poi-duplicate-physical-place"
+    duplicate["canonical_name"] = "Alternate spelling of the same place"
+    document["pois"].append(duplicate)
+
+    assert "duplicate_physical_poi" in _codes(
+        _write_package(tmp_path, document)
+    )
+
+
+def test_duplicate_canonical_poi_name_is_rejected(tmp_path: Path) -> None:
+    document = copied_document()
+    duplicate = document["pois"][0].copy()
+    duplicate["id"] = "hcmc-poi-duplicate-canonical-name"
+    duplicate["address"] = "Different address"
+    duplicate["location"] = {"latitude": 10.8, "longitude": 106.8}
+    document["pois"].append(duplicate)
+
+    assert "duplicate_physical_poi" in _codes(
+        _write_package(tmp_path, document)
+    )
+
+
 def test_narration_without_source_or_fallback_fails(
     tmp_path: Path,
 ) -> None:

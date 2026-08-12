@@ -62,6 +62,58 @@ USER_TABLES = (
     "itineraries",
     "itinerary_items",
 )
+HCMC_NEARBY_IDS = [
+    "hcmc-poi-central-post-office",
+    "hcmc-poi-ho-chi-minh-city-book-street",
+    "hcmc-poi-notre-dame-cathedral",
+    "hcmc-poi-ho-chi-minh-city-museum",
+    "hcmc-poi-park-30-april",
+    "hcmc-poi-saigon-opera-house",
+    "hcmc-poi-independence-palace",
+    "hcmc-poi-nguyen-hue-walking-street",
+    "hcmc-poi-ton-duc-thang-museum",
+    "hcmc-poi-ben-thanh-market",
+    "hcmc-poi-war-remnants-museum",
+    "hcmc-poi-hum-signature",
+    "hcmc-poi-golden-dragon-water-puppet-theater",
+    "hcmc-poi-tao-dan-park",
+    "hcmc-poi-vietnam-history-museum",
+    "hcmc-poi-saigon-skydeck",
+    "hcmc-poi-saigon-zoo-botanical-gardens",
+    "hcmc-poi-fine-arts-museum",
+    "hcmc-poi-jade-emperor-pagoda",
+    "hcmc-poi-tan-dinh-church",
+]
+HCMC_CITY_ONLY_IDS = [
+    "hcmc-poi-ao-dai-museum",
+    "hcmc-poi-ben-thanh-market",
+    "hcmc-poi-binh-tay-market",
+    "hcmc-poi-central-post-office",
+    "hcmc-poi-cu-chi-tunnels-ben-duoc",
+    "hcmc-poi-fine-arts-museum",
+    "hcmc-poi-giac-lam-pagoda",
+    "hcmc-poi-golden-dragon-water-puppet-theater",
+    "hcmc-poi-ho-chi-minh-city-book-street",
+    "hcmc-poi-ho-chi-minh-city-museum",
+    "hcmc-poi-ho-chi-minh-museum-nha-rong",
+    "hcmc-poi-hum-signature",
+    "hcmc-poi-independence-palace",
+    "hcmc-poi-jade-emperor-pagoda",
+    "hcmc-poi-landmark-81",
+    "hcmc-poi-le-van-duyet-tomb",
+    "hcmc-poi-nguyen-hue-walking-street",
+    "hcmc-poi-notre-dame-cathedral",
+    "hcmc-poi-park-30-april",
+    "hcmc-poi-saigon-opera-house",
+]
+HCMC_NEARBY_MUSEUM_IDS = [
+    "hcmc-poi-ho-chi-minh-city-museum",
+    "hcmc-poi-ton-duc-thang-museum",
+    "hcmc-poi-war-remnants-museum",
+    "hcmc-poi-vietnam-history-museum",
+    "hcmc-poi-fine-arts-museum",
+    "hcmc-poi-ho-chi-minh-museum-nha-rong",
+]
 
 
 def _run(coroutine: Coroutine[Any, Any, ResultT]) -> ResultT:
@@ -265,10 +317,7 @@ def test_hcmc_and_bangkok_results_are_city_scoped_with_metres(
         )
     )
 
-    assert [item.provider_id for item in hcmc.items] == [
-        "hcmc-poi-central-post-office",
-        "hcmc-poi-war-remnants-museum",
-    ]
+    assert [item.provider_id for item in hcmc.items] == HCMC_NEARBY_IDS
     assert {item.city for item in hcmc.items} == {SupportedCity.HCMC}
     assert [item.provider_id for item in bangkok.items] == ["bkk-poi-wat-pho"]
     assert {item.city for item in bangkok.items} == {SupportedCity.BANGKOK}
@@ -305,10 +354,7 @@ def test_city_only_candidates_are_stable_read_only_and_have_no_distance(
     )
     after = _run(_database_snapshot(provider_database_url))
 
-    assert [item.provider_id for item in first.items] == [
-        "hcmc-poi-central-post-office",
-        "hcmc-poi-war-remnants-museum",
-    ]
+    assert [item.provider_id for item in first.items] == HCMC_CITY_ONLY_IDS
     assert first == second
     assert [item.provider_id for item in bangkok.items] == ["bkk-poi-wat-pho"]
     assert all(item.distance_metres is None for item in first.items)
@@ -349,13 +395,9 @@ def test_category_text_radius_and_limit_filters_are_bounded(
         )
     )
 
-    assert [item.provider_id for item in category.items] == [
-        "hcmc-poi-war-remnants-museum"
-    ]
+    assert [item.provider_id for item in category.items] == HCMC_NEARBY_MUSEUM_IDS
     assert [item.provider_id for item in text.items] == ["hcmc-poi-war-remnants-museum"]
-    assert [item.provider_id for item in radius.items] == [
-        "hcmc-poi-central-post-office"
-    ]
+    assert [item.provider_id for item in radius.items] == HCMC_NEARBY_IDS[:2]
     assert limited.returned_count == 1
     assert limited.is_complete is False
 
@@ -604,7 +646,8 @@ def test_discovery_is_one_read_only_query_without_user_table_access(
     result, statements = _run(_discover_with_statement_capture(provider_database_url))
     after = _run(_database_snapshot(provider_database_url))
 
-    assert result.returned_count == 2
+    assert result.returned_count == 20
+    assert result.is_complete is False
     assert before == after
     assert len(statements) == 1
     normalized_sql = statements[0].casefold()
@@ -753,24 +796,21 @@ def test_nearby_endpoint_uses_seeded_postgis_without_mutation(
 
     hcmc_body = hcmc.json()
     bangkok_body = bangkok.json()
-    assert [item["provider_id"] for item in hcmc_body["items"]] == [
-        "hcmc-poi-central-post-office",
-        "hcmc-poi-war-remnants-museum",
-    ]
+    assert [item["provider_id"] for item in hcmc_body["items"]] == HCMC_NEARBY_IDS[:5]
     assert [item["provider_id"] for item in bangkok_body["items"]] == [
         "bkk-poi-wat-pho"
     ]
     assert {item["city"] for item in hcmc_body["items"]} == {"hcmc"}
     assert {item["city"] for item in bangkok_body["items"]} == {"bkk"}
-    assert [item["provider_id"] for item in category.json()["items"]] == [
-        "hcmc-poi-war-remnants-museum"
-    ]
+    assert [item["provider_id"] for item in category.json()["items"]] == (
+        HCMC_NEARBY_MUSEUM_IDS[:5]
+    )
     assert [item["provider_id"] for item in text.json()["items"]] == [
         "hcmc-poi-war-remnants-museum"
     ]
-    assert [item["provider_id"] for item in radius.json()["items"]] == [
-        "hcmc-poi-central-post-office"
-    ]
+    assert [item["provider_id"] for item in radius.json()["items"]] == (
+        HCMC_NEARBY_IDS[:2]
+    )
     assert limited.json()["returned_count"] == 1
     assert limited.json()["is_complete"] is False
 

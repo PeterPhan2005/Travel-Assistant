@@ -322,11 +322,10 @@ pytest
 
 Pipeline chỉ đọc nội dung repository, không fetch web/runtime, không sinh nội
 dung bằng AI, không chứa user/preferences/trip/itinerary, không lưu vị trí người
-dùng và không cần Firebase credential. Package starter cố ý nhỏ, chỉ giữ fact
-có nguồn review được. Target đã khóa là đúng 42 curated POI: T092 hoàn thiện 30
-HCMC và T093 hoàn thiện 12 Bangkok. Hai target này chưa hoàn thành ở T031; 42
-POI là trust anchor/downloadable offline dataset chứ không phải toàn bộ universe
-online.
+dùng và không cần Firebase credential. T092 đã hoàn thiện đúng 30 HCMC POI có
+nguồn review được; Bangkok vẫn là starter một POI cho đến khi T093 hoàn thiện
+target 12 POI. Target cuối đã khóa là đúng 42 curated POI và là trust anchor/
+downloadable offline dataset chứ không phải toàn bộ universe online.
 
 Khi thực hiện T092/T093, price/menu ưu tiên direct venue/restaurant/operator và
 phải có freshness metadata; historical/cultural claim ưu tiên official venue,
@@ -349,7 +348,7 @@ Từ `backend/`, regenerate HCMC artifact đã commit:
 ```bash
 python -m app.travel_packages build \
   --city hcmc \
-  --output-dir ../data/travel-packages/hcmc/1.0.0
+  --output-dir ../data/travel-packages/hcmc/1.1.0
 ```
 
 Build Bangkok vào thư mục tạm riêng:
@@ -366,7 +365,7 @@ với YAML canonical hoặc builder:
 
 ```bash
 python -m app.travel_packages verify \
-  --manifest ../data/travel-packages/hcmc/1.0.0/hcmc-starter-v1-1.0.0.manifest.json
+  --manifest ../data/travel-packages/hcmc/1.1.0/hcmc-starter-v1-1.1.0.manifest.json
 python -m app.travel_packages check
 ```
 
@@ -381,7 +380,7 @@ Kiểm tra SHA-256 trực tiếp trên macOS:
 
 ```bash
 shasum -a 256 \
-  ../data/travel-packages/hcmc/1.0.0/hcmc-starter-v1-1.0.0.data.json
+  ../data/travel-packages/hcmc/1.1.0/hcmc-starter-v1-1.1.0.data.json
 ```
 
 Giá trị phải khớp field `sha256` trong manifest; `byteSize` phải khớp chính xác
@@ -393,7 +392,7 @@ chạy server local:
 
 ```bash
 python3 -m http.server 8000 \
-  --directory data/travel-packages/hcmc/1.0.0
+  --directory data/travel-packages/hcmc/1.1.0
 ```
 
 Trong terminal khác, download cả manifest và data:
@@ -401,16 +400,20 @@ Trong terminal khác, download cả manifest và data:
 ```bash
 DOWNLOAD_TMP_DIR="$(mktemp -d)"
 curl --fail --silent --show-error \
-  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.manifest.json" \
-  http://127.0.0.1:8000/hcmc-starter-v1-1.0.0.manifest.json
+  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.1.0.manifest.json" \
+  http://127.0.0.1:8000/hcmc-starter-v1-1.1.0.manifest.json
 curl --fail --silent --show-error \
-  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.data.json" \
-  http://127.0.0.1:8000/hcmc-starter-v1-1.0.0.data.json
-shasum -a 256 "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.0.0.data.json"
+  --output "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.1.0.data.json" \
+  http://127.0.0.1:8000/hcmc-starter-v1-1.1.0.data.json
+shasum -a 256 "$DOWNLOAD_TMP_DIR/hcmc-starter-v1-1.1.0.data.json"
 ```
 
 T034 chưa download, stage, import hoặc activate package trên Android. WorkManager,
 checksum-before-activation và atomic Room activation vẫn thuộc T035.
+
+T092 giữ nguyên exact bytes của published HCMC `1.0.0` và phát hành dataset mở
+rộng dưới version `1.1.0`. Android debug configuration vẫn trỏ `1.0.0`; việc đổi
+client download target không thuộc data task T092.
 
 ### Đồng bộ travel package HCMC trên Android
 
@@ -947,9 +950,11 @@ asyncio.run(main())
 PY
 ```
 
-Starter data hiện tại phải trả hai HCMC POI theo distance/ID order và một Wat
-Pho ở Bangkok. Cả hai city có zero menu rows; rating, price và opening hours
-không được tự điền. Output không có origin hoặc final prose.
+Với request mẫu limit 5, HCMC phải trả lần lượt Bưu điện Trung tâm, Đường sách
+Nguyễn Văn Bình, Nhà thờ Đức Bà, Bảo tàng Thành phố và Công viên 30/4; Bangkok
+vẫn trả Wat Pho. Canonical HCMC package có ba menu rows trực tiếp cho Hum
+Signature, còn rating và opening hours không được tự điền. Output không có
+origin hoặc final prose.
 
 Live-model check là tùy chọn. Đọc key im lặng, đặt một model ID được OpenAI
 project hỗ trợ, chạy cùng script trên và chỉ in normalized `DiscoveryOutput`;

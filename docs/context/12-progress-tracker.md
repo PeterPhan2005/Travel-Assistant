@@ -103,8 +103,10 @@ normalized sources, menu prices, grounded narrations and PostGIS geography
 points. A repository-owned curated pipeline now validates canonical YAML (and
 accepted JSON) against immutable Pydantic schema version 1 plus a generated
 JSON Schema, then seeds the fixed T030 schema with async, transaction-scoped,
-idempotent upserts. Starter packages contain two HCMC POIs and one Bangkok POI,
-each linked to reviewable official sources with retrieval timestamps. An
+idempotent upserts. The HCMC package now contains exactly 30 POIs, three direct-
+operator menu facts and 30 sourced narrations; Bangkok remains a one-POI starter
+until T093. Every current record links to reviewable official sources with
+retrieval timestamps. An
 immutable provider-neutral POI boundary now accepts a validated city, optional
 query/category, request-scoped origin, bounded metre radius and bounded limit.
 The first adapter reads curated POIs through an injected async session, uses
@@ -127,9 +129,10 @@ Provider failures map to stable sanitized 400/429/501/502/503/500 errors with
 matching request IDs and preserved cancellation. A database-free static
 travel-package builder now converts exactly one validated T031 city package per
 invocation into schema-version-1 public data plus a schema-version-1 manifest.
-The committed HCMC pair is byte-deterministic and independently verifiable by
-exact byte size and SHA-256. Android now downloads/resumes and validates that
-HCMC artifact through a user-triggered WorkManager flow, then atomically
+The committed HCMC `1.1.0` pair is byte-deterministic and independently
+verifiable by exact byte size and SHA-256; published `1.0.0` remains byte-
+identical. Android still downloads/resumes and validates the `1.0.0` HCMC
+artifact through a user-triggered WorkManager flow, then atomically
 activates it in Room while retaining old offline data on every failure.
 Canonical private `GET /preferences` and `PUT /preferences` now persist one
 strict schema-version-1 generic document by authenticated Firebase UID. Android
@@ -201,8 +204,8 @@ closure are roadmap requirements.
 
 ## Current goal
 
-T091 is complete. T092 is the earliest later ready task in `tasks/index.json`;
-it is selected as Next Up but remains `todo`, unimplemented and unstarted.
+T092 is complete with exactly 30 canonical HCMC POIs in the fixed 42-POI trust
+anchor; the 12 Bangkok POIs remain owned by T093.
 
 ## Completed
 
@@ -256,6 +259,7 @@ it is selected as Next Up but remains `todo`, unimplemented and unstarted.
 - T080 Implement Room full-text search.
 - T090 Instrument MVP KPIs.
 - T091 Add end-to-end demo tests.
+- T092 Complete HCMC curated dataset.
 
 ## In progress
 
@@ -263,7 +267,7 @@ it is selected as Next Up but remains `todo`, unimplemented and unstarted.
 
 ## Next up
 
-- T092 Complete HCMC curated dataset.
+- T093 Complete Bangkok curated dataset.
 
 ## Open questions
 
@@ -1012,7 +1016,7 @@ it is selected as Next Up but remains `todo`, unimplemented and unstarted.
 | Deterministic services | Location acquisition, speech recognition, distance, opening-hours evaluation, ranking, authentication/authorization, offline search and package synchronization remain application services. |
 | Privacy/permissions | No server-side exact location history or stored voice audio; foreground location and microphone permissions are requested only at their feature points; background location is outside MVP. |
 | Task sequence | T000 through T004, T010 through T025, T030–T035 and T040–T050 are complete; T060 is next but unassigned. |
-| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed two-POI HCMC artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds sourced HCMC/Bangkok starter packages. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. The independent Grounding Reviewer creates complete deterministic claim decisions, applies request-supplied source/freshness/price rules, approves only closed specialist outputs and prevents model output from weakening safety or authoring new facts/IDs. The independent Response Composer renders only approved evidence and content. The strict T048 application-code orchestrator now coordinates the typed runtime with scoped separate service calls, concurrent specialist fan-out, bounded timeouts/retry and safe partial output. Live Google Places and assistant HTTP/Android transport remain unimplemented. |
+| Implementation state | The Android architecture shell, five-destination Navigation Compose shell, centralized Material 3 theme and Room version-2 offline schema/core DAO layer are present under `android/`. A bundled HCMC demo seed imports safely and idempotently and still contains no menu or narration records. Explore has user-triggered, one-shot foreground location context plus offline Room search by name, alias and category, Vietnamese normalization and deterministic straight-line distance ranking. Nearby POIs open local detail screens resolved by stable ID; missing optional data is omitted, while stored prices include freshness dates and stored narration requires a real source label. Explore location/query state survives Back. Loaded details expose an explicit `Dẫn đường` action that validates the stored POI destination and opens any compatible external `geo:` handler, with typed failures, localized retryable UI and coordinate-free no-op analytics. Validated connectivity is observed without network requests; the shell explicitly shows Offline while local Room search/detail remains usable. Downloads now exposes HCMC-only user-triggered package sync with WorkManager, strict manifest/artifact validation, resumable app-private staging, exact byte/SHA-256 verification and one-transaction Room activation. Active package metadata/data survives process restart and every failed update; bundled seed never replaces a valid downloaded package. Assistant still explains its Internet-only future behavior, while external navigation is never disabled solely because connectivity is Offline. The dedicated Firebase development configuration is integrated only for debug and initializes the default Firebase app automatically. Profile implements email/password registration and sign-in, verification-email delivery/resend, explicit verification refresh and a common sign-out path. It also implements explicit Google authentication through Credential Manager; Google ID credentials are exchanged only ephemerally for Firebase, cancellation is controlled, Firebase remains the single session source of truth and sign-out clears Credential Manager state. Manual development-project validation confirms email/password and Google sessions restore after force-stop/cold launch; Explore and local Room data remain independent of authentication. A taxonomy-neutral preference repository now keeps strict per-account DataStore documents and revision/pending metadata, while unique connected WorkManager sync obtains Firebase tokens only at request time and protects newer in-flight edits. Production/release Firebase and backend hosting configuration remain absent. There is no background tracking or exact-location persistence. The backend builds and verifies deterministic static travel-package JSON directly from validated T031 input, with a committed 30-POI HCMC `1.1.0` artifact alongside the byte-preserved `1.0.0` artifact and no package HTTP endpoint; Android-to-backend transport is implemented only for private preferences. Local PostgreSQL/PostGIS infrastructure exists. The backend FastAPI factory, validated settings, liveness endpoint, request IDs, sanitized error envelope and Firebase Admin ID-token verification are implemented; `/auth/me` exposes only UID and `/health` remains public and database-free. Canonical authenticated GET/PUT `/preferences` return or transactionally replace one strict bounded version-1 JSON document by verified UID without exposing identity. Typed SQLAlchemy metadata and an async Alembic migration create the ownership, itinerary, curated provenance, menu, narration and PostGIS POI schema. The strict version-1 curated pipeline validates and transactionally seeds the sourced 30-POI HCMC package and the Bangkok starter package. A provider-neutral async discovery contract normalizes bounded nearby requests, namespaced result identity, provenance/freshness and canonical errors/timeouts. Its first injected-session curated adapter performs one read-only parameterized PostGIS query with deterministic distance/ID ordering and no payload/ORM escape. Canonical `GET /pois/nearby` validates bounded HTTP query parameters, supports anonymous or strictly verified optional Firebase authentication, and returns only normalized curated POIs with metre distance, provenance/freshness, returned count and completeness. Its app-owned lazy engine and request session lifecycle do not persist request origins or commit writes. The independent Discovery Agent calls that injected provider and a selected-curated menu reader, assembles deterministic closed evidence, preserves distance order/missing values and returns no final prose. The independent Narration Agent consumes only supplied approved POI-scoped claims, runs with no tools/handoffs/sessions when explicitly configured, enforces exact requested 100–200-word plain text and exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Local Culture Agent consumes only supplied source-closed culture/etiquette claims, rejects stereotypes and unsafe generalizations, enforces canonical IDs plus exact claim/source closure, and otherwise returns deterministic content-free `LIMITED`. The independent Itinerary Agent creates only one-day candidate-backed drafts, preserves distance-ranked input order, allocates the exact local window without overlap, uses fixed explicit assumptions and falls back deterministically without touching saved itineraries. The independent Grounding Reviewer creates complete deterministic claim decisions, applies request-supplied source/freshness/price rules, approves only closed specialist outputs and prevents model output from weakening safety or authoring new facts/IDs. The independent Response Composer renders only approved evidence and content. The strict T048 application-code orchestrator now coordinates the typed runtime with scoped separate service calls, concurrent specialist fan-out, bounded timeouts/retry and safe partial output. Live Google Places and assistant HTTP/Android transport remain unimplemented. |
 
 T049 update to the implementation-state row: the independent Response Composer,
 strict application-code orchestration path and injected privacy-safe local
@@ -2976,3 +2980,55 @@ Tracker state remains: T091 done and Completed; In progress empty; T092 todo,
 unimplemented and the sole Next Up; T093/T094/T095 todo and unstarted. This pass
 changed only documentation/task metadata. It changed no Android/backend
 production code, data package or test, and made no commit or push.
+
+T092 completed on 2026-08-12 from a clean `main` worktree at exact
+`HEAD`/`origin/main` SHA `e71b0d5658a8e4e366f8e76f93339a55f7dd98f9`, with
+GitHub Actions run 31469674967 complete/success before implementation. The
+canonical `hcmc-starter-v1` package advances additively to content version
+`1.1.0` with exactly 30 unique HCMC POIs, 22 sources, 63 POI-source links,
+three integer-VND Hum Signature menu facts and 30 verified Vietnamese
+narrations of 100–200 words. All menu facts use the direct official operator,
+the source retrieval timestamp and the operator page's own modification
+timestamp. Sources comprise 14 official-tourism, three official-operator,
+three official-government and two official-institution records; no review,
+social-media or model output is a factual source.
+
+Category coverage is museum 7, religious site 5, market 3, landmark 2, modern
+attraction 2, park 2, and one each of history site, entertainment, cultural
+space, restaurant, heritage site, public space, performing arts, family
+attraction and nature. Area coverage has 13 current commune-level labels:
+Phường Sài Gòn has 11 POIs, Phường Bến Thành five, Phường Xuân Hòa three,
+Phường Tân Định two, and Phường Long Phước, Phường Bình Tây, Phường Bảy Hiền,
+Phường Xóm Chiếu, Phường Thạnh Mỹ Tây, Phường Gia Định, Phường Chợ Lớn, Xã An
+Nhơn Tây and Xã An Thới Đông one each. The single restaurant does not dominate
+the package.
+
+The deterministic public artifact is committed at
+`data/travel-packages/hcmc/1.1.0/`: 47,062 data bytes with SHA-256
+`9632ff38d7dd798bf6c89298c4560c6093ccc59c9668490b8dd51672e548138d`.
+The published `1.0.0` data and manifest bytes remain unchanged; Android still
+targets `1.0.0`, because client retargeting is outside T092. Schema version 1
+has no canonical local-culture record or authored alias collection, so T092
+records no such rows and performs no contract migration. Opening hours,
+admission prices, short descriptions and narration titles remain absent when
+not supported or not independently established.
+
+Validation, schema drift, artifact build/verify/check, two-directory exact-byte
+determinism, Ruff, strict mypy and `pip check` all passed. The complete backend
+suite passed 828/828 with disposable PostGIS databases, including repeat-seed
+idempotency and changed-content upsert coverage. T092 is `done`, Completed
+includes T092, In progress is empty, and T093 is the sole Next Up task. T093 and
+all later implementation remain untouched. No commit or push was made.
+
+Before commit, T092 received a geographic-freshness audit on 2026-08-12 for all
+30 POIs. Resolution 1685/NQ-UBTVQH15 from the Government of Vietnam supplies
+the authoritative old-to-current commune-level mapping; HCMC Department of
+Culture and Sports records resolve split or previously merged heritage
+locations, and the Government Gazette closes the Bitexco civic-address chain.
+The canonical `area` and `address` values now use only current `Phường`/`Xã`
+labels and omit obsolete district-level hierarchy. Five narrations that used
+obsolete districts as present-day geography were minimally corrected; no menu,
+price, historical claim, category, coordinate, POI identity or POI count
+changed. No optional area was omitted. A T092-only regression prevents `Quận`,
+`Huyện` or `Thành phố Thủ Đức` from reappearing in current snapshot area/address
+components. Schema version 1 and T106's future GeoArea work remain untouched.

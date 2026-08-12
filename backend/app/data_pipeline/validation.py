@@ -12,6 +12,7 @@ from app.data_pipeline.models import (
     CityCode,
     CuratedPackageV1,
     NarrationRecord,
+    SourceType,
     VerificationStatus,
 )
 
@@ -72,6 +73,44 @@ def _duplicate_issues(
         )
         for index, record in enumerate(records)
         if counts[record.id] > 1
+    ]
+
+
+def _normalize_identity_text(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
+def _duplicate_physical_poi_issues(
+    package: CuratedPackageV1,
+    path: Path,
+) -> list[ValidationIssue]:
+    name_keys = [
+        _normalize_identity_text(poi.canonical_name)
+        for poi in package.pois
+    ]
+    location_keys = [
+        (
+            _normalize_identity_text(poi.address or ""),
+            poi.location.latitude,
+            poi.location.longitude,
+        )
+        for poi in package.pois
+    ]
+    name_counts = Counter(name_keys)
+    location_counts = Counter(location_keys)
+    return [
+        _issue(
+            path,
+            "duplicate_physical_poi",
+            "poi",
+            poi.id,
+            f"$.pois[{index}]",
+            "POI name or exact address/coordinates duplicate another physical record.",
+        )
+        for index, (poi, name_key, location_key) in enumerate(
+            zip(package.pois, name_keys, location_keys, strict=True)
+        )
+        if name_counts[name_key] > 1 or location_counts[location_key] > 1
     ]
 
 
@@ -237,6 +276,8 @@ def validate_package_semantics(
                     )
                 )
 
+    issues.extend(_duplicate_physical_poi_issues(package, path))
+
     sources = {source.id: source for source in package.sources}
     poi_ids = {poi.id for poi in package.pois}
     for index, source in enumerate(package.sources):
@@ -365,6 +406,28 @@ def validate_package_semantics(
                     item.id,
                     f"$.menu_items[{index}].source_type",
                     "Menu source_type must match its referenced source.",
+                )
+            )
+        elif referenced_source.source_type is not SourceType.OFFICIAL_OPERATOR:
+            issues.append(
+                _issue(
+                    path,
+                    "menu_source_not_direct",
+                    "menu_item",
+                    item.id,
+                    f"$.menu_items[{index}].source_id",
+                    "Menu facts require a direct official operator source.",
+                )
+            )
+        elif referenced_source.retrieved_at is None:
+            issues.append(
+                _issue(
+                    path,
+                    "menu_source_freshness_required",
+                    "menu_item",
+                    item.id,
+                    f"$.menu_items[{index}].source_id",
+                    "Menu sources require a retrieval timestamp.",
                 )
             )
 

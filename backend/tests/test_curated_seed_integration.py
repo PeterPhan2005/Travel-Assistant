@@ -187,11 +187,11 @@ def test_migrated_schema_seeds_both_cities_with_spatial_provenance(
 
     assert hcmc_summary.package_id == "hcmc-starter-v1"
     assert bangkok_summary.package_id == "bkk-starter-v1"
-    assert counts["sources"] == 3
-    assert counts["pois"] == 3
-    assert counts["poi_sources"] == 3
-    assert counts["menu_items"] == 0
-    assert counts["narrations"] == 0
+    assert counts["sources"] == 23
+    assert counts["pois"] == 31
+    assert counts["poi_sources"] == 64
+    assert counts["menu_items"] == 3
+    assert counts["narrations"] == 30
     assert {counts[table] for table in USER_TABLES} == {0}
 
     async def snapshot() -> tuple[list[str], list[asyncpg.Record]]:
@@ -259,11 +259,14 @@ def test_second_seed_is_idempotent_and_changed_content_updates(
     second = _run(poi_snapshot())
     assert second == first
 
-    first_poi = loaded.package.pois[0].model_copy(
-        update={"canonical_name": "Updated deterministic name"}
+    updated_pois = tuple(
+        poi.model_copy(update={"canonical_name": "Updated deterministic name"})
+        if poi.id == "hcmc-poi-central-post-office"
+        else poi
+        for poi in loaded.package.pois
     )
     updated_package = loaded.package.model_copy(
-        update={"pois": (first_poi, *loaded.package.pois[1:])}
+        update={"pois": updated_pois}
     )
     updated = LoadedPackage(loaded.source_path, updated_package)
     _run(seed_loaded_package(updated, curated_database_url))
@@ -273,9 +276,9 @@ def test_second_seed_is_idempotent_and_changed_content_updates(
     assert third[1] == "Updated deterministic name"
     assert third[2] != first[2]
     counts = _run(_counts(curated_database_url))
-    assert counts["pois"] == 2
-    assert counts["sources"] == 2
-    assert counts["poi_sources"] == 2
+    assert counts["pois"] == 30
+    assert counts["sources"] == 22
+    assert counts["poi_sources"] == 63
 
 
 def test_menu_and_narration_provenance_and_freshness_survive(

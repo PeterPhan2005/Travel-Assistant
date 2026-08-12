@@ -129,7 +129,9 @@ Grounding Reviewer.
   SQLAlchemy 2 typed schema và Alembic migration foundation đã có cho dữ liệu
   người dùng, trip/itinerary và curated POI/content trên PostGIS. Curated
   pipeline schema version 1 đã có YAML canonical packages cho HCMC và Bangkok,
-  strict validation/JSON Schema cùng async transactional idempotent seed.
+  strict validation/JSON Schema cùng async transactional idempotent seed. HCMC
+  canonical package hiện có đúng 30 POI, 3 menu facts và 30 narration có nguồn;
+  Bangkok vẫn là starter một POI cho đến T093.
   Provider-neutral POI contract và curated PostGIS adapter đã có với timeout,
   lỗi và provenance được chuẩn hóa. `GET /pois/nearby` dùng optional Firebase
   Bearer authentication, app-scoped async engine và request-scoped read-only
@@ -211,7 +213,8 @@ Grounding Reviewer.
   observability route.
   Backend có
   thêm deterministic offline builder cho static travel-package data/manifest
-  schema version 1; HCMC artifact hai POI đã được commit với exact-byte SHA-256.
+  schema version 1; HCMC artifact version `1.1.0` gồm 30 POI đã được commit với
+  exact-byte SHA-256, còn published version `1.0.0` hai POI được giữ nguyên byte.
   Android Downloads nay có HCMC-only package sync do người dùng kích hoạt qua
   WorkManager. App tải/resume static artifact vào app-private staging, kiểm tra
   strict manifest/data contract, exact byte size và SHA-256 trước khi kích hoạt
