@@ -15,8 +15,11 @@ from app.auth.models import (
 )
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
-from app.preferences.contracts import PreferenceDocument
+from app.preferences.contracts import (
+    SupportedPreferenceDocument,
+)
 from app.preferences.store import (
+    PreferenceSchemaConflictError,
     PreferenceStoreError,
     StoredPreference,
 )
@@ -61,12 +64,18 @@ class MemoryPreferenceStore:
     async def replace(
         self,
         firebase_uid: str,
-        document: PreferenceDocument,
+        document: SupportedPreferenceDocument,
     ) -> StoredPreference:
         self.replace_calls += 1
+        existing = self.records.get(firebase_uid)
+        if (
+            existing is not None
+            and existing.schema_version > document.schema_version
+        ):
+            raise PreferenceSchemaConflictError
         record = StoredPreference(
             schema_version=document.schema_version,
-            preferences=document.preferences,
+            preferences=document.model_dump(mode="json")["preferences"],
             updated_at=datetime.now(timezone.utc),
         )
         self.records[firebase_uid] = record
@@ -81,7 +90,7 @@ class FailingPreferenceStore(MemoryPreferenceStore):
     async def replace(
         self,
         firebase_uid: str,
-        document: PreferenceDocument,
+        document: SupportedPreferenceDocument,
     ) -> StoredPreference:
         del firebase_uid, document
         raise PreferenceStoreError
@@ -219,6 +228,70 @@ def test_put_replaces_complete_document_and_never_exposes_owner() -> None:
     assert datetime.fromisoformat(
         fetched.json()["updated_at"].replace("Z", "+00:00")
     ).tzinfo is not None
+
+
+def test_schema_v2_replaces_legacy_and_legacy_cannot_downgrade_it() -> None:
+    store = MemoryPreferenceStore()
+    typed_payload = {
+        "schema_version": 2,
+        "preferences": {
+            "interests": ["culture_and_history", "food_and_cafes"],
+            "pace": "relaxed",
+            "budget_preference": "budget",
+        },
+    }
+    with _client(store) as client:
+        legacy = client.put(
+            "/preferences",
+            headers=_headers(),
+            json={"schema_version": 1, "preferences": {"legacy": True}},
+        )
+        typed = client.put(
+            "/preferences",
+            headers=_headers(),
+            json=typed_payload,
+        )
+        downgrade = client.put(
+            "/preferences",
+            headers=_headers(),
+            json={"schema_version": 1, "preferences": {}},
+        )
+        fetched = client.get("/preferences", headers=_headers())
+
+    assert legacy.status_code == 200
+    assert typed.status_code == 200
+    assert typed.json()["preferences"]["interests"] == [
+        "food_and_cafes",
+        "culture_and_history",
+    ]
+    assert downgrade.status_code == 409
+    assert downgrade.json()["error"]["code"] == "preference_schema_conflict"
+    assert fetched.json()["schema_version"] == 2
+    assert fetched.json()["preferences"] == typed.json()["preferences"]
+
+
+def test_explicit_reset_is_a_canonical_schema_v2_full_replacement() -> None:
+    store = MemoryPreferenceStore()
+    with _client(store) as client:
+        response = client.put(
+            "/preferences",
+            headers=_headers(),
+            json={
+                "schema_version": 2,
+                "preferences": {
+                    "interests": [],
+                    "pace": None,
+                    "budget_preference": None,
+                },
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["preferences"] == {
+        "interests": [],
+        "pace": None,
+        "budget_preference": None,
+    }
 
 
 def test_two_authenticated_owners_are_isolated() -> None:

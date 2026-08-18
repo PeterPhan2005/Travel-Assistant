@@ -177,6 +177,15 @@ def serialize_response_composer_request(
     value = {
         "user_query": " ".join(request.user_query.split()),
         "locale": request.locale,
+        **(
+            {
+                "preference_projection": (
+                    request.preference_projection.model_dump(mode="json")
+                )
+            }
+            if request.preference_projection is not None
+            else {}
+        ),
         "approved_claims": [
             {
                 "claim_id": claim.claim_id,

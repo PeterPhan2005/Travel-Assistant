@@ -31,6 +31,8 @@ import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileUiState
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileViewModel
 import com.kltn.travelassistant.navigation.TopLevelDestination
 import com.kltn.travelassistant.navigation.TravelAssistantNavHost
 import com.kltn.travelassistant.navigation.TravelAssistantNavigationBar
@@ -45,6 +47,7 @@ fun TravelAssistantApp(
     homeViewModel: HomeViewModel,
     itineraryViewModel: ItineraryViewModel,
     profileViewModel: ProfileViewModel,
+    preferenceProfileViewModel: PreferenceProfileViewModel,
     downloadsViewModel: DownloadsViewModel,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
@@ -61,6 +64,8 @@ fun TravelAssistantApp(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val itineraryUiState by itineraryViewModel.uiState.collectAsStateWithLifecycle()
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val preferenceProfileUiState by
+        preferenceProfileViewModel.uiState.collectAsStateWithLifecycle()
     val downloadsUiState by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     TravelAssistantAppContent(
         appShellUiState = appShellUiState,
@@ -68,6 +73,7 @@ fun TravelAssistantApp(
         homeUiState = homeUiState,
         itineraryUiState = itineraryUiState,
         profileUiState = profileUiState,
+        preferenceProfileUiState = preferenceProfileUiState,
         downloadsUiState = downloadsUiState,
         onUseCurrentLocation = onUseCurrentLocation,
         onOpenLocationSettings = onOpenLocationSettings,
@@ -128,6 +134,16 @@ fun TravelAssistantApp(
         onAuthResendVerificationEmail = profileViewModel::resendVerificationEmail,
         onAuthSignOut = profileViewModel::signOut,
         onAuthRetrySession = profileViewModel::retrySessionObservation,
+        onBeginPreferenceEdit = preferenceProfileViewModel::beginEdit,
+        onCancelPreferenceEdit = preferenceProfileViewModel::cancelEdit,
+        onToggleInterest = preferenceProfileViewModel::toggleInterest,
+        onSelectPace = preferenceProfileViewModel::selectPace,
+        onSelectBudget = preferenceProfileViewModel::selectBudget,
+        onSavePreferences = preferenceProfileViewModel::save,
+        onRequestPreferenceReset = preferenceProfileViewModel::requestReset,
+        onDismissPreferenceReset = preferenceProfileViewModel::dismissReset,
+        onConfirmPreferenceReset = preferenceProfileViewModel::confirmReset,
+        onRetryPreferenceSync = preferenceProfileViewModel::retry,
         onDismissOfflineWarning = appShellViewModel::dismissOfflineWarning,
         onDownloadPackage = downloadsViewModel::download,
         onRetryPackageDownload = downloadsViewModel::retry,
@@ -143,6 +159,7 @@ internal fun TravelAssistantAppContent(
     assistantUiState: AssistantUiState = AssistantUiState(),
     itineraryUiState: ItineraryUiState = ItineraryUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
+    preferenceProfileUiState: PreferenceProfileUiState = PreferenceProfileUiState(),
     downloadsUiState: DownloadsUiState? = null,
     onUseCurrentLocation: () -> Unit,
     onOpenLocationSettings: () -> Unit,
@@ -181,6 +198,16 @@ internal fun TravelAssistantAppContent(
     onAuthResendVerificationEmail: () -> Unit = {},
     onAuthSignOut: () -> Unit = {},
     onAuthRetrySession: () -> Unit = {},
+    onBeginPreferenceEdit: () -> Unit = {},
+    onCancelPreferenceEdit: () -> Unit = {},
+    onToggleInterest: (com.kltn.travelassistant.feature.preferences.domain.TravelInterest) -> Unit = {},
+    onSelectPace: (com.kltn.travelassistant.feature.preferences.domain.TravelPace?) -> Unit = {},
+    onSelectBudget: (com.kltn.travelassistant.feature.preferences.domain.BudgetPreference?) -> Unit = {},
+    onSavePreferences: () -> Unit = {},
+    onRequestPreferenceReset: () -> Unit = {},
+    onDismissPreferenceReset: () -> Unit = {},
+    onConfirmPreferenceReset: () -> Unit = {},
+    onRetryPreferenceSync: () -> Unit = {},
     onDismissOfflineWarning: () -> Unit = {},
     onDownloadPackage: () -> Unit = {},
     onRetryPackageDownload: () -> Unit = {},
@@ -240,6 +267,7 @@ internal fun TravelAssistantAppContent(
                     assistantUiState = assistantUiState,
                     itineraryUiState = itineraryUiState,
                     profileUiState = profileUiState,
+                    preferenceProfileUiState = preferenceProfileUiState,
                     connectivityUiState = appShellUiState.connectivity,
                     localPackageUiState = appShellUiState.localPackage,
                     downloadsUiState = downloadsUiState,
@@ -278,6 +306,16 @@ internal fun TravelAssistantAppContent(
                     onAuthResendVerificationEmail = onAuthResendVerificationEmail,
                     onAuthSignOut = onAuthSignOut,
                     onAuthRetrySession = onAuthRetrySession,
+                    onBeginPreferenceEdit = onBeginPreferenceEdit,
+                    onCancelPreferenceEdit = onCancelPreferenceEdit,
+                    onToggleInterest = onToggleInterest,
+                    onSelectPace = onSelectPace,
+                    onSelectBudget = onSelectBudget,
+                    onSavePreferences = onSavePreferences,
+                    onRequestPreferenceReset = onRequestPreferenceReset,
+                    onDismissPreferenceReset = onDismissPreferenceReset,
+                    onConfirmPreferenceReset = onConfirmPreferenceReset,
+                    onRetryPreferenceSync = onRetryPreferenceSync,
                     onDownloadPackage = onDownloadPackage,
                     onRetryPackageDownload = onRetryPackageDownload,
                     onOpenExternalNavigation = onOpenExternalNavigation,

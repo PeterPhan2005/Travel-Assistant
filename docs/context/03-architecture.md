@@ -149,6 +149,33 @@ adequate for freshness-sensitive claims.
 - Saved-itinerary full-snapshot synchronization uses explicit integer revisions;
   timestamp-only last-write-wins and semantic merge are forbidden.
 
+## Preference profile and personalization
+
+- Generic document schema version 1 remains opaque compatibility data. Travel
+  taxonomy version 1 uses document schema version 2 with exactly three required
+  fields: `interests`, nullable `pace` and nullable `budget_preference`.
+- `interests` is a unique canonical set of at most five values from
+  `food_and_cafes`, `culture_and_history`, `scenic_and_landmarks`,
+  `nature_and_outdoors`, `local_life_and_markets`,
+  `entertainment_and_nightlife`, `family_activities` and
+  `wellness_and_relaxation`. Pace is `relaxed`, `balanced` or `active`; budget
+  is `budget`, `moderate` or `premium`.
+- A schema-v2 replacement may upgrade v1; a v1 write cannot downgrade an
+  existing v2 row. Android retains per-account, offline-first, revision-safe
+  complete-document synchronization. Reset writes the canonical empty v2
+  document and is independent of sign-out.
+- Personalization runs only after eligibility/deduplication. Interest match,
+  then compatible/unknown/incompatible qualitative price, then the existing
+  base order form the backend key. Android applies the interest prefix before
+  its existing distance/name/ID key; its current offline POI shape has no
+  qualitative price field, so every local price bucket is unknown. Pace never
+  ranks POIs.
+- Router and Discovery requests receive no profile. The application may pass
+  only an identity-free typed projection to the runtime; Response Composer sees
+  only values relevant to approved specialist output. No stored document,
+  Firebase identity, sync metadata or model-authored/inferred preference enters
+  an agent boundary.
+
 ## Offline full-text search
 
 - Canonical POI, alias, menu and package-metadata tables remain the source of

@@ -19,6 +19,7 @@ import com.kltn.travelassistant.feature.assistant.presentation.AssistantViewMode
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInFailure
 import com.kltn.travelassistant.feature.auth.domain.GoogleSignInResult
 import com.kltn.travelassistant.feature.auth.presentation.ProfileViewModel
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileViewModel
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsViewModel
 import com.kltn.travelassistant.feature.home.presentation.HomeViewModel
 import com.kltn.travelassistant.feature.home.presentation.LocationUiState
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModels()
     private val itineraryViewModel: ItineraryViewModel by viewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
+    private val preferenceProfileViewModel: PreferenceProfileViewModel by viewModels()
     private val downloadsViewModel: DownloadsViewModel by viewModels()
     private var pendingLocationPermissionActionId: Long? = null
     private var pendingMicrophonePermissionAttemptId: Long? = null
@@ -103,6 +105,7 @@ class MainActivity : ComponentActivity() {
                 homeViewModel = homeViewModel,
                 itineraryViewModel = itineraryViewModel,
                 profileViewModel = profileViewModel,
+                preferenceProfileViewModel = preferenceProfileViewModel,
                 downloadsViewModel = downloadsViewModel,
                 onUseCurrentLocation = ::onUseCurrentLocation,
                 onOpenLocationSettings = ::openApplicationSettings,

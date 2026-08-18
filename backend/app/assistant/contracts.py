@@ -35,6 +35,7 @@ from app.agents.contracts import (
     RouterStageOutcome,
 )
 from app.agents.contracts.common import NormalizedQuery
+from app.preferences.contracts import AgentPreferenceProjectionV1
 
 _FAILED_MESSAGE = "Chưa thể tạo câu trả lời an toàn cho yêu cầu này."
 _NARRATION_OUTPUT_ID = "runtime-narration"
@@ -79,7 +80,11 @@ class AssistantQueryRequest(AssistantTransportModel):
             )
         return self
 
-    def to_runtime_request(self, request_id: str) -> AgentRuntimeRequest:
+    def to_runtime_request(
+        self,
+        request_id: str,
+        preference_projection: AgentPreferenceProjectionV1 | None = None,
+    ) -> AgentRuntimeRequest:
         """Map only validated transport fields into the strict runtime."""
         origin = (
             DiscoveryOrigin(
@@ -94,7 +99,7 @@ class AssistantQueryRequest(AssistantTransportModel):
             user_query=self.text,
             locale=self.locale,
             city=None,
-            preferences=None,
+            preference_projection=preference_projection,
             discovery_origin=origin,
             context=AgentRuntimeContext(),
         )

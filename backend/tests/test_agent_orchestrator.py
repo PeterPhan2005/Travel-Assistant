@@ -343,7 +343,7 @@ def _runtime_request(
         user_query="Hãy giới thiệu văn hóa và lập lịch trình",
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=None,
+        preference_projection=None,
         discovery_origin=DiscoveryOrigin(
             latitude=10.76,
             longitude=106.68,
@@ -645,7 +645,6 @@ async def test_complete_graph_maps_scoped_inputs_and_fans_out_concurrently() -> 
         "user_query",
         "locale",
         "city",
-        "preferences",
     }
     discovery_request = discovery.calls[0]
     assert discovery_request.origin == _runtime_request().discovery_origin

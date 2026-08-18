@@ -55,6 +55,17 @@ from app.auth.models import (
 )
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
+from app.preferences.contracts import (
+    BudgetPreference,
+    SupportedPreferenceDocument,
+    TravelInterest,
+    TravelPace,
+)
+from app.preferences.store import (
+    PreferenceStore,
+    PreferenceStoreError,
+    StoredPreference,
+)
 
 TEST_DATABASE_URL = (
     "postgresql+asyncpg://unused:never-connect@database.invalid:9999/unused"
@@ -120,6 +131,35 @@ class CancellingOrchestrator:
         raise asyncio.CancelledError
 
 
+class EmptyPreferenceStore:
+    async def get(self, firebase_uid: str) -> StoredPreference | None:
+        assert firebase_uid == UID_SENTINEL
+        return None
+
+    async def replace(
+        self,
+        firebase_uid: str,
+        document: SupportedPreferenceDocument,
+    ) -> StoredPreference:
+        del firebase_uid, document
+        raise AssertionError("Assistant tests must not replace preferences")
+
+
+class FixedPreferenceStore(EmptyPreferenceStore):
+    def __init__(self, stored: StoredPreference | None) -> None:
+        self.stored = stored
+
+    async def get(self, firebase_uid: str) -> StoredPreference | None:
+        assert firebase_uid == UID_SENTINEL
+        return self.stored
+
+
+class FailingPreferenceStore(EmptyPreferenceStore):
+    async def get(self, firebase_uid: str) -> StoredPreference | None:
+        del firebase_uid
+        raise PreferenceStoreError
+
+
 def _settings() -> Settings:
     return Settings(
         database_url=SecretStr(TEST_DATABASE_URL),
@@ -132,6 +172,7 @@ def _client(
     orchestrator: object,
     *,
     verifier: object | None = None,
+    preference_store: PreferenceStore | None = None,
     raise_server_exceptions: bool = False,
 ) -> TestClient:
     return TestClient(
@@ -139,6 +180,7 @@ def _client(
             _settings(),
             token_verifier=verifier or TokenVerifier(),  # type: ignore[arg-type]
             assistant_orchestrator=orchestrator,  # type: ignore[arg-type]
+            preference_store=preference_store or EmptyPreferenceStore(),
         ),
         raise_server_exceptions=raise_server_exceptions,
     )
@@ -559,7 +601,7 @@ def test_valid_token_maps_exact_strict_runtime_request_without_identity() -> Non
         user_query=QUERY_SENTINEL,
         locale="vi-VN",
         city=None,
-        preferences=None,
+        preference_projection=None,
         discovery_origin=DiscoveryOrigin(
             latitude=10.776,
             longitude=106.7,
@@ -570,6 +612,59 @@ def test_valid_token_maps_exact_strict_runtime_request_without_identity() -> Non
     assert TOKEN_SENTINEL not in serialized
     assert response.headers["X-Request-ID"] == REQUEST_ID
     assert response.json()["request_id"] == REQUEST_ID
+
+
+def test_typed_preferences_are_projected_without_identity_or_sync_metadata() -> None:
+    private_timestamp = datetime(2026, 8, 15, tzinfo=timezone.utc)
+    store = FixedPreferenceStore(
+        StoredPreference(
+            schema_version=2,
+            preferences={
+                "interests": ["food_and_cafes"],
+                "pace": "relaxed",
+                "budget_preference": "budget",
+            },
+            updated_at=private_timestamp,
+        )
+    )
+    orchestrator = CapturingOrchestrator()
+    with _client(orchestrator, preference_store=store) as client:
+        response = client.post(
+            "/v1/assistant/query",
+            headers=_headers(),
+            json=_payload(),
+        )
+
+    assert response.status_code == 200
+    projection = orchestrator.requests[0].preference_projection
+    assert projection is not None
+    assert projection.interests == (TravelInterest.FOOD_AND_CAFES,)
+    assert projection.pace is TravelPace.RELAXED
+    assert projection.budget_preference is BudgetPreference.BUDGET
+    serialized = orchestrator.requests[0].model_dump_json()
+    assert UID_SENTINEL not in serialized
+    assert private_timestamp.isoformat() not in serialized
+
+
+def test_preference_failure_omits_personalization_without_logging_content(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO)
+    orchestrator = CapturingOrchestrator()
+    with _client(
+        orchestrator,
+        preference_store=FailingPreferenceStore(),
+    ) as client:
+        response = client.post(
+            "/v1/assistant/query",
+            headers=_headers(),
+            json=_payload(),
+        )
+
+    assert response.status_code == 200
+    assert orchestrator.requests[0].preference_projection is None
+    assert UID_SENTINEL not in caplog.text
+    assert QUERY_SENTINEL not in caplog.text
 
 
 @pytest.mark.parametrize(

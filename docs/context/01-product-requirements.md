@@ -4,6 +4,8 @@
 
 - Đăng ký/đăng nhập bằng email-password và Google.
 - Đồng bộ sở thích theo tài khoản.
+- Cho phép người dùng đọc, chỉnh sửa và đặt lại hồ sơ sở thích du lịch gồm tối
+  đa 5 mối quan tâm, nhịp độ lịch trình và mức chi tiêu mong muốn.
 - Lấy vị trí foreground khi người dùng mở app.
 - Hiển thị POI gần vị trí hiện tại.
 - Khám phá du lịch rộng, không chỉ ẩm thực: restaurant/food, café, landmark,
@@ -59,6 +61,10 @@
 - Explore và Assistant dùng chung Travel Discovery Core. Area resolution,
   provider merge, deduplication, ranking và retrieval policy thuộc application
   code, không thuộc model.
+- Chỉ các sở thích do người dùng tự chọn mới được dùng để cá nhân hóa. Thiếu
+  hồ sơ giữ nguyên thứ tự hiện có; sở thích chỉ xếp hạng mềm các POI đã đủ điều
+  kiện và cung cấp ngữ cảnh typed tối thiểu cho agent liên quan. Không suy đoán
+  sở thích từ vị trí, lịch sử di chuyển hoặc nội dung truy vấn.
 - Canonical area ID/boundary/alias/membership do ứng dụng sở hữu và
   `AreaResolver` xử lý deterministic. LLM không được invent area geography hoặc
   mô tả external provider result count như census đầy đủ của một area.

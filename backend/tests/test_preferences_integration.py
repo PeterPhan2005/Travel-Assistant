@@ -23,8 +23,15 @@ from app.auth.models import AuthenticatedPrincipal
 from app.core.settings import ApplicationEnvironment, Settings
 from app.db.runtime import create_database_runtime
 from app.main import create_app
-from app.preferences.contracts import PreferenceDocument
+from app.preferences.contracts import (
+    BudgetPreference,
+    PreferenceDocument,
+    TravelInterest,
+    TravelPreferenceDocument,
+    TravelPreferenceValuesV1,
+)
 from app.preferences.store import (
+    PreferenceSchemaConflictError,
     PreferenceStoreError,
     SqlAlchemyPreferenceStore,
 )
@@ -296,3 +303,56 @@ def test_failed_transaction_rolls_back_and_preserves_prior_document(
     preference_database_url: str,
 ) -> None:
     _run(_failed_replace_preserves_prior_document(preference_database_url))
+
+
+async def _schema_upgrade_cannot_be_downgraded(database_url: str) -> None:
+    runtime = create_database_runtime(database_url)
+    try:
+        async with runtime.session_factory() as session:
+            store = SqlAlchemyPreferenceStore(session)
+            await store.replace(
+                "firebase-schema-upgrade",
+                PreferenceDocument(
+                    schema_version=1,
+                    preferences={"legacy": True},
+                ),
+            )
+            upgraded = await store.replace(
+                "firebase-schema-upgrade",
+                TravelPreferenceDocument(
+                    schema_version=2,
+                    preferences=TravelPreferenceValuesV1(
+                        interests=(TravelInterest.FOOD_AND_CAFES,),
+                        pace=None,
+                        budget_preference=BudgetPreference.BUDGET,
+                    ),
+                ),
+            )
+
+        async with runtime.session_factory() as session:
+            with pytest.raises(PreferenceSchemaConflictError):
+                await SqlAlchemyPreferenceStore(session).replace(
+                    "firebase-schema-upgrade",
+                    PreferenceDocument(
+                        schema_version=1,
+                        preferences={},
+                    ),
+                )
+
+        async with runtime.session_factory() as session:
+            retained = await SqlAlchemyPreferenceStore(session).get(
+                "firebase-schema-upgrade"
+            )
+
+        assert upgraded.schema_version == 2
+        assert retained is not None
+        assert retained.schema_version == 2
+        assert retained.preferences["interests"] == ["food_and_cafes"]
+    finally:
+        await runtime.dispose()
+
+
+def test_schema_v2_upgrade_is_atomic_and_rejects_legacy_downgrade(
+    preference_database_url: str,
+) -> None:
+    _run(_schema_upgrade_cannot_be_downgraded(preference_database_url))

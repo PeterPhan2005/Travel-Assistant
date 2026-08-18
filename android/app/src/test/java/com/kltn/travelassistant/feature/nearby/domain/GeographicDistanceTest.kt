@@ -1,5 +1,7 @@
 package com.kltn.travelassistant.feature.nearby.domain
 
+import com.kltn.travelassistant.feature.preferences.domain.TravelInterest
+import com.kltn.travelassistant.feature.preferences.domain.TravelPreferenceProfile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -56,10 +58,31 @@ class GeographicDistanceTest {
         })
     }
 
-    private fun poi(id: String, name: String, distance: Double) = NearbyPoi(
+    @Test
+    fun explicitInterestRanksMatchingEligiblePoisBeforeBaseDistance() {
+        val ranked = NearbyPoiRanking.sort(
+            pois = listOf(
+                poi(id = "museum", name = "Bảo tàng", distance = 100.0, category = "museum"),
+                poi(id = "market", name = "Chợ", distance = 300.0, category = "market"),
+                poi(id = "landmark", name = "Mốc", distance = 50.0, category = "landmark"),
+            ),
+            profile = TravelPreferenceProfile(
+                interests = setOf(TravelInterest.LOCAL_LIFE_AND_MARKETS),
+            ),
+        )
+
+        assertEquals(listOf("market", "landmark", "museum"), ranked.map(NearbyPoi::poiId))
+    }
+
+    private fun poi(
+        id: String,
+        name: String,
+        distance: Double,
+        category: String = "landmark",
+    ) = NearbyPoi(
         poiId = id,
         displayName = name,
-        category = "landmark",
+        category = category,
         categoryLabel = PoiCategoryLabel.LANDMARK,
         distanceMeters = distance,
     )

@@ -187,6 +187,7 @@ def create_app(
         create_assistant_router(
             request_assistant_orchestrator,
             authentication,
+            request_preference_service,
         )
     )
     app.include_router(

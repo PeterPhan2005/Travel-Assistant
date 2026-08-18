@@ -10,6 +10,9 @@ import com.kltn.travelassistant.feature.nearby.domain.NearbySearchResult
 import com.kltn.travelassistant.feature.nearby.domain.CompiledOfflineSearchQuery
 import com.kltn.travelassistant.feature.nearby.domain.OfflineSearchQueryCompiler
 import com.kltn.travelassistant.feature.nearby.domain.PoiCategoryLabels
+import com.kltn.travelassistant.feature.preferences.domain.PreferenceRepository
+import com.kltn.travelassistant.feature.preferences.domain.documentOrNull
+import com.kltn.travelassistant.feature.preferences.domain.toTravelPreferenceProfileOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -19,7 +22,13 @@ import kotlinx.coroutines.withContext
 @Singleton
 class RoomNearbySearchRepository @Inject constructor(
     private val poiContentDao: PoiContentDao,
+    private val preferenceRepository: PreferenceRepository,
 ) : NearbySearchRepository {
+    constructor(poiContentDao: PoiContentDao) : this(
+        poiContentDao = poiContentDao,
+        preferenceRepository = NoPersonalizationPreferenceRepository,
+    )
+
     override suspend fun search(
         latitude: Double,
         longitude: Double,
@@ -52,13 +61,30 @@ class RoomNearbySearchRepository @Inject constructor(
                     distanceMeters = distance,
                 )
             }
-            val rankedPois = NearbyPoiRanking.sort(nearbyPois)
+            val profile = preferenceRepository.state.value
+                .documentOrNull()
+                ?.toTravelPreferenceProfileOrNull()
+            val rankedPois = NearbyPoiRanking.sort(nearbyPois, profile)
             NearbySearchResult.Success(rankedPois)
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: Exception) {
             NearbySearchResult.DatabaseError
         }
+    }
+
+    private object NoPersonalizationPreferenceRepository : PreferenceRepository {
+        override val state = kotlinx.coroutines.flow.MutableStateFlow(
+            com.kltn.travelassistant.feature.preferences.domain.PreferenceSyncState.SignedOut,
+        )
+
+        override suspend fun updateLocal(
+            document: com.kltn.travelassistant.feature.preferences.domain.PreferenceDocument,
+        ) = com.kltn.travelassistant.feature.preferences.domain.PreferenceUpdateResult.SignedOut
+
+        override fun refresh() = Unit
+
+        override fun retry() = Unit
     }
 
     companion object {

@@ -37,6 +37,10 @@ import com.kltn.travelassistant.feature.downloads.presentation.DownloadsStatus
 import com.kltn.travelassistant.feature.downloads.presentation.DownloadsUiState
 import com.kltn.travelassistant.feature.poi.domain.PoiNavigationTarget
 import com.kltn.travelassistant.feature.poi.presentation.PoiDetailRoute
+import com.kltn.travelassistant.feature.preferences.domain.BudgetPreference
+import com.kltn.travelassistant.feature.preferences.domain.TravelInterest
+import com.kltn.travelassistant.feature.preferences.domain.TravelPace
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileUiState
 import com.kltn.travelassistant.navigation.external.ExternalNavigationResult
 
 object PoiDetailDestination {
@@ -81,6 +85,7 @@ internal fun TravelAssistantNavHost(
     assistantUiState: AssistantUiState = AssistantUiState(),
     itineraryUiState: ItineraryUiState = ItineraryUiState(),
     profileUiState: ProfileUiState = ProfileUiState(),
+    preferenceProfileUiState: PreferenceProfileUiState = PreferenceProfileUiState(),
     connectivityUiState: ConnectivityUiState = ConnectivityUiState.Checking,
     localPackageUiState: LocalPackageUiState = LocalPackageUiState.Loading,
     downloadsUiState: DownloadsUiState? = null,
@@ -119,6 +124,16 @@ internal fun TravelAssistantNavHost(
     onAuthResendVerificationEmail: () -> Unit = {},
     onAuthSignOut: () -> Unit = {},
     onAuthRetrySession: () -> Unit = {},
+    onBeginPreferenceEdit: () -> Unit = {},
+    onCancelPreferenceEdit: () -> Unit = {},
+    onToggleInterest: (TravelInterest) -> Unit = {},
+    onSelectPace: (TravelPace?) -> Unit = {},
+    onSelectBudget: (BudgetPreference?) -> Unit = {},
+    onSavePreferences: () -> Unit = {},
+    onRequestPreferenceReset: () -> Unit = {},
+    onDismissPreferenceReset: () -> Unit = {},
+    onConfirmPreferenceReset: () -> Unit = {},
+    onRetryPreferenceSync: () -> Unit = {},
     onDownloadPackage: () -> Unit = {},
     onRetryPackageDownload: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -204,6 +219,17 @@ internal fun TravelAssistantNavHost(
                 onResendVerificationEmail = onAuthResendVerificationEmail,
                 onSignOut = onAuthSignOut,
                 onRetrySession = onAuthRetrySession,
+                preferenceUiState = preferenceProfileUiState,
+                onBeginPreferenceEdit = onBeginPreferenceEdit,
+                onCancelPreferenceEdit = onCancelPreferenceEdit,
+                onToggleInterest = onToggleInterest,
+                onSelectPace = onSelectPace,
+                onSelectBudget = onSelectBudget,
+                onSavePreferences = onSavePreferences,
+                onRequestPreferenceReset = onRequestPreferenceReset,
+                onDismissPreferenceReset = onDismissPreferenceReset,
+                onConfirmPreferenceReset = onConfirmPreferenceReset,
+                onRetryPreferenceSync = onRetryPreferenceSync,
             )
         }
         composable(

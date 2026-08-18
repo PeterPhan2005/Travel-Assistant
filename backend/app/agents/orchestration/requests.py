@@ -61,12 +61,11 @@ _SPECIALIST_FACT_KINDS = {
 
 
 def build_router_request(request: AgentRuntimeRequest) -> RouterRequest:
-    """Map only the four fields accepted by the Router boundary."""
+    """Map only query routing fields; preferences never reach the Router."""
     return RouterRequest(
         user_query=request.user_query,
         locale=request.locale,
         city=request.city,
-        preferences=request.preferences,
     )
 
 

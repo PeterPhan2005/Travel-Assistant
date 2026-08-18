@@ -70,6 +70,8 @@ from app.agents.orchestration.requests import (
     build_router_request,
 )
 from app.agents.observability.service import AgentObservabilityService
+from app.personalization.projection import scope_projection_for_composer
+from app.personalization.ranking import personalize_discovery_output
 
 logger = logging.getLogger("travel_assistant.agents.orchestration")
 
@@ -252,6 +254,15 @@ class AgentOrchestratorService:
                 router_output,
                 deadline,
             )
+            if discovery_stage.output is not None:
+                discovery_stage = discovery_stage.model_copy(
+                    update={
+                        "output": personalize_discovery_output(
+                            discovery_stage.output,
+                            request.preference_projection,
+                        )
+                    }
+                )
             stages.append(discovery_stage)
             discovery_output = discovery_stage.output
             if discovery_output is not None:
@@ -753,6 +764,10 @@ class AgentOrchestratorService:
             composer_request = ResponseComposerRequest(
                 user_query=request.user_query,
                 locale=request.locale,
+                preference_projection=scope_projection_for_composer(
+                    request.preference_projection,
+                    approved_outputs,
+                ),
                 evidence=evidence,
                 approved_claim_ids=approved_claim_ids,
                 approved_specialist_outputs=approved_outputs,

@@ -15,7 +15,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +42,12 @@ import com.kltn.travelassistant.feature.auth.domain.AuthSession
 import com.kltn.travelassistant.feature.auth.domain.EmailValidationError
 import com.kltn.travelassistant.feature.auth.domain.PasswordConfirmationValidationError
 import com.kltn.travelassistant.feature.auth.domain.PasswordValidationError
+import com.kltn.travelassistant.feature.preferences.domain.BudgetPreference
+import com.kltn.travelassistant.feature.preferences.domain.TravelInterest
+import com.kltn.travelassistant.feature.preferences.domain.TravelPace
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileMessage
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileStatus
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileUiState
 import com.kltn.travelassistant.ui.theme.AppSpacing
 
 const val PROFILE_EMAIL_TEST_TAG = "profile-email"
@@ -47,6 +56,9 @@ const val PROFILE_PASSWORD_CONFIRMATION_TEST_TAG = "profile-password-confirmatio
 const val PROFILE_SUBMIT_TEST_TAG = "profile-submit"
 const val PROFILE_GOOGLE_SIGN_IN_TEST_TAG = "profile-google-sign-in"
 const val PROFILE_GOOGLE_SIGN_IN_LOGO_TEST_TAG = "google-sign-in-logo"
+const val PROFILE_PREFERENCES_EDIT_TEST_TAG = "profile-preferences-edit"
+const val PROFILE_PREFERENCES_SAVE_TEST_TAG = "profile-preferences-save"
+const val PROFILE_PREFERENCES_RESET_TEST_TAG = "profile-preferences-reset"
 
 @Composable
 fun ProfileScreen(
@@ -61,6 +73,17 @@ fun ProfileScreen(
     onResendVerificationEmail: () -> Unit,
     onSignOut: () -> Unit,
     onRetrySession: () -> Unit,
+    preferenceUiState: PreferenceProfileUiState = PreferenceProfileUiState(),
+    onBeginPreferenceEdit: () -> Unit = {},
+    onCancelPreferenceEdit: () -> Unit = {},
+    onToggleInterest: (TravelInterest) -> Unit = {},
+    onSelectPace: (TravelPace?) -> Unit = {},
+    onSelectBudget: (BudgetPreference?) -> Unit = {},
+    onSavePreferences: () -> Unit = {},
+    onRequestPreferenceReset: () -> Unit = {},
+    onDismissPreferenceReset: () -> Unit = {},
+    onConfirmPreferenceReset: () -> Unit = {},
+    onRetryPreferenceSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -97,6 +120,17 @@ fun ProfileScreen(
                 email = session.user.email,
                 isLoading = uiState.isLoading,
                 onSignOut = onSignOut,
+                preferenceUiState = preferenceUiState,
+                onBeginPreferenceEdit = onBeginPreferenceEdit,
+                onCancelPreferenceEdit = onCancelPreferenceEdit,
+                onToggleInterest = onToggleInterest,
+                onSelectPace = onSelectPace,
+                onSelectBudget = onSelectBudget,
+                onSavePreferences = onSavePreferences,
+                onRequestPreferenceReset = onRequestPreferenceReset,
+                onDismissPreferenceReset = onDismissPreferenceReset,
+                onConfirmPreferenceReset = onConfirmPreferenceReset,
+                onRetryPreferenceSync = onRetryPreferenceSync,
             )
             AuthSession.Error -> SessionErrorContent(onRetrySession)
         }
@@ -322,6 +356,17 @@ private fun AuthenticatedContent(
     email: String,
     isLoading: Boolean,
     onSignOut: () -> Unit,
+    preferenceUiState: PreferenceProfileUiState,
+    onBeginPreferenceEdit: () -> Unit,
+    onCancelPreferenceEdit: () -> Unit,
+    onToggleInterest: (TravelInterest) -> Unit,
+    onSelectPace: (TravelPace?) -> Unit,
+    onSelectBudget: (BudgetPreference?) -> Unit,
+    onSavePreferences: () -> Unit,
+    onRequestPreferenceReset: () -> Unit,
+    onDismissPreferenceReset: () -> Unit,
+    onConfirmPreferenceReset: () -> Unit,
+    onRetryPreferenceSync: () -> Unit,
 ) {
     Text(
         text = stringResource(R.string.auth_authenticated_title),
@@ -329,6 +374,23 @@ private fun AuthenticatedContent(
     )
     Text(stringResource(R.string.auth_account_email, email))
     Text(stringResource(R.string.auth_authenticated_explanation))
+    if (preferenceUiState.isVisible) {
+        HorizontalDivider()
+        PreferenceProfileSection(
+            uiState = preferenceUiState,
+            onBeginEdit = onBeginPreferenceEdit,
+            onCancelEdit = onCancelPreferenceEdit,
+            onToggleInterest = onToggleInterest,
+            onSelectPace = onSelectPace,
+            onSelectBudget = onSelectBudget,
+            onSave = onSavePreferences,
+            onRequestReset = onRequestPreferenceReset,
+            onDismissReset = onDismissPreferenceReset,
+            onConfirmReset = onConfirmPreferenceReset,
+            onRetry = onRetryPreferenceSync,
+        )
+        HorizontalDivider()
+    }
     Button(
         onClick = onSignOut,
         enabled = !isLoading,
@@ -338,6 +400,167 @@ private fun AuthenticatedContent(
     }
     if (isLoading) {
         LoadingContent()
+    }
+}
+
+@Composable
+private fun PreferenceProfileSection(
+    uiState: PreferenceProfileUiState,
+    onBeginEdit: () -> Unit,
+    onCancelEdit: () -> Unit,
+    onToggleInterest: (TravelInterest) -> Unit,
+    onSelectPace: (TravelPace?) -> Unit,
+    onSelectBudget: (BudgetPreference?) -> Unit,
+    onSave: () -> Unit,
+    onRequestReset: () -> Unit,
+    onDismissReset: () -> Unit,
+    onConfirmReset: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.preference_title),
+        style = MaterialTheme.typography.titleLarge,
+    )
+    Text(stringResource(R.string.preference_privacy_explanation))
+    if (uiState.isLegacyDocument) {
+        Text(stringResource(R.string.preference_legacy_explanation))
+    }
+    Text(
+        text = stringResource(uiState.status.stringResource()),
+        color = when (uiState.status) {
+            PreferenceProfileStatus.RETRYABLE_FAILURE,
+            PreferenceProfileStatus.AUTHENTICATION_FAILURE,
+            PreferenceProfileStatus.INVALID_DOCUMENT,
+            -> MaterialTheme.colorScheme.error
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+    )
+    if (
+        uiState.status == PreferenceProfileStatus.RETRYABLE_FAILURE ||
+        uiState.status == PreferenceProfileStatus.AUTHENTICATION_FAILURE
+    ) {
+        TextButton(onClick = onRetry) {
+            Text(stringResource(R.string.preference_retry_sync))
+        }
+    }
+    Text(
+        text = stringResource(R.string.preference_interests_title),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Text(stringResource(R.string.preference_interests_limit))
+    TravelInterest.entries.forEach { interest ->
+        FilterChip(
+            selected = interest in uiState.draftProfile.interests,
+            onClick = { onToggleInterest(interest) },
+            enabled = uiState.isEditing && !uiState.isSaving,
+            label = { Text(stringResource(interest.stringResource())) },
+        )
+    }
+    PreferenceSingleChoice(
+        title = stringResource(R.string.preference_pace_title),
+        noneLabel = stringResource(R.string.preference_unspecified),
+        choices = TravelPace.entries,
+        selected = uiState.draftProfile.pace,
+        enabled = uiState.isEditing && !uiState.isSaving,
+        label = { stringResource(it.stringResource()) },
+        onSelected = onSelectPace,
+    )
+    PreferenceSingleChoice(
+        title = stringResource(R.string.preference_budget_title),
+        noneLabel = stringResource(R.string.preference_unspecified),
+        choices = BudgetPreference.entries,
+        selected = uiState.draftProfile.budgetPreference,
+        enabled = uiState.isEditing && !uiState.isSaving,
+        label = { stringResource(it.stringResource()) },
+        onSelected = onSelectBudget,
+    )
+    uiState.message?.let { message ->
+        Text(
+            text = stringResource(message.stringResource()),
+            color = if (
+                message == PreferenceProfileMessage.SAVED_LOCALLY ||
+                message == PreferenceProfileMessage.RESET_LOCALLY
+            ) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+        )
+    }
+    if (uiState.isEditing) {
+        Button(
+            onClick = onSave,
+            enabled = !uiState.isSaving,
+            modifier = Modifier.fillMaxWidth().testTag(PROFILE_PREFERENCES_SAVE_TEST_TAG),
+        ) {
+            Text(stringResource(R.string.preference_save))
+        }
+        OutlinedButton(
+            onClick = onCancelEdit,
+            enabled = !uiState.isSaving,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.preference_cancel))
+        }
+    } else {
+        Button(
+            onClick = onBeginEdit,
+            enabled = !uiState.isSaving,
+            modifier = Modifier.fillMaxWidth().testTag(PROFILE_PREFERENCES_EDIT_TEST_TAG),
+        ) {
+            Text(stringResource(R.string.preference_edit))
+        }
+    }
+    TextButton(
+        onClick = onRequestReset,
+        enabled = !uiState.isSaving,
+        modifier = Modifier.fillMaxWidth().testTag(PROFILE_PREFERENCES_RESET_TEST_TAG),
+    ) {
+        Text(stringResource(R.string.preference_reset))
+    }
+    if (uiState.showResetConfirmation) {
+        AlertDialog(
+            onDismissRequest = onDismissReset,
+            title = { Text(stringResource(R.string.preference_reset_confirm_title)) },
+            text = { Text(stringResource(R.string.preference_reset_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = onConfirmReset) {
+                    Text(stringResource(R.string.preference_reset_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissReset) {
+                    Text(stringResource(R.string.preference_cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun <T> PreferenceSingleChoice(
+    title: String,
+    noneLabel: String,
+    choices: List<T>,
+    selected: T?,
+    enabled: Boolean,
+    label: @Composable (T) -> String,
+    onSelected: (T?) -> Unit,
+) {
+    Text(text = title, style = MaterialTheme.typography.titleMedium)
+    FilterChip(
+        selected = selected == null,
+        onClick = { onSelected(null) },
+        enabled = enabled,
+        label = { Text(noneLabel) },
+    )
+    choices.forEach { choice ->
+        FilterChip(
+            selected = selected == choice,
+            onClick = { onSelected(choice) },
+            enabled = enabled,
+            label = { Text(label(choice)) },
+        )
     }
 }
 
@@ -403,3 +626,45 @@ private fun ProfileMessage.stringResource(): Int = when (this) {
 
 private fun ProfileMessage.isSuccess(): Boolean =
     this == ProfileMessage.VERIFICATION_EMAIL_SENT
+
+private fun PreferenceProfileStatus.stringResource(): Int = when (this) {
+    PreferenceProfileStatus.LOADING -> R.string.preference_status_loading
+    PreferenceProfileStatus.CURRENT -> R.string.preference_status_current
+    PreferenceProfileStatus.PENDING_OFFLINE -> R.string.preference_status_pending_offline
+    PreferenceProfileStatus.SYNCHRONIZING -> R.string.preference_status_synchronizing
+    PreferenceProfileStatus.SYNCHRONIZED -> R.string.preference_status_synchronized
+    PreferenceProfileStatus.RETRYABLE_FAILURE -> R.string.preference_status_retryable
+    PreferenceProfileStatus.AUTHENTICATION_FAILURE -> R.string.preference_status_auth_failure
+    PreferenceProfileStatus.INVALID_DOCUMENT -> R.string.preference_status_invalid
+}
+
+private fun PreferenceProfileMessage.stringResource(): Int = when (this) {
+    PreferenceProfileMessage.MAXIMUM_INTERESTS -> R.string.preference_maximum_interests
+    PreferenceProfileMessage.SAVED_LOCALLY -> R.string.preference_saved_locally
+    PreferenceProfileMessage.RESET_LOCALLY -> R.string.preference_reset_locally
+    PreferenceProfileMessage.INVALID_DOCUMENT -> R.string.preference_invalid_document
+    PreferenceProfileMessage.STORAGE_FAILURE -> R.string.preference_storage_failure
+}
+
+private fun TravelInterest.stringResource(): Int = when (this) {
+    TravelInterest.FOOD_AND_CAFES -> R.string.preference_interest_food
+    TravelInterest.CULTURE_AND_HISTORY -> R.string.preference_interest_culture
+    TravelInterest.SCENIC_AND_LANDMARKS -> R.string.preference_interest_scenic
+    TravelInterest.NATURE_AND_OUTDOORS -> R.string.preference_interest_nature
+    TravelInterest.LOCAL_LIFE_AND_MARKETS -> R.string.preference_interest_local_life
+    TravelInterest.ENTERTAINMENT_AND_NIGHTLIFE -> R.string.preference_interest_entertainment
+    TravelInterest.FAMILY_ACTIVITIES -> R.string.preference_interest_family
+    TravelInterest.WELLNESS_AND_RELAXATION -> R.string.preference_interest_wellness
+}
+
+private fun TravelPace.stringResource(): Int = when (this) {
+    TravelPace.RELAXED -> R.string.preference_pace_relaxed
+    TravelPace.BALANCED -> R.string.preference_pace_balanced
+    TravelPace.ACTIVE -> R.string.preference_pace_active
+}
+
+private fun BudgetPreference.stringResource(): Int = when (this) {
+    BudgetPreference.BUDGET -> R.string.preference_budget_budget
+    BudgetPreference.MODERATE -> R.string.preference_budget_moderate
+    BudgetPreference.PREMIUM -> R.string.preference_budget_premium
+}

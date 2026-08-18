@@ -18,6 +18,8 @@ import com.kltn.travelassistant.feature.auth.domain.AuthUser
 import com.kltn.travelassistant.feature.auth.domain.EmailValidationError
 import com.kltn.travelassistant.feature.auth.domain.PasswordConfirmationValidationError
 import com.kltn.travelassistant.feature.auth.domain.PasswordValidationError
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileStatus
+import com.kltn.travelassistant.feature.preferences.presentation.PreferenceProfileUiState
 import com.kltn.travelassistant.ui.theme.TravelAssistantTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -186,6 +188,42 @@ class ProfileScreenTest {
     }
 
     @Test
+    fun authenticatedPreferenceControlsShowOfflineStateAndExplicitResetConfirmation() {
+        var resetConfirmed = false
+        setProfileContent(
+            state = ProfileUiState(
+                session = AuthSession.Authenticated(verifiedUser),
+            ),
+            preferenceState = PreferenceProfileUiState(
+                isVisible = true,
+                status = PreferenceProfileStatus.PENDING_OFFLINE,
+                showResetConfirmation = true,
+            ),
+            onConfirmPreferenceReset = { resetConfirmed = true },
+        )
+
+        composeRule.onNodeWithText(getString(R.string.preference_title))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.preference_status_pending_offline))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(getString(R.string.preference_reset_confirm))
+            .performClick()
+
+        assertTrue(resetConfirmed)
+    }
+
+    @Test
+    fun signedOutNeverShowsPreferenceProfileEvenIfStaleUiStateIsProvided() {
+        setProfileContent(
+            state = ProfileUiState(session = AuthSession.SignedOut),
+            preferenceState = PreferenceProfileUiState(isVisible = true),
+        )
+
+        composeRule.onAllNodesWithText(getString(R.string.preference_title))
+            .assertCountEquals(0)
+    }
+
+    @Test
     fun googleButtonIsAbsentWhileVerificationIsRequired() {
         setProfileContent(
             ProfileUiState(
@@ -251,6 +289,9 @@ class ProfileScreenTest {
         onResendVerificationEmail: () -> Unit = {},
         onSignOut: () -> Unit = {},
         onGoogleSignIn: () -> Unit = {},
+        preferenceState: PreferenceProfileUiState = PreferenceProfileUiState(),
+        onBeginPreferenceEdit: () -> Unit = {},
+        onConfirmPreferenceReset: () -> Unit = {},
     ) {
         composeRule.setContent {
             TravelAssistantTheme {
@@ -266,6 +307,9 @@ class ProfileScreenTest {
                     onResendVerificationEmail = onResendVerificationEmail,
                     onSignOut = onSignOut,
                     onRetrySession = {},
+                    preferenceUiState = preferenceState,
+                    onBeginPreferenceEdit = onBeginPreferenceEdit,
+                    onConfirmPreferenceReset = onConfirmPreferenceReset,
                 )
             }
         }

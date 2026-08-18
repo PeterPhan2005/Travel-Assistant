@@ -9,9 +9,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from app.auth.dependencies import FirebaseAuthentication
 from app.auth.models import AuthenticatedPrincipal
 from app.middleware.request_id import REQUEST_ID_STATE_KEY
-from app.preferences.contracts import PreferenceDocument, PreferenceResponse
+from app.preferences.contracts import (
+    SupportedPreferenceDocument,
+    SupportedPreferenceResponse,
+)
 from app.preferences.service import PreferenceService
-from app.preferences.store import PreferenceStoreError
+from app.preferences.store import (
+    PreferenceSchemaConflictError,
+    PreferenceStoreError,
+)
 
 logger = logging.getLogger("travel_assistant.api")
 PreferenceServiceDependency = Callable[[], AsyncIterator[PreferenceService]]
@@ -20,12 +26,12 @@ PreferenceServiceDependency = Callable[[], AsyncIterator[PreferenceService]]
 class PreferenceHTTPException(HTTPException):
     """Controlled sanitized preference failure."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, status_code: int, code: str, message: str) -> None:
         super().__init__(
-            status_code=503,
-            detail="Preferences are temporarily unavailable.",
+            status_code=status_code,
+            detail=message,
         )
-        self.code = "preferences_unavailable"
+        self.code = code
 
 
 def create_preferences_router(
@@ -35,7 +41,7 @@ def create_preferences_router(
     """Create the sole private preference resource."""
     router = APIRouter()
 
-    @router.get("/preferences", response_model=PreferenceResponse)
+    @router.get("/preferences", response_model=SupportedPreferenceResponse)
     async def get_preferences(
         principal: Annotated[
             AuthenticatedPrincipal,
@@ -46,17 +52,17 @@ def create_preferences_router(
             Depends(service_dependency),
         ],
         request: Request,
-    ) -> PreferenceResponse:
+    ) -> SupportedPreferenceResponse:
         """Read only the authenticated owner's current document."""
         try:
             return await service.get(principal.uid)
         except PreferenceStoreError as error:
             _log_failure(request, operation="get")
-            raise PreferenceHTTPException from error
+            raise _unavailable() from error
 
-    @router.put("/preferences", response_model=PreferenceResponse)
+    @router.put("/preferences", response_model=SupportedPreferenceResponse)
     async def replace_preferences(
-        document: PreferenceDocument,
+        document: SupportedPreferenceDocument,
         principal: Annotated[
             AuthenticatedPrincipal,
             Depends(authentication.required),
@@ -66,13 +72,16 @@ def create_preferences_router(
             Depends(service_dependency),
         ],
         request: Request,
-    ) -> PreferenceResponse:
+    ) -> SupportedPreferenceResponse:
         """Replace the authenticated owner's complete document."""
         try:
             return await service.replace(principal.uid, document)
+        except PreferenceSchemaConflictError as error:
+            _log_failure(request, operation="put")
+            raise _schema_conflict() from error
         except PreferenceStoreError as error:
             _log_failure(request, operation="put")
-            raise PreferenceHTTPException from error
+            raise _unavailable() from error
 
     return router
 
@@ -84,4 +93,20 @@ def _log_failure(request: Request, *, operation: str) -> None:
         "code=persistence_failure",
         request_id,
         operation,
+    )
+
+
+def _schema_conflict() -> PreferenceHTTPException:
+    return PreferenceHTTPException(
+        status_code=409,
+        code="preference_schema_conflict",
+        message="A newer preference schema is already stored.",
+    )
+
+
+def _unavailable() -> PreferenceHTTPException:
+    return PreferenceHTTPException(
+        status_code=503,
+        code="preferences_unavailable",
+        message="Preferences are temporarily unavailable.",
     )

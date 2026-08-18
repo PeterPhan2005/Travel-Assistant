@@ -1,7 +1,9 @@
 package com.kltn.travelassistant.data.preferences
 
 import com.kltn.travelassistant.feature.preferences.domain.PREFERENCE_SCHEMA_VERSION
+import com.kltn.travelassistant.feature.preferences.domain.TRAVEL_PREFERENCE_SCHEMA_VERSION
 import com.kltn.travelassistant.feature.preferences.domain.PreferenceDocument
+import com.kltn.travelassistant.feature.preferences.domain.toTravelPreferenceProfileOrNull
 import java.time.DateTimeException
 import java.time.Instant
 import kotlinx.serialization.SerialName
@@ -16,6 +18,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 internal const val MAX_PREFERENCE_DOCUMENT_BYTES = 16_384
+internal const val MAX_TRAVEL_PREFERENCE_DOCUMENT_BYTES = 512
 internal const val MAX_PREFERENCE_CONTAINER_DEPTH = 6
 internal const val MAX_PREFERENCE_KEY_LENGTH = 64
 internal const val MAX_PREFERENCE_STRING_LENGTH = 512
@@ -51,9 +54,16 @@ internal class PreferenceDocumentCodec(
     private val json: Json = strictPreferenceJson(),
 ) {
     fun validate(document: PreferenceDocument): PreferenceDocument {
-        if (document.schemaVersion != PREFERENCE_SCHEMA_VERSION) {
-            throw InvalidPreferenceDocumentException()
+        if (document.schemaVersion == TRAVEL_PREFERENCE_SCHEMA_VERSION) {
+            return validateTravelDocument(document)
         }
+        if (document.schemaVersion == PREFERENCE_SCHEMA_VERSION) {
+            return validateLegacyDocument(document)
+        }
+        throw InvalidPreferenceDocumentException()
+    }
+
+    private fun validateLegacyDocument(document: PreferenceDocument): PreferenceDocument {
         val counter = ValueCounter()
         val normalized = validateObject(document.preferences, depth = 0, counter = counter)
         val normalizedDocument = PreferenceDocument(
@@ -71,6 +81,22 @@ internal class PreferenceDocumentCodec(
             throw InvalidPreferenceDocumentException()
         }
         return normalizedDocument
+    }
+
+    private fun validateTravelDocument(document: PreferenceDocument): PreferenceDocument {
+        val normalized = document.toTravelPreferenceProfileOrNull()?.toDocument()
+            ?: throw InvalidPreferenceDocumentException()
+        val bytes = json.encodeToString(
+            PreferenceRequestWire.serializer(),
+            PreferenceRequestWire(
+                schemaVersion = normalized.schemaVersion,
+                preferences = normalized.preferences,
+            ),
+        ).toByteArray(Charsets.UTF_8)
+        if (bytes.size > MAX_TRAVEL_PREFERENCE_DOCUMENT_BYTES) {
+            throw InvalidPreferenceDocumentException()
+        }
+        return normalized
     }
 
     fun encodeRequest(document: PreferenceDocument): String {

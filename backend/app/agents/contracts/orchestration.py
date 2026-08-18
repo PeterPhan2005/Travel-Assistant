@@ -34,7 +34,7 @@ from app.agents.contracts.itinerary import ItineraryOutput
 from app.agents.contracts.local_culture import LocalCultureOutput
 from app.agents.contracts.narration import NarrationOutput
 from app.agents.contracts.router import RouterOutput
-from app.preferences.contracts import PreferenceDocument
+from app.preferences.contracts import AgentPreferenceProjectionV1
 
 DurationMilliseconds = Annotated[
     StrictFloat,
@@ -366,7 +366,7 @@ class AgentRuntimeRequest(ContractModel):
     user_query: NormalizedQuery
     locale: LocaleCode
     city: SupportedCity | None = None
-    preferences: PreferenceDocument | None = None
+    preference_projection: AgentPreferenceProjectionV1 | None = None
     discovery_origin: DiscoveryOrigin | None = None
     context: AgentRuntimeContext = AgentRuntimeContext()
 

@@ -12,7 +12,13 @@ from app.preferences.contracts import (
     MAX_KEY_LENGTH,
     MAX_OBJECT_ITEMS,
     MAX_STRING_LENGTH,
+    AgentPreferenceProjectionV1,
+    BudgetPreference,
     PreferenceDocument,
+    TravelInterest,
+    TravelPace,
+    TravelPreferenceDocument,
+    project_for_agents,
 )
 
 
@@ -91,3 +97,70 @@ def test_contract_rejects_excessive_nesting() -> None:
     with pytest.raises(ValidationError):
         _document(nested)
 
+
+def test_typed_travel_contract_is_closed_canonical_and_projectable() -> None:
+    document = TravelPreferenceDocument.model_validate(
+        {
+            "schema_version": 2,
+            "preferences": {
+                "interests": ["nature_and_outdoors", "food_and_cafes"],
+                "pace": "balanced",
+                "budget_preference": "moderate",
+            },
+        }
+    )
+
+    assert document.preferences.interests == (
+        TravelInterest.FOOD_AND_CAFES,
+        TravelInterest.NATURE_AND_OUTDOORS,
+    )
+    assert project_for_agents(document) == AgentPreferenceProjectionV1(
+        interests=document.preferences.interests,
+        pace=TravelPace.BALANCED,
+        budget_preference=BudgetPreference.MODERATE,
+    )
+    assert project_for_agents(PreferenceDocument.empty()) is None
+    assert project_for_agents(TravelPreferenceDocument.empty()) is None
+
+
+@pytest.mark.parametrize(
+    "preferences",
+    [
+        {"interests": [], "pace": None},
+        {
+            "interests": [],
+            "pace": None,
+            "budget_preference": None,
+            "inferred_trait": "hidden",
+        },
+        {
+            "interests": ["food_and_cafes", "food_and_cafes"],
+            "pace": None,
+            "budget_preference": None,
+        },
+        {
+            "interests": [
+                "food_and_cafes",
+                "culture_and_history",
+                "scenic_and_landmarks",
+                "nature_and_outdoors",
+                "local_life_and_markets",
+                "family_activities",
+            ],
+            "pace": None,
+            "budget_preference": None,
+        },
+        {
+            "interests": ["religion"],
+            "pace": None,
+            "budget_preference": None,
+        },
+    ],
+)
+def test_typed_travel_contract_rejects_partial_hidden_or_invalid_values(
+    preferences: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        TravelPreferenceDocument.model_validate(
+            {"schema_version": 2, "preferences": preferences}
+        )

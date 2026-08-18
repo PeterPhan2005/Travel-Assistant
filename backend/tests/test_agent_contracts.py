@@ -66,7 +66,6 @@ from app.agents.contracts import (
 )
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
-from app.preferences.contracts import PreferenceDocument
 from app.providers.poi.models import (
     Coordinates,
     PoiProviderKind,
@@ -385,7 +384,6 @@ def test_unknown_fields_frozen_instances_and_strict_scalars_fail() -> None:
         user_query="Tìm bảo tàng gần đây",
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=None,
     )
     with pytest.raises(ValidationError):
         RouterRequest.model_validate(
@@ -656,15 +654,9 @@ def test_unicode_json_round_trip_and_missing_optionals_are_preserved() -> None:
         user_query="Tìm phở ngon ở Thành phố Hồ Chí Minh",
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=PreferenceDocument(
-            schema_version=1,
-            preferences={"ngôn_ngữ": "Tiếng Việt"},
-        ),
     )
     restored = RouterRequest.model_validate_json(request.model_dump_json())
     assert restored == request
-    assert restored.preferences is not None
-    assert restored.preferences.preferences["ngôn_ngữ"] == "Tiếng Việt"
     candidate_json = _candidate().model_dump(mode="json", exclude_none=True)
     assert "address" not in candidate_json
     assert "rating" not in candidate_json
@@ -708,7 +700,7 @@ def test_runtime_context_is_narrow_strict_and_backward_compatible() -> None:
         "user_query",
         "locale",
         "city",
-        "preferences",
+        "preference_projection",
         "discovery_origin",
     }
     assert set(AgentRuntimeRequest.model_fields) == original_fields | {
@@ -1314,7 +1306,7 @@ def test_runtime_request_contains_origin_only_as_input() -> None:
         user_query="Tìm địa điểm gần đây",
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=None,
+        preference_projection=None,
         discovery_origin=DiscoveryOrigin(
             latitude=10.77,
             longitude=106.69,

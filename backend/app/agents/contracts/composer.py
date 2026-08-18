@@ -28,6 +28,7 @@ from app.agents.contracts.grounding import (
     SpecialistOutput,
     _specialist_claim_ids,
 )
+from app.preferences.contracts import AgentPreferenceProjectionV1
 
 
 class ResponseComposerRequest(ContractModel):
@@ -35,6 +36,7 @@ class ResponseComposerRequest(ContractModel):
 
     user_query: NormalizedQuery
     locale: LocaleCode
+    preference_projection: AgentPreferenceProjectionV1 | None = None
     evidence: EvidenceBundle
     approved_claim_ids: Annotated[
         tuple[ClaimId, ...],

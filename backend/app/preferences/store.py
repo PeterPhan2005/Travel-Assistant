@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from app.db.models.user import User, UserPreference
-from app.preferences.contracts import PreferenceDocument
+from app.preferences.contracts import SupportedPreferenceDocument
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +30,10 @@ class PreferenceStoreError(Exception):
     """A sanitized preference persistence operation failed."""
 
 
+class PreferenceSchemaConflictError(PreferenceStoreError):
+    """A legacy document attempted to replace a newer schema."""
+
+
 class PreferenceStore(Protocol):
     """Persistence seam used by the deterministic preference service."""
 
@@ -40,7 +44,7 @@ class PreferenceStore(Protocol):
     async def replace(
         self,
         firebase_uid: str,
-        document: PreferenceDocument,
+        document: SupportedPreferenceDocument,
     ) -> StoredPreference:
         """Atomically replace the authenticated owner's complete document."""
         ...
@@ -78,7 +82,7 @@ class SqlAlchemyPreferenceStore:
     async def replace(
         self,
         firebase_uid: str,
-        document: PreferenceDocument,
+        document: SupportedPreferenceDocument,
     ) -> StoredPreference:
         """Upsert the owner and one document in one transaction and commit."""
         try:
@@ -94,6 +98,7 @@ class SqlAlchemyPreferenceStore:
                         .returning(User.id)
                     )
                 ).scalar_one()
+                serialized_preferences = document.model_dump(mode="json")["preferences"]
                 row = (
                     await self._session.execute(
                         insert(UserPreference)
@@ -101,15 +106,18 @@ class SqlAlchemyPreferenceStore:
                             id=uuid4(),
                             user_id=user_id,
                             schema_version=document.schema_version,
-                            preferences=document.preferences,
+                            preferences=serialized_preferences,
                         )
                         .on_conflict_do_update(
                             index_elements=[UserPreference.user_id],
                             set_={
                                 "schema_version": document.schema_version,
-                                "preferences": document.preferences,
+                                "preferences": serialized_preferences,
                                 "updated_at": func.now(),
                             },
+                            where=(
+                                UserPreference.schema_version <= document.schema_version
+                            ),
                         )
                         .returning(
                             UserPreference.schema_version,
@@ -117,7 +125,9 @@ class SqlAlchemyPreferenceStore:
                             UserPreference.updated_at,
                         )
                     )
-                ).one()
+                ).one_or_none()
+                if row is None:
+                    raise PreferenceSchemaConflictError
         except SQLAlchemyError as error:
             await self._session.rollback()
             raise PreferenceStoreError from error
@@ -126,4 +136,3 @@ class SqlAlchemyPreferenceStore:
             preferences=dict(row.preferences),
             updated_at=row.updated_at,
         )
-

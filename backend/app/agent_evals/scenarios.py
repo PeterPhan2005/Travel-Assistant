@@ -512,7 +512,6 @@ async def _execute_router(case: RouterEvalCase) -> ScenarioOutcome:
             user_query=queries[case.scenario],
             locale="vi-VN",
             city=explicit_city,
-            preferences=None,
         )
     )
     checks = _base_checks()
@@ -1344,7 +1343,7 @@ def _runtime_request(
         user_query="synthetic runtime request",
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=None,
+        preference_projection=None,
         discovery_origin=DiscoveryOrigin(latitude=10.76, longitude=106.66),
         context=AgentRuntimeContext(
             selected_poi=selected_poi,

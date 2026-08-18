@@ -1,6 +1,11 @@
 package com.kltn.travelassistant.data.preferences
 
 import com.kltn.travelassistant.feature.preferences.domain.PreferenceDocument
+import com.kltn.travelassistant.feature.preferences.domain.BudgetPreference
+import com.kltn.travelassistant.feature.preferences.domain.TravelInterest
+import com.kltn.travelassistant.feature.preferences.domain.TravelPace
+import com.kltn.travelassistant.feature.preferences.domain.TravelPreferenceProfile
+import com.kltn.travelassistant.feature.preferences.domain.toTravelPreferenceProfileOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -31,7 +36,7 @@ class PreferenceDocumentCodecTest {
     fun unknownEnvelopeFieldsAndUnsupportedVersionAreRejected() {
         listOf(
             """{"schema_version":1,"preferences":{},"updated_at":null,"unknown":true}""",
-            """{"schema_version":2,"preferences":{},"updated_at":null}""",
+            """{"schema_version":3,"preferences":{},"updated_at":null}""",
             """{"schema_version":1,"preferences":[],"updated_at":null}""",
         ).forEach { raw ->
             expectInvalid {
@@ -88,6 +93,39 @@ class PreferenceDocumentCodecTest {
             setOf("schema_version", "preferences"),
             strictPreferenceJson().parseToJsonElement(encoded).jsonObject.keys,
         )
+    }
+
+    @Test
+    fun typedTravelDocumentRoundTripsInCanonicalOrder() {
+        val profile = TravelPreferenceProfile(
+            interests = setOf(
+                TravelInterest.NATURE_AND_OUTDOORS,
+                TravelInterest.FOOD_AND_CAFES,
+            ),
+            pace = TravelPace.BALANCED,
+            budgetPreference = BudgetPreference.MODERATE,
+        )
+
+        val encoded = codec.encodeRequest(profile.toDocument())
+        val decoded = codec.decodeResponse(
+            encoded.dropLast(1) + ",\"updated_at\":null}",
+        )
+
+        assertEquals(2, decoded.document.schemaVersion)
+        assertEquals(profile, decoded.document.toTravelPreferenceProfileOrNull())
+        assertTrue(
+            encoded.indexOf("food_and_cafes") < encoded.indexOf("nature_and_outdoors"),
+        )
+    }
+
+    @Test
+    fun typedTravelDocumentRejectsPartialUnknownDuplicateAndTooManyInterests() {
+        listOf(
+            """{"schema_version":2,"preferences":{"interests":[],"pace":null},"updated_at":null}""",
+            """{"schema_version":2,"preferences":{"interests":[],"pace":null,"budget_preference":null,"hidden":true},"updated_at":null}""",
+            """{"schema_version":2,"preferences":{"interests":["food_and_cafes","food_and_cafes"],"pace":null,"budget_preference":null},"updated_at":null}""",
+            """{"schema_version":2,"preferences":{"interests":["food_and_cafes","culture_and_history","scenic_and_landmarks","nature_and_outdoors","local_life_and_markets","family_activities"],"pace":null,"budget_preference":null},"updated_at":null}""",
+        ).forEach { raw -> expectInvalid { codec.decodeResponse(raw) } }
     }
 
     private fun expectInvalid(block: () -> Unit) {

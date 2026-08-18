@@ -18,7 +18,6 @@ from app.agents.contracts.common import (
     SupportedCity,
     validate_sorted_unique,
 )
-from app.preferences.contracts import PreferenceDocument
 
 MAX_ROUTER_SPECIALISTS = 4
 MAX_REFERENCED_POIS = 20
@@ -78,7 +77,6 @@ class RouterRequest(ContractModel):
     user_query: NormalizedQuery
     locale: LocaleCode
     city: SupportedCity | None = None
-    preferences: PreferenceDocument | None = None
 
 
 class RouterOutput(ContractModel):

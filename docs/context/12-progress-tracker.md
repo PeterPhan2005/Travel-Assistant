@@ -204,7 +204,7 @@ closure are roadmap requirements.
 
 ## Current goal
 
-T094 is complete. No task is active; T096 is the sole Next Up task.
+T096 is complete. T097 is the next ready task; no T097 work has started.
 
 ## Completed
 
@@ -261,6 +261,7 @@ T094 is complete. No task is active; T096 is the sole Next Up task.
 - T092 Complete HCMC curated dataset.
 - T093 Complete Bangkok curated dataset.
 - T094 Add safe demo mode.
+- T096 Finalize preference profile and personalization.
 
 ## In progress
 
@@ -268,7 +269,7 @@ T094 is complete. No task is active; T096 is the sole Next Up task.
 
 ## Next up
 
-- T096 Finalize preference profile and personalization.
+- T097 Add API rate limits and AI cost guards.
 
 ## Open questions
 
@@ -276,7 +277,6 @@ T094 is complete. No task is active; T096 is the sole Next Up task.
 - Cloud deployment provider.
 - Exact production retention duration for rounded or redacted operational
   location-request logs within the accepted 7–30 day range.
-- Final user-facing preference taxonomy and editing UI.
 - Exact provider/API selection for the provider-neutral `WebSearchProvider`.
 - Exact bounded freshness enum names and thresholds to be finalized in T107.
 
@@ -3161,3 +3161,94 @@ is the earliest ready task in index order and the sole Next Up task. T095 and
 T096+ implementation remain untouched. Closure changed only the T094 task,
 validation document and progress tracker; no Android production/test, backend,
 curated data or travel-package artifact changed. No commit or push was made.
+
+T096 phase 1 began on 2026-08-12 after verifying a clean `main` worktree at
+exact `HEAD`/`origin/main` SHA
+`b5340a52e1be4782ca9bdfb8fcba1a1847f37ce5` and successful exact-SHA GitHub
+Actions CI run 31602387436. T094 and every T096 dependency
+T025/T090/T092/T093 were `done`; Completed included T094; In progress was empty;
+T096 was `todo` and the sole Next Up task.
+
+The phase-1 audit confirmed that T025 persists one complete generic
+schema-version-1 JSON object per verified Firebase UID. The backend accepts
+only null, Boolean, bounded integer, bounded string, array and object values,
+with a 16 KiB serialized envelope, depth 6, 64-character keys, 512-character
+strings, 50 items per container, 500 total values and integer magnitude at most
+10^12. PUT is complete-document replacement with server-receipt-order
+last-write-wins and a PostgreSQL `updated_at`; GET of a missing row is read-only
+and returns an empty document with `updated_at=null`.
+
+Android keeps one complete record per SHA-256 UID-derived account key in
+backup-excluded DataStore. Atomic local edits increment a monotonic revision and
+set pending before unique connected WorkManager synchronization. Pending data
+is pushed before refresh; a response clears pending only for the captured
+revision, and an account change after the request cannot report success for the
+new account. Sign-out hides but does not delete records. There is no current
+preference UI or personalization. Offline Room ranking remains distance,
+normalized name and stable POI ID. Agent runtime contracts currently permit the
+whole generic preference document only at the Router seam, but the production
+Assistant transport always supplies `None`.
+
+The unapproved recommendation is travel-taxonomy version 1 carried by document
+schema version 2, because assigning new semantics to the existing generic
+schema version 1 would be unsafe. Its proposed fields are a closed, unique,
+canonical `interests` set of at most five values, optional closed `pace` and
+optional closed `budget_preference`; absence means no personalization. Ranking
+would remain deterministic application code and preserve exact current order
+when values are missing. Agents would receive only a minimal request-scoped
+typed projection, never the stored document, identity or synchronization
+metadata. Reset would be an explicit local full replacement with an empty
+schema-version-2 document that queues through existing offline sync; it would
+not delete the server row or run on sign-out.
+
+Existing generic version-1 documents would remain legacy data and would never
+be interpreted field-by-field as the new taxonomy. Pending legacy edits must
+retain their current push-first semantics; unknown future versions must fail
+closed without overwrite. User approval is required before any phase-2
+implementation. T096 is now `in_progress`, Next Up is empty, and T097+ remain
+untouched. This checkpoint changed only the T096 task and progress tracker; it
+added no product/test code, task, commit or push.
+
+T096 phase 2 completed on 2026-08-15 after explicit user approval of the
+phase-1 plan. The closed travel-taxonomy version 1 is carried by document schema
+version 2 and requires exactly canonical `interests` (at most five), nullable
+`pace` and nullable `budget_preference`. Exact enum values are documented in
+the architecture context. Schema-v1 generic documents remain opaque and
+readable; v2 may replace v1, while an atomic PostgreSQL upsert condition rejects
+v1 downgrade after v2. Unknown future or malformed stored versions fail closed.
+Missing/v1-empty data and canonical v2-empty data produce no personalization.
+
+Authenticated Profile now presents Vietnamese read/edit/cancel/save controls,
+the five-interest limit, single-choice pace/budget, offline/pending/sync/error
+states and a confirmation dialog for explicit reset. Save and reset write one
+complete canonical v2 document through the existing per-account DataStore,
+revision and WorkManager path. Sign-out only hides data. Legacy non-empty data
+is never interpreted and is replaced only after explicit save/reset. JVM and
+Compose coverage verifies offline edits, reset, sign-out hiding and direct
+two-account value replacement without cross-account content.
+
+Personalization is application-owned and soft. Backend Discovery candidates are
+ranked only after eligibility/deduplication by interest match, then qualitative
+budget compatibility (known compatible, unknown, known incompatible), then
+their existing input order. Android uses the same interest mapping before its
+existing distance/normalized-name/ID key. Its current offline POI contract has
+no qualitative price level, so local budget buckets all remain unknown and do
+not change order; pace never ranks POIs. Retrieval receives no hard preference
+filter. Router and Discovery requests receive no preference. The verified UID
+is used only to load a typed v2 projection and is discarded before runtime;
+Response Composer receives only projection values relevant to approved
+specialist output. Legacy documents, stored envelopes, UID and sync/timestamp
+metadata never enter the agent boundary, logs or analytics.
+
+Required backend checks passed: `ruff check .`, `mypy --strict app tests`, and
+the complete `pytest` suite with 820 passed and 34 environment-gated
+PostgreSQL/PostGIS tests skipped because no `DATABASE_URL` was provided. Android
+`./gradlew test` passed all 290 JVM tests. The available API 36 ARM64 emulator
+passed all 150 `connectedDebugAndroidTest` cases with zero failures or skips.
+Android commands used the complete Android Studio JDK explicitly because the
+shell's VS Code JRE path lacks `jlink`; the checks themselves completed
+successfully. `git diff --check` passed. No commit or push was made.
+
+T096 is `done`; Completed includes T096, In progress is None, and T097 is the
+next ready task and sole Next Up item. T097 and later behavior remains
+unimplemented.

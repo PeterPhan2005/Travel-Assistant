@@ -31,7 +31,6 @@ from app.agents.router.executor import (
 from app.agents.router.instructions import ROUTER_INSTRUCTIONS
 from app.core.settings import ApplicationEnvironment, Settings
 from app.main import create_app
-from app.preferences.contracts import PreferenceDocument
 from pydantic import SecretStr
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,10 +42,6 @@ def _request(query: str = "Tìm địa điểm gần đây") -> RouterRequest:
         user_query=query,
         locale="vi-VN",
         city=SupportedCity.HCMC,
-        preferences=PreferenceDocument(
-            schema_version=1,
-            preferences={"pace": "chậm"},
-        ),
     )
 
 

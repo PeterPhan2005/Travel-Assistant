@@ -8,6 +8,11 @@
   explicit open question in the progress tracker.
 - Itinerary: retained until user deletes it/account.
 - Preferences: retained until user deletes them/account.
+- Preference values are only explicit user selections from the closed travel
+  taxonomy. They are not inferred from exact location, location history,
+  queries, transcripts, POI views or analytics. Sign-out hides account-scoped
+  local values without deleting them; explicit reset replaces them with an
+  empty typed profile.
 - Voice audio: not stored or uploaded by TravelAssistant.
 - Transcript: confirmed text is sent only in the foreground assistant request
   and is not persisted by Android or backend. The T090 product-analytics adapter
@@ -70,6 +75,9 @@
   agent input receive no provider credential.
 - Agent tools receive least privilege.
 - Logs redact authorization headers, exact coordinates and provider secrets.
+- Preference content, legacy documents, UID/account keys and synchronization
+  metadata are excluded from logs and analytics. Agents receive only the
+  minimal identity-free typed projection required by an approved boundary.
 - Saved-itinerary CRUD logs only operation, safe result category and aggregate
   count; they never log snapshot/tombstone content or owner identity.
 - Fresh-web fetching is application-controlled and enforces HTTPS, SSRF

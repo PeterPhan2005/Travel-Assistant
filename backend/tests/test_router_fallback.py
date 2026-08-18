@@ -12,7 +12,6 @@ from app.agents.contracts import (
     SupportedCity,
 )
 from app.agents.router import match_router_fallback
-from app.preferences.contracts import PreferenceDocument
 
 
 def _request(
@@ -20,13 +19,11 @@ def _request(
     *,
     city: SupportedCity | None = None,
     locale: str = "vi-VN",
-    preferences: PreferenceDocument | None = None,
 ) -> RouterRequest:
     return RouterRequest(
         user_query=query,
         locale=locale,
         city=city,
-        preferences=preferences,
     )
 
 
@@ -132,10 +129,6 @@ def test_matching_is_case_whitespace_diacritic_and_punctuation_insensitive() -> 
 def test_repeated_matching_is_deterministic_and_does_not_mutate_request() -> None:
     request = _request(
         "Lên kế hoạch tham quan Bangkok",
-        preferences=PreferenceDocument(
-            schema_version=1,
-            preferences={"pace": "chậm"},
-        ),
     )
     original_json = request.model_dump_json()
 
@@ -197,19 +190,11 @@ def test_conflicting_query_cities_do_not_force_an_entity() -> None:
     assert output.entities.city is None
 
 
-def test_locale_and_preferences_do_not_imply_city_or_other_entities() -> None:
+def test_locale_does_not_imply_city_or_other_entities() -> None:
     output = match_router_fallback(
         _request(
             "Tôi cần hỗ trợ chuyến đi",
             locale="th-TH",
-            preferences=PreferenceDocument(
-                schema_version=1,
-                preferences={
-                    "city": "Bangkok",
-                    "duration": 480,
-                    "category": "museum",
-                },
-            ),
         )
     )
 
